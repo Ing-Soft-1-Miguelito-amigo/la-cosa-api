@@ -1,6 +1,6 @@
 from models.entities import Game
 from pydantic import BaseModel, ConfigDict
-
+from typing import Optional
 
 class GameBase(BaseModel):#This is used to return a game before it started (it has no turn owner and play direction)
     name: str
@@ -10,14 +10,14 @@ class GameBase(BaseModel):#This is used to return a game before it started (it h
     model_config = ConfigDict(from_attributes=True)
 
 class GameCreate(GameBase):#This is used to create a game
-    password: str = None
+    password: Optional[str] = None
     
 
-class GameInDB(GameBase): #This is used to return a game with the password 
+class GameInDB(GameCreate): #This is used to return a game with the password 
     id: int
     state: int = 0
-    play_direction: bool = True
-    turn_owner: int = None
+    play_direction: Optional[bool] = None
+    turn_owner: Optional[int] = None
     
 
 class GameOut(BaseModel): #This is used to return a game without the password
@@ -26,7 +26,7 @@ class GameOut(BaseModel): #This is used to return a game without the password
     min_players: int
     max_players: int
     state: int = 0
-    play_direction: None | bool 
-    turn_owner: int | None
+    play_direction: Optional[bool] = None
+    turn_owner: Optional[int] = None
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True,)
