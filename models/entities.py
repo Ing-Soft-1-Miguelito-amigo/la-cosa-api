@@ -1,5 +1,5 @@
 from pony.orm import *
-
+from models.settings import DATABASE_FILENAME
 db = Database()
 
 
@@ -14,5 +14,5 @@ class Game(db.Entity):
     turn_owner = Optional(int)
 
 
-db.bind(provider='sqlite', filename='database.sqlite', create_db=True)
+db.bind(provider='sqlite', filename=DATABASE_FILENAME, create_db=True)
 db.generate_mapping(create_tables=True)
