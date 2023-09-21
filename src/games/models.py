@@ -1,9 +1,12 @@
-from pony.orm import *
-from models.settings import DATABASE_FILENAME
-db = Database()
+from pony.orm import Required, Set, Optional, PrimaryKey
 
+from src.models.db import db
 
 class Game(db.Entity):
+
+    """ 
+     Represent a game
+    """
     id = PrimaryKey(int, auto=True)
     name = Required(str)
     min_players = Required(int)
@@ -12,7 +15,3 @@ class Game(db.Entity):
     state = Required(int, default=0)  # 0 = waiting, 1 = playing, 2 = finished
     play_direction = Optional(bool)  # true = clockwise
     turn_owner = Optional(int)
-
-
-db.bind(provider='sqlite', filename=DATABASE_FILENAME, create_db=True)
-db.generate_mapping(create_tables=True)

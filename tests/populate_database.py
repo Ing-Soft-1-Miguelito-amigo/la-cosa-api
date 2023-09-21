@@ -1,4 +1,4 @@
-from ..entities import Game
+from src.games.models import Game
 from pony.orm import db_session, count
 
 @db_session

@@ -1,4 +1,3 @@
-from models.entities import Game
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 

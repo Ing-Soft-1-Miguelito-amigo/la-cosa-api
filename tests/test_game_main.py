@@ -1,9 +1,9 @@
 from fastapi import FastAPI, status, HTTPException
 from fastapi.testclient import TestClient
-from ..entities import Game # imports database definition
-from ..schemas import GameBase, GameCreate, GameOut, GameInDB # imports schemas
+from src.games.models import Game # imports database definition
+from src.games.schemas import GameBase, GameCreate, GameOut, GameInDB # imports schemas
 from pony.orm import db_session
-
+from src.models.db import db
 
 app = FastAPI()  # Create an FastAPI instance app for testing purposes
 
@@ -68,7 +68,8 @@ async def delete_game(game_id: int):
 
 
 client = TestClient(app)  # Create a TestClient instance client for testing purposes
-
+db.bind(provider='sqlite', filename='test_database.sqlite', create_db=True)
+db.generate_mapping(create_tables=True)
 
 def test_read_main():
     response = client.get("/")
