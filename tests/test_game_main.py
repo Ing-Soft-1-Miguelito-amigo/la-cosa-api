@@ -38,10 +38,10 @@ async def create_game(new_game: schemas.GameCreate):
 async def delete_game(game_id: int):
     return crud.delete_game(game_id)
 
-#update a game
 @app.put("/games/{game_id}",
             status_code=status.HTTP_200_OK)
 async def update_game(game_id: int, game: schemas.GameUpdate):
+    #update a game
     return crud.update_game(game_id, game)
 
 client = TestClient(app)  # Create a TestClient instance client for testing purposes

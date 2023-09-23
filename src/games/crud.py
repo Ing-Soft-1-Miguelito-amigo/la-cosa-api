@@ -1,12 +1,13 @@
 from . import schemas, models
 from pony.orm import db_session
 
-""" 
-It creates a game in the database from the
-GameCreate schema and returns the GameOut schema
-containing all the data from the game except the password
-"""
+
 def create_game(game: schemas.GameCreate):
+    """ 
+    It creates a game in the database from the
+    GameCreate schema and returns the GameOut schema
+    containing all the data from the game except the password
+    """
     with db_session:
         if models.Game.exists(name=game.name):
             raise Exception("Game already exists")
@@ -23,12 +24,11 @@ def create_game(game: schemas.GameCreate):
         response = schemas.GameOut.model_validate(game)
     return response
 
-""" 
-This function returns the GameInDB schema from its id 
-containing all the data from the game including the password
-
-"""
 def get_game(game_id: int):
+    """ 
+    This function returns the GameInDB schema from its id 
+    containing all the data from the game including the password
+    """
     with db_session:
         try:
             game = models.Game[game_id]
@@ -37,21 +37,21 @@ def get_game(game_id: int):
             return {"message": f"Game {game_id} not found"}
     return response
 
-""" 
-This funtcion rteturns all the games in the database
-in a list of GameBase schemas 
-"""
 def get_all_games():
+    """ 
+    This funtcion returns all the games in the database
+    in a list of GameBase schemas 
+    """
     with db_session:
         games = models.Game.select()
         result = [schemas.GameBase.model_validate(game) for game in games]
     return result
 
-""" 
-This function deletes a game from the database
-and returns a message with the result
-"""
 def delete_game(game_id: int):
+    """ 
+    This function deletes a game from the database
+    and returns a message with the result
+    """
     with db_session:
         try:
             game = models.Game[game_id]
@@ -60,20 +60,20 @@ def delete_game(game_id: int):
             return {"message": f"Game {game_id} not found"}
     return {"message": f"Game {game_id} deleted successfully"}
 
-""" 
-This function gets all games in the database with all their data
-"""
 def get_all_games_in_db():
+    """ 
+    This function gets all games in the database with all their data
+    """
     with db_session:
         games = models.Game.select()
         result = [schemas.GameInDB.model_validate(game) for game in games]
     return result
 
-""" 
-This functions updates a game with game_id 
-with the data in the GameUpdate schema
-"""
 def update_game(game_id: int, game: schemas.GameUpdate):
+    """ 
+    This functions updates a game with game_id 
+    with the data in the GameUpdate schema
+    """
     with db_session:
         try:
             game_to_update = models.Game[game_id]
