@@ -28,4 +28,11 @@ class GameOut(BaseModel): #This is used to return a game without the password
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
     
-    model_config = ConfigDict(from_attributes=True,)
+    model_config = ConfigDict(from_attributes=True)
+
+class GameUpdate(BaseModel):
+    state: Optional[int] = None
+    play_direction: Optional[bool] = None
+    turn_owner: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)

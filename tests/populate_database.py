@@ -1,5 +1,7 @@
 from src.games.models import Game
+from src.models.db import db
 from pony.orm import db_session, count
+
 
 @db_session
 def load_data_for_test():
