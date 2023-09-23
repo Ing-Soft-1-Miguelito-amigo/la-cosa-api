@@ -17,7 +17,3 @@ def load_data_for_test():
                 Game(name=name, min_players=min_players, max_players=max_players)
             else:
                 Game(name=name, min_players=min_players, max_players=max_players, password=password)
-
-if __name__ == '__main__':
-    load_data_for_test()
-            

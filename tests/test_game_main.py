@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from src.games import crud, schemas, models
 from pony.orm import db_session, ObjectNotFound
 from src.models.db import db
-from populate_database import load_data_for_test
+from . import populate_database
 import pytest
 app = FastAPI()  # Create an FastAPI instance app for testing purposes
 
@@ -48,7 +48,7 @@ client = TestClient(app)  # Create a TestClient instance client for testing purp
 db.bind(provider='sqlite', filename='test_database.sqlite', create_db=True)
 db.generate_mapping(create_tables=True)
 #load data for test
-load_data_for_test()
+populate_database.load_data_for_test()
 
 def test_read_main():
     response = client.get("/")
