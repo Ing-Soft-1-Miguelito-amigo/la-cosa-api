@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from settings import DATABASE_FILENAME
-from models import db
+from models.db import db
+from games import endpoints as games_endpoints
+
+
 app = FastAPI()
+app.include_router(games_endpoints.router)
 
 
 @app.get("/")
