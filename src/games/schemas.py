@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, root_validator
+from typing import Optional, List
+from src.players.schemas import PlayerBase
 
 
 class GameBase(BaseModel):
@@ -33,7 +34,8 @@ class GameOut(BaseModel):
     state: int = 0
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
-    
+    players: List[PlayerBase] = []
+
     model_config = ConfigDict(from_attributes=True)
 
 

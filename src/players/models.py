@@ -7,7 +7,7 @@ class Player(db.Entity):
     name = Optional(str)
     table_position = Optional(int)
     role = Optional(int)  # enum(humano,infectado,laCosa)
-    alive = Optional(bool)
-    quarantine = Optional(bool)
+    alive = Optional(bool, default=True)
+    quarantine = Optional(bool, default=False)
     game = Required('Game', reverse='players')
-    owner = Optional(bool)
+    owner = bool
