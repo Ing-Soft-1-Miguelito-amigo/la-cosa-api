@@ -1,5 +1,4 @@
 from src.models.db import db
-from src.games.models import Game
 from pony.orm import Required, Optional, PrimaryKey
 
 
@@ -10,5 +9,5 @@ class Player(db.Entity):
     role = Optional(int)  # enum(humano,infectado,laCosa)
     alive = Optional(bool)
     quarantine = Optional(bool)
-    game = Required(Game, reverse='players')
-    owner_of = Optional(Game, reverse='owner')
+    game = Required('Game', reverse='players')
+    owner = Optional(bool)

@@ -1,6 +1,6 @@
 from pony.orm import Required, Set, Optional, PrimaryKey
 from src.models.db import db
-
+from src.players.models import Player
 
 class Game(db.Entity):
 
@@ -15,5 +15,4 @@ class Game(db.Entity):
     state = Required(int, default=0)  # 0 = waiting, 1 = playing, 2 = finished
     play_direction = Optional(bool)  # true = clockwise
     turn_owner = Optional(int)
-    players = Set('Player', reverse='game')
-    owner = Required('Player', reverse='owner_of')
+    players = Set(Player, reverse='game')
