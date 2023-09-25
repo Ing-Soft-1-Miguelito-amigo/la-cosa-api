@@ -2,3 +2,7 @@
 test:
 	pytest -vv --cov=.. .
 	rm -f test_database.sqlite
+
+# Rule to remove all .sqlite files
+clean:
+	rm -f *.sqlite
