@@ -23,7 +23,7 @@ class GameInDB(GameCreate):
     state: int = 0
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
-    
+    players: List[PlayerBase] = None
 
 class GameOut(BaseModel): 
     # This is used to return a game without the password and the attributes saved in DB
@@ -34,7 +34,7 @@ class GameOut(BaseModel):
     state: int = 0
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
-    players: List[PlayerBase] = []
+    players: List[PlayerBase] = None
 
     model_config = ConfigDict(from_attributes=True)
 

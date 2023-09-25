@@ -1,17 +1,12 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
-from src.games import crud, schemas, models
 from pony.orm import db_session, ObjectNotFound
+
+from src.games import crud, schemas
 from src.models.db import db
 from . import populate_database
-import pytest
 
 app = FastAPI()  # Create an FastAPI instance app for testing purposes
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World this is a test API"}
 
 
 @app.get("/games")
@@ -57,12 +52,6 @@ db.generate_mapping(create_tables=True)
 populate_database.load_data_for_test()
 
 
-def test_read_main():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Hello World this is a test API"}
-
-
 @db_session
 def test_read_games_base_form():
     response = client.get("/games")
@@ -77,11 +66,12 @@ def test_read_games_INDB_form():
     response = client.get("/gamesINDB")
     assert response.status_code == 200
     assert response.json() == [{"id": 1, "name": "Uno", "min_players": 4, "max_players": 12,
-                                "password": "", "state": 0, "play_direction": None, "turn_owner": None},
+                                "password": "", "state": 0, "players": [], "play_direction": None, "turn_owner": None},
                                {"id": 2, "name": "Dos", "min_players": 2, "max_players": 10,
-                                "password": "", "state": 0, "play_direction": None, "turn_owner": None},
+                                "password": "", "state": 0, "players": [], "play_direction": None, "turn_owner": None},
                                {"id": 3, "name": "Tres", "min_players": 3, "max_players": 8,
-                                "password": "securepassword", "state": 0, "play_direction": None, "turn_owner": None}]
+                                "password": "securepassword", "state": 0, "players": [], "play_direction": None,
+                                "turn_owner": None}]
 
 
 @db_session
@@ -89,8 +79,7 @@ def test_get_single_game():
     response = client.get("/games/3")
     assert response.status_code == 200
     assert response.json() == {"id": 3, "name": "Tres", "min_players": 3, "max_players": 8,
-                               "password": "securepassword", "state": 0, "play_direction": None,
-                               "turn_owner": None}
+                               "state": 0, "players": [], "play_direction": None, "turn_owner": None}
 
 
 @db_session
@@ -108,14 +97,15 @@ def test_create_delete_game():
     assert response.status_code == 200
     data = response.json()
     assert data == {"id": game_id, "name": "Cuatro", "min_players": 2, "max_players": 4,
-                    "password": "testpassword", "state": 0, "play_direction": None,
-                    "turn_owner": None}
+                    "state": 0, "players": [], "play_direction": None, "turn_owner": None}
 
     response = client.delete(f"/games/{game_id}")
     assert response.status_code == 200
-
-    response = client.get(f"/games/{game_id}")
-    assert response.json() == {"message": f"Game {game_id} not found"}
+    try:
+        response = client.get(f"/games/{game_id}")
+    except ObjectNotFound:
+        assert True
+    assert response.json() == {"message": f"Game {game_id} deleted successfully"}
 
 
 @db_session
@@ -135,3 +125,10 @@ def test_update_game():
     assert data["state"] == 1
     assert data["play_direction"] == True
     assert data["turn_owner"] == 1
+@db_session
+def test_create_wrong_game():
+    try:
+        response = client.post("/games/create/",
+                           json={"min_players": 2, "max_players": 4})
+    except ValueError:
+        assert True

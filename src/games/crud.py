@@ -35,8 +35,9 @@ def get_game(game_id: int):
     """
     with db_session:
         game = models.Game[game_id]
-        response = schemas.GameInDB.model_validate(game)
+        response = schemas.GameOut.model_validate(game)
     return response
+
 
 def get_all_games():
     """ 
