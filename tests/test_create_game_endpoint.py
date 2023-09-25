@@ -1,11 +1,9 @@
 from fastapi.testclient import TestClient
 from src.main import app
-from src.models.db import db
+from src.theThing.models.db import db
 
 
 client = TestClient(app)
-db.bind(provider='sqlite', filename='test_create_game.sqlite', create_db=True)
-db.generate_mapping(create_tables=True)
 
 
 def test_create_game_success():
