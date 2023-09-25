@@ -1,6 +1,5 @@
-from src.games.models import Game
-from src.models.db import db
-from pony.orm import db_session, count
+from src.theThing.games.models import Game
+from pony.orm import db_session
 
 
 @db_session

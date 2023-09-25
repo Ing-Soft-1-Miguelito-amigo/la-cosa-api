@@ -1,0 +1,8 @@
+black
+pytest
+pytest-cov
+fastapi
+pydantic
+pony
+uvicorn
+pydantic-settings

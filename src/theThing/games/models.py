@@ -1,12 +1,14 @@
-from pony.orm import Required, Set, Optional, PrimaryKey
+from pony.orm import Required, Optional, PrimaryKey
 
-from src.models.db import db
+from src.theThing.models.db import db
+
 
 class Game(db.Entity):
 
-    """ 
-     Represent a game
     """
+    Represent a game
+    """
+
     id = PrimaryKey(int, auto=True)
     name = Required(str)
     min_players = Required(int)
