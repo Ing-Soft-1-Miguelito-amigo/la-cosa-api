@@ -5,13 +5,14 @@ from typing import Optional
 class PlayerCreate(BaseModel):
     # This is used to create a player
     name: str
-    owner: bool
+    owner: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 
 class PlayerBase(PlayerCreate):
     # This is used to return a player
     id: int
+    name: str
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None

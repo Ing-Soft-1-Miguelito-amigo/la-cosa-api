@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, root_validator
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
-from src.players.schemas import PlayerBase
+from src.theThing.players.schemas import PlayerBase
 
 
 class GameBase(BaseModel):
@@ -15,9 +15,9 @@ class GameBase(BaseModel):
 class GameCreate(GameBase):
     # This is used to create a game
     password: Optional[str] = None
-    
 
-class GameInDB(GameCreate): 
+
+class GameInDB(GameCreate):
     # This is used to return a game with the password and all the attributes saved
     id: int
     state: int = 0
@@ -25,7 +25,8 @@ class GameInDB(GameCreate):
     turn_owner: Optional[int] = None
     players: List[PlayerBase] = None
 
-class GameOut(BaseModel): 
+
+class GameOut(BaseModel):
     # This is used to return a game without the password and the attributes saved in DB
     id: int
     name: str
@@ -39,7 +40,7 @@ class GameOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class GameUpdate(BaseModel): 
+class GameUpdate(BaseModel):
     # This is used to update a game
     state: Optional[int] = None
     play_direction: Optional[bool] = None

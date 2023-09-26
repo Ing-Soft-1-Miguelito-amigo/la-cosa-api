@@ -1,9 +1,10 @@
 from . import schemas, models
 from pony.orm import db_session
+from src.theThing.players.models import Player
 
 
 def create_game(game: schemas.GameCreate):
-    """ 
+    """
     It creates a game in the database from the
     GameCreate schema and returns the GameOut schema
     containing all the data from the game except the password
@@ -15,22 +16,26 @@ def create_game(game: schemas.GameCreate):
         if models.Game.exists(name=game.name):
             raise Exception("Game already exists")
         elif game.password:
-            game = models.Game(name=game.name,
-                                min_players=game.min_players,
-                                max_players=game.max_players,
-                                password=game.password)
+            game = models.Game(
+                name=game.name,
+                min_players=game.min_players,
+                max_players=game.max_players,
+                password=game.password,
+            )
         else:
-            game = models.Game(name=game.name,
-                                min_players=game.min_players,
-                                max_players=game.max_players)
+            game = models.Game(
+                name=game.name,
+                min_players=game.min_players,
+                max_players=game.max_players,
+            )
         game.flush()
         response = schemas.GameOut.model_validate(game)
     return response
 
 
 def get_game(game_id: int):
-    """ 
-    This function returns the GameInDB schema from its id 
+    """
+    This function returns the GameOut schema from its id
     containing all the data from the game including the password
     """
     with db_session:
@@ -40,9 +45,9 @@ def get_game(game_id: int):
 
 
 def get_all_games():
-    """ 
-    This funtcion returns all the games in the database
-    in a list of GameBase schemas 
+    """
+    This function returns all the games in the database
+    in a list of GameBase schemas
     """
     with db_session:
         games = models.Game.select()
@@ -51,7 +56,7 @@ def get_all_games():
 
 
 def delete_game(game_id: int):
-    """ 
+    """
     This function deletes a game from the database
     and returns a message with the result
     """
@@ -62,7 +67,7 @@ def delete_game(game_id: int):
 
 
 def get_all_games_in_db():
-    """ 
+    """
     This function gets all games in the database with all their data
     """
     with db_session:
@@ -72,8 +77,8 @@ def get_all_games_in_db():
 
 
 def update_game(game_id: int, game: schemas.GameUpdate):
-    """ 
-    This functions updates a game with game_id 
+    """
+    This functions updates a game with game_id
     with the data in the GameUpdate schema
     """
     with db_session:
