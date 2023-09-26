@@ -71,3 +71,15 @@ def verify_data_start(game: GameOut, host_name: str):
 
     if game.state != 0:
         raise HTTPException(status_code=422, detail="The game has already started")
+
+
+def verify_finished_game(game: GameOut):
+    alive_players = [player for player in game.players if player.alive]
+
+    if len(alive_players) == 1:
+        game.state = 2
+        winner = alive_players[0].name
+
+        return game, winner
+
+    return game, None

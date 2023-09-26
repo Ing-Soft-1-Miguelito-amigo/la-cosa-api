@@ -4,7 +4,7 @@ from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player
 from .crud import create_game, get_game, update_game
-from .utils import verify_data_create, verify_data_start
+from .utils import verify_data_create, verify_data_start, verify_finished_game
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
@@ -96,5 +96,10 @@ async def get_game_by_id(game_id: int):
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+    game, winner = verify_finished_game(game)
+
+    if winner is not None:
+        return {"message": f"Game {game_id} finished successfully", "winner": winner}
 
     return game
