@@ -2,7 +2,7 @@ from fastapi import HTTPException
 
 
 # Function to verify configuration data integrity
-def verify_data(game_name, min_players, max_players):
+def verify_data(game_name, min_players, max_players, host_name):
     """
     Verify the integrity of game configuration data.
 
@@ -10,9 +10,10 @@ def verify_data(game_name, min_players, max_players):
     - game_name (str): The name of the game.
     - min_players (int): The minimum number of players.
     - max_players (int): The maximum number of players.
+    - host_name (str): The name of the host.
 
     Raises:
-    - HTTPException (status_code=422): If game name is empty, or if min_players is less than 4 or max_players
+    - HTTPException (status_code=422): If game or host name is empty, or if min_players is less than 4 or max_players
     is greater than 12.
 
     Returns:
@@ -20,6 +21,9 @@ def verify_data(game_name, min_players, max_players):
     """
     if not game_name:
         raise HTTPException(status_code=422, detail="Game name cannot be empty")
+
+    if not host_name:
+        raise HTTPException(status_code=422, detail="Host name cannot be empty")
 
     if min_players < 4:
         raise HTTPException(
