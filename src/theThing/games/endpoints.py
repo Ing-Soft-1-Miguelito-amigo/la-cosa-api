@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .schemas import GameCreate
+from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player
-from .crud import create_game, get_game
-from .utils import verify_data
+from .crud import create_game, get_game, update_game
+from .utils import verify_data_create, verify_data_start
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
@@ -37,7 +37,7 @@ async def create_new_game(game_data: GameWithHost):
     host_name = game_data.host.name
 
     # Check that name and host are not empty
-    verify_data(game_name, min_players, max_players, host_name)
+    verify_data_create(game_name, min_players, max_players, host_name)
 
     game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
@@ -51,6 +51,31 @@ async def create_new_game(game_data: GameWithHost):
         raise HTTPException(status_code=422, detail=str(e))
 
     return {"message": f"Game '{game_name}' created by '{host_name}' successfully"}
+
+
+@router.post("/game/start")
+async def start_game(game_start_info: dict):
+    game_id = game_start_info["game_id"]
+    host_name = game_start_info["player_name"]
+
+    # Retrieve game data
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # Check game data integrity with current game status
+    verify_data_start(game, host_name)
+
+    # Update game status to started and assign turn owner and play direction
+    new_game_status = GameUpdate(state=1, play_direction=True, turn_owner=game.players[0].table_position)
+    try:
+        update_game(game_id, new_game_status)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # TODO: Assign initial hands and roles to players
+    # TODO: Create initial deck
 
 
 @router.get("/game/{game_id}")
