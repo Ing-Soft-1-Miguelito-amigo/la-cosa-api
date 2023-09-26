@@ -1,6 +1,6 @@
-from pony.orm import Required, Optional, PrimaryKey
-
+from pony.orm import Required, Set, Optional, PrimaryKey
 from src.theThing.models.db import db
+from src.theThing.players.models import Player
 
 
 class Game(db.Entity):
@@ -17,3 +17,4 @@ class Game(db.Entity):
     state = Required(int, default=0)  # 0 = waiting, 1 = playing, 2 = finished
     play_direction = Optional(bool)  # true = clockwise
     turn_owner = Optional(int)
+    players = Set(Player, reverse="game")

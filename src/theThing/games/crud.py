@@ -1,5 +1,6 @@
 from . import schemas, models
 from pony.orm import db_session
+from src.theThing.players.models import Player
 
 
 def create_game(game: schemas.GameCreate):
@@ -7,6 +8,9 @@ def create_game(game: schemas.GameCreate):
     It creates a game in the database from the
     GameCreate schema and returns the GameOut schema
     containing all the data from the game except the password
+
+    If a game with the same name exists, then it cannot be created.
+    Then an exception its raised.
     """
     with db_session:
         if models.Game.exists(name=game.name):
@@ -31,21 +35,18 @@ def create_game(game: schemas.GameCreate):
 
 def get_game(game_id: int):
     """
-    This function returns the GameInDB schema from its id
+    This function returns the GameOut schema from its id
     containing all the data from the game including the password
     """
     with db_session:
-        try:
-            game = models.Game[game_id]
-            response = schemas.GameInDB.model_validate(game)
-        except Exception as e:
-            return {"message": f"Game {game_id} not found"}
+        game = models.Game[game_id]
+        response = schemas.GameOut.model_validate(game)
     return response
 
 
 def get_all_games():
     """
-    This funtcion returns all the games in the database
+    This function returns all the games in the database
     in a list of GameBase schemas
     """
     with db_session:
@@ -60,11 +61,8 @@ def delete_game(game_id: int):
     and returns a message with the result
     """
     with db_session:
-        try:
-            game = models.Game[game_id]
-            game.delete()
-        except Exception as e:
-            return {"message": f"Game {game_id} not found"}
+        game = models.Game[game_id]
+        game.delete()
     return {"message": f"Game {game_id} deleted successfully"}
 
 
@@ -84,10 +82,7 @@ def update_game(game_id: int, game: schemas.GameUpdate):
     with the data in the GameUpdate schema
     """
     with db_session:
-        try:
-            game_to_update = models.Game[game_id]
-            game_to_update.set(**game.model_dump())
-            response = schemas.GameInDB.model_validate(game_to_update)
-        except Exception as e:
-            return {"message": f"Game {game_id} not found"}
+        game_to_update = models.Game[game_id]
+        game_to_update.set(**game.model_dump())
+        response = schemas.GameInDB.model_validate(game_to_update)
     return response
