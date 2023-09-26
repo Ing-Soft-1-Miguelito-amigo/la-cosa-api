@@ -19,17 +19,17 @@ class GameWithHost(BaseModel):
 @router.post("/game/create", status_code=201)
 async def create_new_game(game_data: GameWithHost):
     """
-        Create a new game with a host player.
-    
-        Args:
-            game_data (GameWithHost): Pydantic model containing game and host player information.
-    
-        Returns:
-            dict: A JSON response indicating the success of the game creation.
-    
-        Raises:
-            HTTPException: If there is an error during game creation or data validation.
-        """
+    Create a new game with a host player.
+
+    Args:
+        game_data (GameWithHost): Pydantic model containing game and host player information.
+
+    Returns:
+        dict: A JSON response indicating the success of the game creation.
+
+    Raises:
+        HTTPException: If there is an error during game creation or data validation.
+    """
     game_name = game_data.game.name
     min_players = game_data.game.min_players
     max_players = game_data.game.max_players
