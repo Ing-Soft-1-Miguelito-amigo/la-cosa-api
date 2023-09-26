@@ -5,6 +5,7 @@ from ..players.schemas import PlayerCreate
 from ..players.crud import create_player
 from .crud import create_game, get_game
 from .utils import verify_data
+from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -50,3 +51,25 @@ async def create_new_game(game_data: GameWithHost):
         raise HTTPException(status_code=422, detail=str(e))
 
     return {"message": f"Game '{game_name}' created by '{host_name}' successfully"}
+
+
+@router.get("/game/{game_id}")
+async def get_game_by_id(game_id: int):
+    """
+    Get a game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game information.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return game

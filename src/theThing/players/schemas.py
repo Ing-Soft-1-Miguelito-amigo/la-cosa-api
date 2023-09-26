@@ -20,6 +20,16 @@ class PlayerBase(PlayerCreate):
     owner: Optional[bool] = None
 
 
+class PlayerForGame(BaseModel):
+    # This is used to return a player and it's public game status
+    name: str
+    table_position: Optional[int] = None
+    alive: Optional[bool] = None
+    quarantine: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PlayerUpdate(BaseModel):
     # This is used to update a player
     id: int
