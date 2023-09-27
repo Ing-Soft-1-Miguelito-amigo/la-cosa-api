@@ -44,6 +44,17 @@ def get_game(game_id: int):
     return response
 
 
+def get_full_game(game_id: int):
+    """
+    This function returns the GameInDB schema from its id
+    containing all the data from the game including full information of the players
+    """
+    with db_session:
+        game = models.Game[game_id]
+        response = schemas.GameInDB.model_validate(game)
+    return response
+
+
 def get_all_games():
     """
     This function returns all the games in the database
