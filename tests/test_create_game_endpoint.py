@@ -16,7 +16,10 @@ def test_create_game_success(test_db):
     }
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 201
-    assert response.json() == {"message": "Game 'Test Game' created by 'Test Host' successfully"}
+    assert response.json() == {
+        "message": "Game 'Test Game' created by 'Test Host' successfully",
+        "game_id": 1,
+    }
     rollback()
 
 
@@ -31,6 +34,7 @@ def test_create_game_empty_name(test_db):
     assert response.status_code == 422
     assert "Game name cannot be empty" in response.text
     rollback()
+
 
 @db_session
 def test_create_game_invalid_min_players(test_db):
