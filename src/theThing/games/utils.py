@@ -53,7 +53,7 @@ def verify_data_start(game: GameOut, host_name: str):
     Returns:
     - None
     """
-    if game.min_players <= len(game.players):
+    if len(game.players) < game.min_players:
         raise HTTPException(
             status_code=422, detail="Not enough players to start the game"
         )
@@ -83,7 +83,7 @@ def verify_data_start(game: GameOut, host_name: str):
 def verify_finished_game(game: GameOut):
     alive_players = [player for player in game.players if player.alive]
 
-    if len(alive_players) == 1:
+    if len(alive_players) == 1 and game.state == 1:
         game.state = 2
         winner = alive_players[0].name
 

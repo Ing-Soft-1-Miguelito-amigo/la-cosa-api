@@ -16,7 +16,10 @@ def create_player(player_data: PlayerCreate, game_id: int):
     Then an exception its raised.
     """
     with db_session:
-        game_to_join = Game[game_id]
+        try:
+            game_to_join = Game[game_id]
+        except ObjectNotFound:
+            raise Exception("Game not found")
         if game_to_join.state != 0:
             raise Exception("Game already started")
         elif game_to_join.max_players == len(game_to_join.players):
