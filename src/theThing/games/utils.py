@@ -58,13 +58,15 @@ def verify_data_start(game: GameOut, host_name: str):
             status_code=422, detail="Not enough players to start the game"
         )
 
-    if len(game.players) >= game.max_players:
+    if len(game.players) > game.max_players:
         raise HTTPException(
             status_code=422, detail="Too many players to start the game"
         )
 
     if host_name not in [player.name for player in game.players]:
-        raise HTTPException(status_code=422, detail="The host is not in the game")
+        raise HTTPException(
+            status_code=422, detail="The host is not in the game"
+        )
 
     for player in game.players:
         if player.name == host_name:
@@ -77,7 +79,9 @@ def verify_data_start(game: GameOut, host_name: str):
                 break
 
     if game.state != 0:
-        raise HTTPException(status_code=422, detail="The game has already started")
+        raise HTTPException(
+            status_code=422, detail="The game has already started"
+        )
 
 
 def verify_finished_game(game: GameOut):

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from settings import DATABASE_FILENAME
+from src.settings import DATABASE_FILENAME
 from src.theThing.models.db import db
 from src.theThing.games import endpoints as games_endpoints
 

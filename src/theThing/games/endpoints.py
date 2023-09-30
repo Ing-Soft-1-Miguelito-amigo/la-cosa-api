@@ -130,6 +130,12 @@ async def join_game(join_info: dict):
     game_id = join_info["game_id"]
     player_name = join_info["player_name"]
 
+    # Check that name is not empty
+    if not player_name:
+        raise HTTPException(
+            status_code=422, detail="Player name cannot be empty"
+        )
+
     new_player = PlayerCreate(name=player_name, owner=False)
 
     # Perform logic to create and save the player in the DB
@@ -173,5 +179,5 @@ async def get_game_by_id(game_id: int):
             "message": f"Game {game_id} finished successfully",
             "winner": winner,
         }
-    
+
     return game
