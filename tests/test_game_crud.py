@@ -1,5 +1,5 @@
 import pytest
-from pony.orm import db_session, commit, rollback
+from pony.orm import db_session, rollback
 from src.theThing.games import crud
 from src.theThing.games.models import Game
 from src.theThing.games.schemas import (

@@ -18,7 +18,9 @@ class Card(db.Entity):
 
     def before_insert(self):
         self.state = 2
-        self.playable = True
+        # chek if kind is 0 1 2 or 3
+        if self.kind not in [0, 1, 2, 3]:
+            raise ValueError("The kind of the card is not valid")
         # check if the player belongs to the game
-        if self.player not in self.game.players:
+        if self.player is not None and self.player not in self.game.players:
             raise ValueError("The player does not belong to the game")

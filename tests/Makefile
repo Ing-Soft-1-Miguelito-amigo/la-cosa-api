@@ -5,3 +5,4 @@ test:
 
 clean:
 	rm -f ../src/*.sqlite
+	rm -f test.db
