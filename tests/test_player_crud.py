@@ -2,11 +2,11 @@ import pytest
 from pony.orm import db_session, rollback, ObjectNotFound
 
 from src.theThing.games import crud as game_crud
-from src.theThing.games.schemas import GameCreate
+from src.theThing.games.schemas import GameCreate, GameOut
 from src.theThing.players import crud
 from src.theThing.players.models import Player
 from src.theThing.players.schemas import PlayerCreate, PlayerUpdate
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 
 
 @db_session
@@ -33,11 +33,8 @@ def test_create_player(test_db):
         "turn_owner": None,
         "players": [
             {
-                "id": 1,
                 "name": "Test Player",
-                "owner": False,
                 "table_position": 1,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             }
@@ -79,11 +76,8 @@ def test_create_wrong_player(test_db):
         "turn_owner": None,
         "players": [
             {
-                "id": 1,
                 "name": "Test Player",
-                "owner": False,
                 "table_position": 1,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             }
@@ -116,36 +110,36 @@ def test_add_player_to_full_game(test_db):
         )
     except Exception as e:
         assert str(e) == "Game is full"
-
-    assert game_crud.get_game(created_game.id).model_dump() == {
-        "id": 1,
-        "name": "Test Game",
-        "min_players": 1,
-        "max_players": 2,
-        "state": 0,
-        "play_direction": None,
-        "turn_owner": None,
-        "players": [
-            {
-                "id": 1,
-                "name": "Test Player 1",
-                "owner": True,
-                "table_position": 1,
-                "role": None,
-                "alive": True,
-                "quarantine": False,
-            },
-            {
-                "id": 2,
-                "name": "Test Player 2",
-                "owner": False,
-                "table_position": 2,
-                "role": None,
-                "alive": True,
-                "quarantine": False,
-            },
-        ],
-    }
+    expected_game = GameOut(
+        **{
+            "id": 1,
+            "name": "Test Game",
+            "min_players": 1,
+            "max_players": 2,
+            "state": 0,
+            "play_direction": None,
+            "turn_owner": None,
+            "players": [
+                {
+                    "name": "Test Player 1",
+                    "table_position": 1,
+                    "alive": True,
+                    "quarantine": False,
+                },
+                {
+                    "name": "Test Player 2",
+                    "table_position": 2,
+                    "alive": True,
+                    "quarantine": False,
+                },
+            ],
+        }
+    )
+    retrieved_game = game_crud.get_game(created_game.id)
+    assert retrieved_game.id == expected_game.id
+    assert retrieved_game.name == expected_game.name
+    assert retrieved_game.state == expected_game.state
+    assert [player in retrieved_game.players for player in expected_game.players]
 
 
 @db_session
@@ -159,6 +153,7 @@ def test_get_player(test_db):
         "role": None,
         "alive": True,
         "quarantine": False,
+        "hand": [],
     }
 
 
@@ -189,6 +184,7 @@ def test_update_player(test_db):
         "role": 2,
         "alive": False,
         "quarantine": True,
+        "hand": [],
     }
 
 

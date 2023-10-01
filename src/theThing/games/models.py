@@ -1,6 +1,7 @@
 from pony.orm import Required, Set, Optional, PrimaryKey
 from src.theThing.models.db import db
 from src.theThing.players.models import Player
+from src.theThing.cards.models import Card
 
 
 class Game(db.Entity):
@@ -18,3 +19,4 @@ class Game(db.Entity):
     play_direction = Optional(bool)  # true = clockwise
     turn_owner = Optional(int)
     players = Set(Player, reverse="game")
+    deck = Set(Card, reverse="game")

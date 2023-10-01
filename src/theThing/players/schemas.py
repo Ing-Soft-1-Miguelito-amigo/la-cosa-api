@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
+from src.theThing.cards.schemas import CardBase
 
 
 class PlayerCreate(BaseModel):
@@ -18,10 +19,11 @@ class PlayerBase(PlayerCreate):
     alive: Optional[bool] = None
     quarantine: Optional[bool] = None
     owner: Optional[bool] = None
+    hand: List[CardBase] = None
 
 
 class PlayerForGame(BaseModel):
-    # This is used to return a player and it's public game status
+    # This is used to return a player, and it's public game status
     name: str
     table_position: Optional[int] = None
     alive: Optional[bool] = None

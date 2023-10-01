@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback
-from tests.test_setup import test_db
+from tests.test_setup import test_db, clear_db
 
 
 client = TestClient(app)

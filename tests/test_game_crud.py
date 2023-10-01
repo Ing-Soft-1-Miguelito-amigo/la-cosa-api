@@ -1,5 +1,5 @@
 import pytest
-from pony.orm import db_session, commit, rollback
+from pony.orm import db_session, rollback
 from src.theThing.games import crud
 from src.theThing.games.models import Game
 from src.theThing.games.schemas import (
@@ -9,7 +9,7 @@ from src.theThing.games.schemas import (
     GameBase,
     GameInDB,
 )
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 
 
 @db_session
@@ -110,6 +110,7 @@ def test_get_all_games_in_db(test_db):
             "play_direction": game1.play_direction,
             "turn_owner": game1.turn_owner,
             "players": [],
+            "deck": [],
         },
         {
             "id": game2.id,
@@ -121,6 +122,7 @@ def test_get_all_games_in_db(test_db):
             "play_direction": game2.play_direction,
             "turn_owner": game2.turn_owner,
             "players": [],
+            "deck": [],
         },
     ]
 
