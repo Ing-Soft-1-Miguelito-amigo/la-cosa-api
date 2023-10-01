@@ -2,7 +2,7 @@ import pytest
 from pony.orm import db_session, rollback, ObjectNotFound
 
 from src.theThing.games import crud as game_crud
-from src.theThing.games.schemas import GameCreate
+from src.theThing.games.schemas import GameCreate, GameOut
 from src.theThing.players import crud
 from src.theThing.players.models import Player
 from src.theThing.players.schemas import PlayerCreate, PlayerUpdate
@@ -110,30 +110,32 @@ def test_add_player_to_full_game(test_db):
         )
     except Exception as e:
         assert str(e) == "Game is full"
-
-    assert game_crud.get_game(created_game.id).model_dump() == {
-        "id": 1,
-        "name": "Test Game",
-        "min_players": 1,
-        "max_players": 2,
-        "state": 0,
-        "play_direction": None,
-        "turn_owner": None,
-        "players": [
-            {
-                "name": "Test Player 1",
-                "table_position": 1,
-                "alive": True,
-                "quarantine": False,
-            },
-            {
-                "name": "Test Player 2",
-                "table_position": 2,
-                "alive": True,
-                "quarantine": False,
-            },
-        ],
-    }
+    expected_game = GameOut(
+        **{
+            "id": 1,
+            "name": "Test Game",
+            "min_players": 1,
+            "max_players": 2,
+            "state": 0,
+            "play_direction": None,
+            "turn_owner": None,
+            "players": [
+                {
+                    "name": "Test Player 1",
+                    "table_position": 1,
+                    "alive": True,
+                    "quarantine": False,
+                },
+                {
+                    "name": "Test Player 2",
+                    "table_position": 2,
+                    "alive": True,
+                    "quarantine": False,
+                },
+            ],
+        }
+    )
+    assert game_crud.get_game(created_game.id) == expected_game
 
 
 @db_session

@@ -51,6 +51,8 @@ def test_join_player_with_empty_name(test_db):
     assert response.status_code == 422
     assert response.json() == {"detail": "Player name cannot be empty"}
 
+    rollback()
+
 
 @db_session
 def test_join_player_with_existing_name(test_db):
@@ -61,6 +63,8 @@ def test_join_player_with_existing_name(test_db):
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
     assert response.json() == {"detail": "Player with same name exists"}
+
+    rollback()
 
 
 @db_session
@@ -77,6 +81,8 @@ def test_join_full_game(test_db):
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
     assert response.json() == {"detail": "Game is full"}
+
+    rollback()
 
 
 @db_session
