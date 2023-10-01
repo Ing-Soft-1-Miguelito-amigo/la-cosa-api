@@ -9,7 +9,7 @@ from pony.orm import db_session, rollback, ObjectNotFound
 
 
 @db_session
-def test_create_card(test_db):
+def test_create_and_get_card(test_db):
     # First create a game where to add the card
     game_data = game_schemas.GameCreate(
         name="Test Game deck", min_players=2, max_players=4
@@ -38,6 +38,10 @@ def test_create_card(test_db):
         "state": 2,
         "playable": True,
     }
+
+    # Get the card
+    retrieved_card = card_crud.get_card(created_card.id, created_game.id)
+    assert retrieved_card == created_card
 
     rollback()
 
@@ -178,3 +182,27 @@ def test_add_card_wrong_player(test_db):
 
     rollback()
 
+
+@db_session
+def test_delete_card(test_db):
+    game_data = game_schemas.GameCreate(
+        name="Test Game deck", min_players=2, max_players=4
+    )
+    created_game = game_crud.create_game(game_data)
+    created_card = card_crud.create_card(CardCreate(
+        code="test_code",
+        name="Test Card",
+        kind=0,
+        description="This is a test card",
+        number_in_card=1,
+        playable=True,
+    ), created_game.id)
+
+    card_crud.delete_card(created_card.id, created_game.id)
+
+    try:
+        card_crud.get_card(created_card.id, created_game.id)
+    except ObjectNotFound as e:
+        assert e.args[0] == f"Card[{created_card.id}]"
+
+    rollback()

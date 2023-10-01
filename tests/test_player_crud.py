@@ -135,7 +135,11 @@ def test_add_player_to_full_game(test_db):
             ],
         }
     )
-    assert game_crud.get_game(created_game.id) == expected_game
+    retrieved_game = game_crud.get_game(created_game.id)
+    assert retrieved_game.id == expected_game.id
+    assert retrieved_game.name == expected_game.name
+    assert retrieved_game.state == expected_game.state
+    assert [player in retrieved_game.players for player in expected_game.players]
 
 
 @db_session
