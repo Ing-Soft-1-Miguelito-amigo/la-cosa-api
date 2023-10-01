@@ -18,3 +18,4 @@ class Game(db.Entity):
     play_direction = Optional(bool)  # true = clockwise
     turn_owner = Optional(int)
     players = Set(Player, reverse="game")
+    deck = Set("Card")

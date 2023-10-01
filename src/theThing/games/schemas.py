@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from src.theThing.players.schemas import PlayerForGame, PlayerBase
+from src.theThing.cards.schemas import CardBase
 
 
 class GameBase(BaseModel):
@@ -24,6 +25,7 @@ class GameInDB(GameCreate):
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
     players: List[PlayerBase] = None
+    cards: List[CardBase] = None
 
 
 class GameOut(BaseModel):

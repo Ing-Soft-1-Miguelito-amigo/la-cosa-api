@@ -1,5 +1,5 @@
 from src.theThing.models.db import db
-from pony.orm import Required, Optional, PrimaryKey, composite_key
+from pony.orm import Required, Optional, PrimaryKey, composite_key, Set
 
 
 class Player(db.Entity):
@@ -11,5 +11,6 @@ class Player(db.Entity):
     quarantine = Optional(bool, default=False)
     game = Required("Game", reverse="players")
     owner = Required(bool, default=False)
+    hand = Set("Card")
 
     composite_key(id, game)
