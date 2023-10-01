@@ -43,7 +43,9 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
+    game = GameCreate(
+        name=game_name, min_players=min_players, max_players=max_players
+    )
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -68,7 +70,7 @@ async def start_game(game_start_info: dict):
     Parameters:
         game_start_info (dict): A dictionary containing game start information.
             It should include the following keys:
-            - 'game_id' (str): The unique identifier of the game.
+            - 'game_id' (int): The unique identifier of the game.
             - 'player_name' (str): The name of the host player.
 
     Returns:
@@ -98,9 +100,7 @@ async def start_game(game_start_info: dict):
     verify_data_start(game, host_name)
 
     # Update game status to started and assign turn owner and play direction
-    new_game_status = GameUpdate(
-        state=1, play_direction=True, turn_owner=game.players[0].table_position
-    )
+    new_game_status = GameUpdate(state=1, play_direction=True, turn_owner=1)
     try:
         update_game(game_id, new_game_status)
     except Exception as e:
@@ -110,6 +110,47 @@ async def start_game(game_start_info: dict):
     # TODO: Create initial deck
 
     return {"message": f"Game {game_id} started successfully"}
+
+
+# Endpoint to join a player to a game
+@router.post("/game/join", status_code=200)
+async def join_game(join_info: dict):
+    """
+    Join a player to a game. It creates a player and join it to the game.
+
+    Parameters:
+        join_info (dict): A dictionary containing the game_id and player_name.
+
+    Returns:
+        dict: A JSON response indicating the success of the player joining the game.
+
+    Raises:
+        HTTPException: If there is an error during player creation or data validation.
+    """
+    game_id = join_info["game_id"]
+    player_name = join_info["player_name"]
+
+    # Check that name is not empty
+    if not player_name:
+        raise HTTPException(
+            status_code=422, detail="Player name cannot be empty"
+        )
+
+    new_player = PlayerCreate(name=player_name, owner=False)
+
+    # Perform logic to create and save the player in the DB
+    try:
+        created_player = create_player(new_player, game_id)
+    except Exception as e:
+        if str(e) == "Game not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+
+    return {
+        "message": "Player joined game successfully",
+        "player_id": created_player.id,
+    }
 
 
 @router.get("/game/{game_id}")
@@ -134,6 +175,9 @@ async def get_game_by_id(game_id: int):
     game, winner = verify_finished_game(game)
 
     if winner is not None:
-        return {"message": f"Game {game_id} finished successfully", "winner": winner}
+        return {
+            "message": f"Game {game_id} finished successfully",
+            "winner": winner,
+        }
 
     return game

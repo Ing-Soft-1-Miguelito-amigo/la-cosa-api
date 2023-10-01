@@ -12,17 +12,23 @@ def create_player(player_data: PlayerCreate, game_id: int):
     PlayerCreate schema and returns the PlayerBase schema
     containing all the data from the player
 
-    If a player with the same name exists, then it cannot be created.
-    Then an exception its raised.
+    - If a player with the same name exists, then it cannot be created.
+    - If the game does not exist, is full or started, then it cannot be created
+    -> Then an exception its raised.
     """
     with db_session:
-        game_to_join = Game[game_id]
+        try:
+            game_to_join = Game[game_id]
+        except ObjectNotFound:
+            raise Exception("Game not found")
         if game_to_join.state != 0:
             raise Exception("Game already started")
         elif game_to_join.max_players == len(game_to_join.players):
             raise Exception("Game is full")
         # check if a player with the same name exists in the list
-        elif any(player.name == player_data.name for player in game_to_join.players):
+        elif any(
+            player.name == player_data.name for player in game_to_join.players
+        ):
             raise Exception("Player with same name exists")
 
         player = Player(**player_data.model_dump(), game=game_to_join)
