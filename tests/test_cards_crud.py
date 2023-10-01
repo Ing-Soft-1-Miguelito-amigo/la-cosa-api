@@ -61,3 +61,5 @@ def test_create_wrong_card(test_db):
         assert e.args[0] == "The kind of the card is not valid"
 
     rollback()
+
+def 
