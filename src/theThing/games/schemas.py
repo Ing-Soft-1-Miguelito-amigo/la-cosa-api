@@ -25,7 +25,7 @@ class GameInDB(GameCreate):
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
     players: List[PlayerBase] = None
-    cards: List[CardBase] = None
+    deck: List[CardBase] = None
 
 
 class GameOut(BaseModel):

@@ -1,7 +1,4 @@
 from pony.orm import Required, Optional, PrimaryKey
-from src.theThing.games.models import Game
-from src.theThing.players.models import Player
-
 from src.theThing.models.db import db
 
 
@@ -16,8 +13,8 @@ class Card(db.Entity):
         int, default=2, unsigned=True
     )  # 0 = played, 1 = in player hand, 2 = not played (in deck)
     playable = Required(bool)
-    game = Required(Game)
-    player = Optional(Player)
+    game = Required("Game", reverse="deck")
+    player = Optional("Player", reverse="hand")
 
     def before_insert(self):
         self.state = 2
