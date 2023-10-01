@@ -62,4 +62,4 @@ def test_create_wrong_card(test_db):
 
     rollback()
 
-def 
+def
