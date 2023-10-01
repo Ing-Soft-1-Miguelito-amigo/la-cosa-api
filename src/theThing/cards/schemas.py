@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-
+from typing import Optional
 
 class CardCreate(BaseModel):
     """
@@ -26,5 +26,12 @@ class CardBase(BaseModel):
     number_in_card: int
     state: int
     playable: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CardUpdate(BaseModel):
+    id: int
+    state: Optional[int]
 
     model_config = ConfigDict(from_attributes=True)

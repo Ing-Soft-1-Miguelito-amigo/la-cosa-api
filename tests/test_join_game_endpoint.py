@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 from src.theThing.games import crud
 
 client = TestClient(app)

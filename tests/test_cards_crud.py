@@ -1,6 +1,6 @@
 from .test_setup import test_db, clear_db
 from src.theThing.cards import crud as card_crud
-from src.theThing.cards.schemas import CardCreate, CardBase
+from src.theThing.cards.schemas import CardCreate, CardBase, CardUpdate
 from src.theThing.games import crud as game_crud
 from src.theThing.games import schemas as game_schemas
 from src.theThing.players import crud as player_crud
@@ -206,3 +206,25 @@ def test_delete_card(test_db):
         assert e.args[0] == f"Card[{created_card.id}]"
 
     rollback()
+
+@db_session
+def test_update_card_state(test_db):
+    game_data = game_schemas.GameCreate(
+        name="Test Game deck", min_players=2, max_players=4
+    )
+
+    created_game = game_crud.create_game(game_data)
+    created_card = card_crud.create_card(CardCreate(
+        code="test_code",
+        name="Test Card",
+        kind=0,
+        description="This is a test card",
+        number_in_card=1,
+        playable=True,
+    ), created_game.id)
+
+    assert created_card.state == 2
+
+    updated_card = card_crud.update_card(CardUpdate(id=created_card.id, state=1), created_game.id)
+
+    assert updated_card.state == 1

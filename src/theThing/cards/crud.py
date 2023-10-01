@@ -1,4 +1,4 @@
-from .schemas import CardCreate, CardBase
+from .schemas import CardCreate, CardBase, CardUpdate
 from .models import Card
 from src.theThing.games.models import Game
 from src.theThing.players.models import Player
@@ -74,6 +74,20 @@ def give_card_to_player(card_id: int, player_id: int, game_id: int):
             raise ObjectNotFound(Player, pkval=player_id)
         card.player = player
         card.state = 1
+        card.flush()
+        response = CardBase.model_validate(card)
+    return response
+
+
+def update_card(card_to_update: CardUpdate, game_id: int):
+    """
+    This function updates the card state
+    """
+    with db_session:
+        card = Card.get(game=Game[game_id], id=card_to_update.id)
+        if card is None:
+            raise ObjectNotFound(Card, pkval=card_to_update.id)
+        card.state = card_to_update.state
         card.flush()
         response = CardBase.model_validate(card)
     return response
