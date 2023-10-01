@@ -9,7 +9,7 @@ from src.theThing.games.schemas import (
     GameBase,
     GameInDB,
 )
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 
 
 @db_session
@@ -110,6 +110,7 @@ def test_get_all_games_in_db(test_db):
             "play_direction": game1.play_direction,
             "turn_owner": game1.turn_owner,
             "players": [],
+            "deck": [],
         },
         {
             "id": game2.id,
@@ -121,6 +122,7 @@ def test_get_all_games_in_db(test_db):
             "play_direction": game2.play_direction,
             "turn_owner": game2.turn_owner,
             "players": [],
+            "deck": [],
         },
     ]
 

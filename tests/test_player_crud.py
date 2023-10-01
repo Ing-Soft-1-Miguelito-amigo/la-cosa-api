@@ -6,7 +6,7 @@ from src.theThing.games.schemas import GameCreate
 from src.theThing.players import crud
 from src.theThing.players.models import Player
 from src.theThing.players.schemas import PlayerCreate, PlayerUpdate
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 
 
 @db_session
@@ -33,11 +33,8 @@ def test_create_player(test_db):
         "turn_owner": None,
         "players": [
             {
-                "id": 1,
                 "name": "Test Player",
-                "owner": False,
                 "table_position": 1,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             }
@@ -79,11 +76,8 @@ def test_create_wrong_player(test_db):
         "turn_owner": None,
         "players": [
             {
-                "id": 1,
                 "name": "Test Player",
-                "owner": False,
                 "table_position": 1,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             }
@@ -127,20 +121,14 @@ def test_add_player_to_full_game(test_db):
         "turn_owner": None,
         "players": [
             {
-                "id": 1,
                 "name": "Test Player 1",
-                "owner": True,
                 "table_position": 1,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             },
             {
-                "id": 2,
                 "name": "Test Player 2",
-                "owner": False,
                 "table_position": 2,
-                "role": None,
                 "alive": True,
                 "quarantine": False,
             },
@@ -159,6 +147,7 @@ def test_get_player(test_db):
         "role": None,
         "alive": True,
         "quarantine": False,
+        "hand": [],
     }
 
 
@@ -189,6 +178,7 @@ def test_update_player(test_db):
         "role": 2,
         "alive": False,
         "quarantine": True,
+        "hand": [],
     }
 
 
