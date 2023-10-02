@@ -4,9 +4,15 @@ from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player
 from ..cards.schemas import CardBase
-from ..cards.crud import get_card_from_deck, give_card_to_player
+from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
 from .crud import create_game, get_game, update_game, get_full_game
-from .utils import verify_data_create, verify_data_start, verify_finished_game
+from .utils import (
+    verify_data_create,
+    verify_data_start,
+    verify_finished_game,
+    verify_data_play_card,
+    play_action_card,
+)
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
@@ -162,7 +168,7 @@ async def steal_card(steal_data: dict):
     """
     Steal a card from the game deck.
 
-    Parameters: 
+    Parameters:
         steal_data (dict): A dict containing game_id and player_id.
 
     Returns:
@@ -175,13 +181,11 @@ async def steal_card(steal_data: dict):
     """
     # Check valid inputs
     if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
-        raise HTTPException(
-            status_code=422, detail="Input data cannot be empty"
-        )
-    
+        raise HTTPException(status_code=422, detail="Input data cannot be empty")
+
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
-    
+
     # Verify that the game exists and it is started
     try:
         game = get_game(game_id)
@@ -194,7 +198,7 @@ async def steal_card(steal_data: dict):
     if game.turn_owner != player_id:
         raise HTTPException(status_code=422, detail="It is not the player turn") 
     """
-    
+
     # Perform logic to steal the card
     try:
         card = get_card_from_deck(game_id)
@@ -207,6 +211,76 @@ async def steal_card(steal_data: dict):
 
     return {"message": "Card stolen successfully"}
 
+
+@router.put("/game/play", status_code=200)
+async def play_card(play_data: dict):
+    """
+    Plays a card and apply its effect.
+
+    Parameters:
+        play_data (dict): A dict containing game_id, player_id(who plays the card), card_id and destination_name.
+
+    Returns:
+        dict: A JSON response indicating the success of the card playing.
+
+    Raises:
+        HTTPException:
+            - 404 (Not Found): If the specified game does not exist.
+            - 422 (Unprocessable Entity): If the card cannot be played.
+    """
+    # Check valid inputs
+    if (
+        not play_data
+        or not play_data["game_id"]
+        or not play_data["player_id"]
+        or not play_data["card_id"]
+        or not play_data["destination_name"]
+    ):
+        raise HTTPException(status_code=422, detail="Input data cannot be empty")
+
+    game_id = play_data["game_id"]
+    player_id = play_data["player_id"]
+    card_id = play_data["card_id"]
+    destination_name = play_data["destination_name"]
+
+    game, turn_player, card, destination_player = verify_data_play_card(
+        game_id, player_id, card_id, destination_name
+    )
+
+    # Perform logic to play the card
+    match card.kind:
+        case 0:  # action
+            game = play_action_card(game, turn_player, card, destination_player)
+        case 1:  # defense
+            # TODO: implement defense card logic
+            pass
+        case 2:  # obstacle
+            # TODO: implement obstacle card logic
+            pass
+        case 3:  # infection
+            # TODO: implement infection card logic
+            pass
+        case 4:  # panic
+            # TODO: implement panic card logic
+            pass
+        case _:  # LaCosa or wrong kind
+            raise HTTPException(status_code=422, detail="Card kind not valid")
+
+    # Assign new turn owner, must be an alive player
+    # if play direction is clockwise, turn owner is the next player. If not, the previous player
+    alive_players = [player for player in game.players if player.alive].sort(key=lambda x: x.table_position)
+    if game.play_direction:
+        game.turn_owner = alive_players[(alive_players.index(turn_player) + 1) % len(alive_players)].table_position
+    else:
+        game.turn_owner = alive_players[(alive_players.index(turn_player) - 1) % len(alive_players)].table_position
+
+    # Update game status
+    try:
+        update_game(game_id, GameUpdate(turn_owner=game.turn_owner))
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return {"message": "Card played successfully"}
 
 @router.get("/game/{game_id}")
 async def get_game_by_id(game_id: int):
