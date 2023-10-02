@@ -4,7 +4,7 @@ from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player
 from .crud import create_game, get_game, update_game, get_full_game
-from .utils import verify_data_create, verify_data_start, verify_finished_game
+from .utils import verify_data_create, verify_data_start, verify_finished_game, assign_hands
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
@@ -109,8 +109,10 @@ async def start_game(game_start_info: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # TODO: Assign initial hands and roles to players
     # TODO: Create initial deck
+
+    # assign initial hands to players
+    assign_hands(game)
 
     return {"message": f"Game {game_id} started successfully"}
 
