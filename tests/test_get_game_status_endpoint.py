@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback
-from tests.test_setup import test_db, clear_db
+from tests.test_setup import test_db
 
 
 client = TestClient(app)
@@ -15,7 +15,7 @@ def test_get_game_success(test_db):
         "game": {"name": "Test Game", "min_players": 4, "max_players": 6},
         "host": {"name": "Test Host"},
     }
-    response = client.post("/game/create", json=game_data)
+    client.post("/game/create", json=game_data)
 
     # Get the game
     response = client.get("/game/1")
@@ -57,7 +57,7 @@ def test_get_game_finished(test_db):
         "game": {"name": "Test Game", "min_players": 4, "max_players": 6},
         "host": {"name": "Test Host"},
     }
-    response = client.post("/game/create", json=game_data)
+    client.post("/game/create", json=game_data)
 
     # Get the game again
     response = client.get("/game/1")
