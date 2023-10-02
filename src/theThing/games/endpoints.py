@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
-from ..players.crud import create_player
+from ..players.crud import create_player, get_player
 from .crud import create_game, get_game, update_game, get_full_game
 from .utils import verify_data_create, verify_data_start, verify_finished_game
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
@@ -43,9 +43,7 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(
-        name=game_name, min_players=min_players, max_players=max_players
-    )
+    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -56,9 +54,14 @@ async def create_new_game(game_data: GameWithHost):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    # Retrieve the full game data to get the host player id
+    full_game = get_full_game(created_game.id)
+    host_player = full_game.players[0]
+
     return {
         "message": f"Game '{game_name}' created by '{host_name}' successfully",
         "game_id": created_game.id,
+        "player_id": host_player.id,
     }
 
 
@@ -132,9 +135,7 @@ async def join_game(join_info: dict):
 
     # Check that name is not empty
     if not player_name:
-        raise HTTPException(
-            status_code=422, detail="Player name cannot be empty"
-        )
+        raise HTTPException(status_code=422, detail="Player name cannot be empty")
 
     new_player = PlayerCreate(name=player_name, owner=False)
 
@@ -172,12 +173,33 @@ async def get_game_by_id(game_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+    # Check if the game is finished
     game, winner = verify_finished_game(game)
 
     if winner is not None:
-        return {
-            "message": f"Game {game_id} finished successfully",
-            "winner": winner,
-        }
+        return {"message": f"Game {game_id} finished successfully", "winner": winner}
 
     return game
+
+
+@router.get("/game/{game_id}/player/{player_id}")
+async def get_player_by_id(game_id: int, player_id: int):
+    """
+    Get a player by its ID.
+
+    Args:
+        game_id (int): The ID of the game the player belongs to.
+        player_id (int): The ID of the player to retrieve.
+
+    Returns:
+        dict: A JSON response containing the player information.
+
+    Raises:
+        HTTPException: If the game or player do not exist.
+    """
+    try:
+        player = get_player(player_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return player
