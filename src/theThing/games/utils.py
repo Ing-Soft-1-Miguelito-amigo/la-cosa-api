@@ -122,7 +122,7 @@ def verify_data_play_card(
         card = get_card(card_id, game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=422, detail=str("Card not found"))
-    if card not in player.hand and card not in game.deck and card.state == 0:
+    if card not in player.hand or card not in game.deck or card.state == 0:
         raise HTTPException(
             status_code=422, detail="The card is not in the player hand or in the deck"
         )
@@ -137,9 +137,25 @@ def verify_data_play_card(
             break
     if destination_player is None:
         raise HTTPException(status_code=422, detail="Destination player not found")
-    if destination_player == player:
+    if destination_player.id == player.id:
         raise HTTPException(
             status_code=422, detail="The destination player cannot be the same player"
+        )
+    if not destination_player.alive:
+        raise HTTPException(
+            status_code=422, detail="The destination player is not alive"
+        )
+    alive_players = [p.table_position for p in game.players if p.alive]
+    alive_players.sort()
+    index_player = alive_players.index(player.table_position)
+    index_destination_player = alive_players.index(destination_player.table_position)
+    # check if the destination player is adjacent to the player,
+    # the first and the last player are adjacent
+    if (index_destination_player == (index_player + 1) % len(alive_players) or index_destination_player == (index_player - 1) % len(alive_players)):
+        pass
+    else:
+        raise HTTPException(
+            status_code=422, detail="The destination player is not adjacent to the player"
         )
     return game, player, card, destination_player
 
@@ -149,25 +165,31 @@ def play_action_card(
 ):
     match card.code:
         case "lla":  # flamethrower
+            if len(player.hand) <= 4:
+                raise HTTPException(
+                    status_code=404, detail="Player has less than minimum cards to play"
+                )
             card.state = 0
             destination_player.alive = False
             player = remove_card_from_player(card.id, player.id, game.id)
             # check that the player has 4 cards in hand
-            if len(player.hand) != 4:
-                raise HTTPException(
-                    status_code=404, detail="Player has less than 4 cards"
-                )
             pass
         case _:  # other cards
+            if len(player.hand) <= 4:
+                raise HTTPException(status_code=404, detail="Player has less than minimum cards to play")
+            card.state = 0
+            player = remove_card_from_player(card.id, player.id, game.id)
+            # check that the player has 4 cards in hand
             # TODO: Implement other cards
             pass
 
     # push the changes to the database
     updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    updated_player = update_player(
-        PlayerUpdate(id=player.id, alive=player.alive), game.id
-    )
+    updated_destination_player = update_player(PlayerUpdate(id=destination_player.id,
+                                                            table_position=destination_player.table_position,
+                                                            role=destination_player.role,
+                                                            alive=destination_player.alive,
+                                                            quarantine=destination_player.quarantine), game.id)
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
-
     return updated_game
