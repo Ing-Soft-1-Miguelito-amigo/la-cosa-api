@@ -43,9 +43,7 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(
-        name=game_name, min_players=min_players, max_players=max_players
-    )
+    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -56,9 +54,14 @@ async def create_new_game(game_data: GameWithHost):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    # Retrieve the full game data to get the host player id
+    full_game = get_full_game(created_game.id)
+    host_player = full_game.players[0]
+
     return {
         "message": f"Game '{game_name}' created by '{host_name}' successfully",
-        "game_id": created_game.id
+        "game_id": created_game.id,
+        "player_id": host_player.id,
     }
 
 
@@ -132,9 +135,7 @@ async def join_game(join_info: dict):
 
     # Check that name is not empty
     if not player_name:
-        raise HTTPException(
-            status_code=422, detail="Player name cannot be empty"
-        )
+        raise HTTPException(status_code=422, detail="Player name cannot be empty")
 
     new_player = PlayerCreate(name=player_name, owner=False)
 
@@ -172,13 +173,11 @@ async def get_game_by_id(game_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+    # Check if the game is finished
     game, winner = verify_finished_game(game)
 
     if winner is not None:
-        return {
-            "message": f"Game {game_id} finished successfully",
-            "winner": winner
-        }
+        return {"message": f"Game {game_id} finished successfully", "winner": winner}
 
     return game
 
