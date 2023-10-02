@@ -19,6 +19,7 @@ def test_create_game_success(test_db):
     assert response.json() == {
         "message": "Game 'Test Game' created by 'Test Host' successfully",
         "game_id": 1,
+        "player_id": 1,
     }
     rollback()
 

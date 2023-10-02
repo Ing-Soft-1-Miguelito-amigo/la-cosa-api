@@ -3,7 +3,9 @@ from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player
-from .crud import create_game, get_game, update_game, get_full_game
+from ..cards.schemas import CardBase
+from ..cards.crud import get_card_from_deck, give_card_to_player
+from .crud import create_game, get_game, update_game, get_full_game, create_game_deck
 from .utils import verify_data_create, verify_data_start, verify_finished_game, assign_hands
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
@@ -85,10 +87,6 @@ async def start_game(game_start_info: dict):
             - 404 (Not Found): If the specified game does not exist.
             - 422 (Unprocessable Entity): If there is an issue updating the game
               status or if the data integrity check fails.
-
-    TODO:
-        - Assign initial hands and roles to players.
-        - Create the initial game deck.
     """
     game_id = game_start_info["game_id"]
     host_name = game_start_info["player_name"]
@@ -109,9 +107,10 @@ async def start_game(game_start_info: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # TODO: Create initial deck
+    # Create the initial game deck
+    create_game_deck(game_id, len(game.players))
 
-    # assign initial hands to players
+    # Assign initial hands to players
     game_with_deck = get_full_game(game_id)
     assign_hands(game_with_deck)
 
@@ -155,6 +154,86 @@ async def join_game(join_info: dict):
         "message": "Player joined game successfully",
         "player_id": created_player.id,
     }
+
+
+# Endpoint to steal a card
+@router.put("/game/steal", status_code=200)
+async def steal_card(steal_data: dict):
+    """
+    Steal a card from the game deck.
+
+    Parameters: 
+        steal_data (dict): A dict containing game_id and player_id.
+
+    Returns:
+        dict: A JSON response indicating the success of the card stealing.
+
+    Raises:
+        HTTPException:
+            - 404 (Not Found): If the specified game does not exist.
+            - 422 (Unprocessable Entity): If the card cannot be stolen.
+    """
+    # Check valid inputs
+    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
+        raise HTTPException(
+            status_code=422, detail="Input data cannot be empty"
+        )
+    
+    game_id = steal_data["game_id"]
+    player_id = steal_data["player_id"]
+    
+    # Verify that the game exists and it is started
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str("Game not found"))
+    if game.state != 1:
+        raise HTTPException(status_code=422, detail="Game has not started yet")
+    """
+    Then it will be useful 
+    if game.turn_owner != player_id:
+        raise HTTPException(status_code=422, detail="It is not the player turn") 
+    """
+    
+    # Perform logic to steal the card
+    try:
+        card = get_card_from_deck(game_id)
+        give_card_to_player(card.id, player_id, game_id)
+    except Exception as e:
+        if str(e) == "Non existent cards in the deck":
+            raise HTTPException(status_code=422, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str("Player not found"))
+
+    return {"message": "Card stolen successfully"}
+
+
+@router.get("/game/full/{game_id}")
+async def get_full_game_by_id(game_id: int):
+    """
+    Get a full game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game information.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # Check if the game is finished
+    game, winner = verify_finished_game(game)
+
+    if winner is not None:
+        return {"message": f"Game {game_id} finished successfully", "winner": winner}
+
+    return game
 
 
 @router.get("/game/{game_id}")
