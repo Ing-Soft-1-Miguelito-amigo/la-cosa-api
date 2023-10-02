@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 @db_session
-def test_get_player_not_started(test_db):
+def test_get_player_successful(test_db):
     # Test getting a player from a game that hasn't started
     # Create a game first
     game_data = {
