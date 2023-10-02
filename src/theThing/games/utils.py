@@ -144,7 +144,9 @@ def verify_data_play_card(
     return game, player, card, destination_player
 
 
-def play_action_card(game: GameInDB, player: PlayerBase, card: CardBase, destination_player: PlayerBase):
+def play_action_card(
+    game: GameInDB, player: PlayerBase, card: CardBase, destination_player: PlayerBase
+):
     match card.code:
         case "lla":  # flamethrower
             card.state = 0
@@ -152,7 +154,9 @@ def play_action_card(game: GameInDB, player: PlayerBase, card: CardBase, destina
             player = remove_card_from_player(card.id, player.id, game.id)
             # check that the player has 4 cards in hand
             if len(player.hand) != 4:
-                raise HTTPException(status_code=404, detail="Player has less than 4 cards")
+                raise HTTPException(
+                    status_code=404, detail="Player has less than 4 cards"
+                )
             pass
         case _:  # other cards
             # TODO: Implement other cards
@@ -160,7 +164,9 @@ def play_action_card(game: GameInDB, player: PlayerBase, card: CardBase, destina
 
     # push the changes to the database
     updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    updated_player = update_player(PlayerUpdate(id=player.id, alive=player.alive), game.id)
+    updated_player = update_player(
+        PlayerUpdate(id=player.id, alive=player.alive), game.id
+    )
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
 

@@ -268,11 +268,17 @@ async def play_card(play_data: dict):
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player for player in game.players if player.alive].sort(key=lambda x: x.table_position)
+    alive_players = [player for player in game.players if player.alive].sort(
+        key=lambda x: x.table_position
+    )
     if game.play_direction:
-        game.turn_owner = alive_players[(alive_players.index(turn_player) + 1) % len(alive_players)].table_position
+        game.turn_owner = alive_players[
+            (alive_players.index(turn_player) + 1) % len(alive_players)
+        ].table_position
     else:
-        game.turn_owner = alive_players[(alive_players.index(turn_player) - 1) % len(alive_players)].table_position
+        game.turn_owner = alive_players[
+            (alive_players.index(turn_player) - 1) % len(alive_players)
+        ].table_position
 
     # Update game status
     try:
@@ -281,6 +287,7 @@ async def play_card(play_data: dict):
         raise HTTPException(status_code=422, detail=str(e))
 
     return {"message": "Card played successfully"}
+
 
 @router.get("/game/{game_id}")
 async def get_game_by_id(game_id: int):

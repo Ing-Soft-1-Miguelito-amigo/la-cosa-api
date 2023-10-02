@@ -7,6 +7,7 @@ from src.theThing.cards.crud import create_card, delete_card, update_card
 
 client = TestClient(app)
 
+
 @db_session
 def test_steal_card_success(test_db):
     # Test #1: steal a card from a player with valid data
@@ -148,7 +149,7 @@ def test_steal_card_on_not_started_game(test_db):
     assert response.status_code == 422
     assert response.json() == {"detail": "Game has not started yet"}
     rollback()
-    
+
 
 def test_steal_card_with_empty_data():
     # Test #2: steal a card with empty data
