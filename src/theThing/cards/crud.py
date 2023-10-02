@@ -1,8 +1,9 @@
 from .schemas import CardCreate, CardBase, CardUpdate
 from .models import Card
+# from ..games import models as gamemodel
 from src.theThing.games.models import Game
 from src.theThing.players.models import Player
-from pony.orm import db_session, ObjectNotFound, select
+from pony.orm import db_session, ObjectNotFound, select, flush
 
 
 def create_card(card: CardCreate, game_id: int):
@@ -78,6 +79,30 @@ def give_card_to_player(card_id: int, player_id: int, game_id: int):
         response = CardBase.model_validate(card)
     return response
 
+
+def get_card_from_deck(game_id: int):
+    """
+    This function returns a card from the deck
+    """
+    with db_session:
+        game = Game[game_id]
+        if len(game.deck) == 0:
+            raise Exception("Non existent cards in the deck")
+        
+        # Select a card from the deck
+        card = game.deck.select(lambda c: c.state == 2).random(1)
+        if card == []:
+            # If there is no cards left in the game deck, shuffle the deck
+            card_state_0 = game.deck.select(lambda c: c.state == 0)
+            for card in card_state_0:
+                card.state = 2
+            flush()
+        
+        card = game.deck.select(lambda c: c.state == 2).random(1)[0]
+    
+        response = CardBase.model_validate(card)
+        return response
+    
 
 def update_card(card_to_update: CardUpdate, game_id: int):
     """
