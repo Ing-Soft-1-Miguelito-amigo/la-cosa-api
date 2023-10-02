@@ -5,7 +5,7 @@ from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player
 from ..cards.schemas import CardBase
 from ..cards.crud import get_card_from_deck, give_card_to_player
-from .crud import create_game, get_game, update_game, get_full_game
+from .crud import create_game, get_game, update_game, get_full_game, create_game_deck
 from .utils import verify_data_create, verify_data_start, verify_finished_game
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
@@ -111,6 +111,7 @@ async def start_game(game_start_info: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    create_game_deck(game_id, len(game.players))
     # TODO: Assign initial hands and roles to players
     # TODO: Create initial deck
 

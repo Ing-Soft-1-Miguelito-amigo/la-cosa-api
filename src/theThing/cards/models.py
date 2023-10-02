@@ -6,7 +6,7 @@ class Card(db.Entity):
     id = PrimaryKey(int, auto=True)
     code = Required(str)
     name = Required(str)
-    kind = Required(int)  # 0 = action, 1 = defense, 2 = obstacle, 3 = infection
+    kind = Required(int)  # 0 = action, 1 = defense, 2 = obstacle, 3 = infection, 4 = panic, 5 = the thing
     description = Required(str)
     number_in_card = Required(int)
     state = Required(
@@ -18,6 +18,6 @@ class Card(db.Entity):
 
     def before_insert(self):
         self.state = 2
-        # chek if kind is 0 1 2 or 3
-        if self.kind not in [0, 1, 2, 3]:
+        # chek if kind is 0 1 2 3 4 5  
+        if self.kind not in [0, 1, 2, 3, 4, 5]:
             raise ValueError("The kind of the card is not valid")
