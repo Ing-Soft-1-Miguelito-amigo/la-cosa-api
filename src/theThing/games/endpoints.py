@@ -156,7 +156,7 @@ async def join_game(join_info: dict):
 
 
 # Endpoint to steal a card
-@router.post("/game/steal", status_code=200)
+@router.put("/game/steal", status_code=200)
 async def steal_card(steal_data: dict):
     """
     Steal a card from the game deck.
@@ -172,29 +172,37 @@ async def steal_card(steal_data: dict):
             - 404 (Not Found): If the specified game does not exist.
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
-    game_id = steal_data["game_id"]
-    player_id = steal_data["player_id"]
-
     # Check valid inputs
-    if not player_id or not game_id:
+    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
         raise HTTPException(
             status_code=422, detail="Input data cannot be empty"
         )
     
-    # Verify that the game exists and is has started
+    game_id = steal_data["game_id"]
+    player_id = steal_data["player_id"]
+    
+    # Verify that the game exists and it is started
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str("Game not found"))
     if game.state != 1:
         raise HTTPException(status_code=422, detail="Game has not started yet")
+    """
+    Then it will be useful 
+    if game.turn_owner != player_id:
+        raise HTTPException(status_code=422, detail="It is not the player turn") 
+    """
     
     # Perform logic to steal the card
     try:
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
     except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        if str(e) == "Non existent cards in the deck":
+            raise HTTPException(status_code=422, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str("Player not found"))
 
     return {"message": "Card stolen successfully"}
 
