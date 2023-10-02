@@ -156,7 +156,7 @@ async def join_game(join_info: dict):
 
 
 # Endpoint to steal a card
-@router.get("/game/steal", status_code=200)
+@router.post("/game/steal", status_code=200)
 async def steal_card(steal_data: dict):
     """
     Steal a card from the game deck.
