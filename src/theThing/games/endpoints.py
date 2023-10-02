@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player
+from ..cards.schemas import CardBase
+from ..cards.crud import get_card_from_deck, give_card_to_player
 from .crud import create_game, get_game, update_game, get_full_game
 from .utils import verify_data_create, verify_data_start, verify_finished_game
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
@@ -151,6 +153,50 @@ async def join_game(join_info: dict):
         "message": "Player joined game successfully",
         "player_id": created_player.id,
     }
+
+
+# Endpoint to steal a card
+@router.get("/game/steal", status_code=200)
+async def steal_card(steal_data: dict):
+    """
+    Steal a card from the game deck.
+
+    Parameters: 
+        steal_data (dict): A dict containing game_id and player_id.
+
+    Returns:
+        dict: A JSON response indicating the success of the card stealing.
+
+    Raises:
+        HTTPException:
+            - 404 (Not Found): If the specified game does not exist.
+            - 422 (Unprocessable Entity): If the card cannot be stolen.
+    """
+    game_id = steal_data["game_id"]
+    player_id = steal_data["player_id"]
+
+    # Check valid inputs
+    if not player_id or not game_id:
+        raise HTTPException(
+            status_code=422, detail="Input data cannot be empty"
+        )
+    
+    # Verify that the game exists and is has started
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    if game.state != 1:
+        raise HTTPException(status_code=422, detail="Game has not started yet")
+    
+    # Perform logic to steal the card
+    try:
+        card = get_card_from_deck(game_id)
+        give_card_to_player(card.id, player_id, game_id)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return {"message": "Card stolen successfully"}
 
 
 @router.get("/game/{game_id}")
