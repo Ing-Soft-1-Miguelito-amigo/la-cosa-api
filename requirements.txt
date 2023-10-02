@@ -6,3 +6,4 @@ pydantic
 pony
 uvicorn
 pydantic-settings
+httpx
