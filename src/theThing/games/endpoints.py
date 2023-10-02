@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
-from ..players.crud import create_player
+from ..players.crud import create_player, get_player
 from .crud import create_game, get_game, update_game, get_full_game
 from .utils import verify_data_create, verify_data_start, verify_finished_game
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
@@ -58,7 +58,7 @@ async def create_new_game(game_data: GameWithHost):
 
     return {
         "message": f"Game '{game_name}' created by '{host_name}' successfully",
-        "game_id": created_game.id,
+        "game_id": created_game.id
     }
 
 
@@ -177,7 +177,30 @@ async def get_game_by_id(game_id: int):
     if winner is not None:
         return {
             "message": f"Game {game_id} finished successfully",
-            "winner": winner,
+            "winner": winner
         }
 
     return game
+
+
+@router.get("/game/{game_id}/player/{player_id}")
+async def get_player_by_id(game_id: int, player_id: int):
+    """
+    Get a player by its ID.
+
+    Args:
+        game_id (int): The ID of the game the player belongs to.
+        player_id (int): The ID of the player to retrieve.
+
+    Returns:
+        dict: A JSON response containing the player information.
+
+    Raises:
+        HTTPException: If the game or player do not exist.
+    """
+    try:
+        player = get_player(player_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return player
