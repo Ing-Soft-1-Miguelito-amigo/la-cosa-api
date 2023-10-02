@@ -112,7 +112,8 @@ async def start_game(game_start_info: dict):
     # TODO: Create initial deck
 
     # assign initial hands to players
-    assign_hands(game)
+    game_with_deck = get_full_game(game_id)
+    assign_hands(game_with_deck)
 
     return {"message": f"Game {game_id} started successfully"}
 

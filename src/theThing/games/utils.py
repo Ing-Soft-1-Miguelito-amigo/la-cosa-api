@@ -115,13 +115,8 @@ def assign_hands(game: GameInDB):
 
     # set aside 4 cards per player - 1
     set_aside_amount = 4 * amount_of_players - 1
-    set_aside_cards = remaining_cards[set_aside_amount:]
+    set_aside_cards = remaining_cards[:set_aside_amount]
     set_aside_cards.append(the_thing_card)
-
-    # shuffle the deck
-    import random
-
-    random.shuffle(remaining_cards)
 
     # assign the cards to the players
     for player in game.players:
