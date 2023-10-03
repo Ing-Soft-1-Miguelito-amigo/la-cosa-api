@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from .schemas import GameOut
+from .schemas import GameOut, GameInDB
+from src.theThing.cards.crud import give_card_to_player
 
 
 # Function to verify configuration data integrity
@@ -64,9 +65,7 @@ def verify_data_start(game: GameOut, host_name: str):
         )
 
     if host_name not in [player.name for player in game.players]:
-        raise HTTPException(
-            status_code=422, detail="The host is not in the game"
-        )
+        raise HTTPException(status_code=422, detail="The host is not in the game")
 
     for player in game.players:
         if player.name == host_name:
@@ -79,9 +78,7 @@ def verify_data_start(game: GameOut, host_name: str):
                 break
 
     if game.state != 0:
-        raise HTTPException(
-            status_code=422, detail="The game has already started"
-        )
+        raise HTTPException(status_code=422, detail="The game has already started")
 
 
 def verify_finished_game(game: GameOut):
@@ -94,3 +91,36 @@ def verify_finished_game(game: GameOut):
         return game, winner
 
     return game, None
+
+
+def assign_hands(game: GameInDB):
+    """
+    Assign the initial hands to the players following the process specified by game rules.
+
+    Parameters:
+    - game (GameInDB): The full game data.
+
+    Returns:
+    - None
+    """
+    amount_of_players = len(game.players)
+    full_deck = game.deck
+    # Remove infection, panic and The Thing cards from the deck
+    remaining_cards = [
+        card
+        for card in full_deck
+        if card.kind != 3 and card.kind != 4 and card.kind != 5
+    ]
+    the_thing_card = [card for card in full_deck if card.kind == 5][0]
+
+    # set aside 4 cards per player - 1
+    set_aside_amount = 4 * amount_of_players - 1
+    set_aside_cards = remaining_cards[:set_aside_amount]
+    set_aside_cards.append(the_thing_card)
+
+    # assign the cards to the players
+    for player in game.players:
+        player_cards = set_aside_cards[:4]
+        set_aside_cards = set_aside_cards[4:]
+        for card in player_cards:
+            give_card_to_player(card.id, player.id, game.id)

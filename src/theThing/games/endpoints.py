@@ -6,7 +6,7 @@ from ..players.crud import create_player, get_player
 from ..cards.schemas import CardBase
 from ..cards.crud import get_card_from_deck, give_card_to_player
 from .crud import create_game, get_game, update_game, get_full_game, create_game_deck
-from .utils import verify_data_create, verify_data_start, verify_finished_game
+from .utils import verify_data_create, verify_data_start, verify_finished_game, assign_hands
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
 # Create an APIRouter instance for grouping related endpoints
@@ -87,10 +87,6 @@ async def start_game(game_start_info: dict):
             - 404 (Not Found): If the specified game does not exist.
             - 422 (Unprocessable Entity): If there is an issue updating the game
               status or if the data integrity check fails.
-
-    TODO:
-        - Assign initial hands and roles to players.
-        - Create the initial game deck.
     """
     game_id = game_start_info["game_id"]
     host_name = game_start_info["player_name"]
@@ -111,9 +107,12 @@ async def start_game(game_start_info: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    # Create the initial game deck
     create_game_deck(game_id, len(game.players))
-    # TODO: Assign initial hands and roles to players
-    # TODO: Create initial deck
+
+    # Assign initial hands to players
+    game_with_deck = get_full_game(game_id)
+    assign_hands(game_with_deck)
 
     return {"message": f"Game {game_id} started successfully"}
 
@@ -207,6 +206,34 @@ async def steal_card(steal_data: dict):
             raise HTTPException(status_code=422, detail=str("Player not found"))
 
     return {"message": "Card stolen successfully"}
+
+
+@router.get("/game/full/{game_id}")
+async def get_full_game_by_id(game_id: int):
+    """
+    Get a full game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game information.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # Check if the game is finished
+    game, winner = verify_finished_game(game)
+
+    if winner is not None:
+        return {"message": f"Game {game_id} finished successfully", "winner": winner}
+
+    return game
 
 
 @router.get("/game/{game_id}")
