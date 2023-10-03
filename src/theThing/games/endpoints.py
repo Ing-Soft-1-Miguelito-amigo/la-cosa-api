@@ -287,8 +287,7 @@ async def play_card(play_data: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    return {"message": "Card played successfully",
-            "new turn": game.turn_owner}
+    return {"message": "Card played successfully"}
 
 
 @router.get("/game/{game_id}")
