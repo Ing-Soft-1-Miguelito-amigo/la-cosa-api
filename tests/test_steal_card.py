@@ -35,6 +35,7 @@ def test_steal_card_success(test_db):
         assert response.json() == {
             "message": "Player joined game successfully",
             "player_id": playerid,
+            "game_id": 1,
         }
         playerid += 1
 
@@ -117,6 +118,7 @@ def test_steal_card_on_not_started_game(test_db):
         assert response.json() == {
             "message": "Player joined game successfully",
             "player_id": playerid,
+            "game_id": 2,
         }
         playerid += 1
 
