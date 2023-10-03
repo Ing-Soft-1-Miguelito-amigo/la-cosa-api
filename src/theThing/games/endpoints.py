@@ -160,6 +160,7 @@ async def join_game(join_info: dict):
     return {
         "message": "Player joined game successfully",
         "player_id": created_player.id,
+        "game_id": game_id,
     }
 
 
