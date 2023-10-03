@@ -2,11 +2,11 @@ from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback, commit
 from .test_setup import test_db, clear_db
+from src.theThing.games.crud import get_full_game
 from src.theThing.cards.schemas import CardCreate, CardUpdate
 from src.theThing.cards.crud import create_card, delete_card, update_card
 
 client = TestClient(app)
-
 
 @db_session
 def test_steal_card_success(test_db):
@@ -42,34 +42,8 @@ def test_steal_card_success(test_db):
     game_data = {"game_id": 1, "player_name": "Test Host"}
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-
-    # Cards for create
-    lla_card = CardCreate(
-        code="lla",
-        name="Test Card lanzallama",
-        kind=0,
-        description="Test Description",
-        number_in_card=4,
-        playable=True,
-    )
-
-    def_card = CardCreate(
-        code="def",
-        name="Test Card default",
-        kind=0,
-        description="Test Description",
-        number_in_card=4,
-        playable=True,
-    )
-
-    # Create 2 cards, 1 of each kind
-    for i in range(1):
-        card1 = create_card(lla_card, 1)
-        assert card1 is not None
-        card2 = create_card(def_card, 1)
-        assert card2 is not None
-    commit()
-
+    assert response.json() == {"message": "Game 1 started successfully"}
+    
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
@@ -104,13 +78,16 @@ def test_steal_card_with_invalid_player_id(test_db):
 
 def test_steal_with_no_cards_indeck(test_db):
     # Test #2: steal a card from a player with no cards in deck
-    # Delete cards on the previous test game to empty the deck
-    delete_card(1, 1)
-    delete_card(2, 1)
-
+    # Delete the 35 cards on the previous test game to empty the deck
+    for i in range(1, 36):
+        response = delete_card(i, 1)
+        assert response == {"message": f"Card {i} deleted successfully from game 1"}
+    commit()
+    
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
+    print(response.json())
     assert response.status_code == 422
     assert response.json() == {"detail": "Non existent cards in the deck"}
 
@@ -149,7 +126,7 @@ def test_steal_card_on_not_started_game(test_db):
     assert response.status_code == 422
     assert response.json() == {"detail": "Game has not started yet"}
     rollback()
-
+    
 
 def test_steal_card_with_empty_data():
     # Test #2: steal a card with empty data
