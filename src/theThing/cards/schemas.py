@@ -1,12 +1,14 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
+
 class CardCreate(BaseModel):
     """
     This class is used to create a card
     it has no state field because a card is always created in the deck
     (state = 2 is default value)
     """
+
     code: str
     name: str
     kind: int

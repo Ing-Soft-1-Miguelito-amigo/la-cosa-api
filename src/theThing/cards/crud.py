@@ -1,8 +1,10 @@
 from .schemas import CardCreate, CardBase, CardUpdate
 from .models import Card
+
 # from ..games import models as gamemodel
 from src.theThing.games.models import Game
 from src.theThing.players.models import Player
+from src.theThing.players.schemas import PlayerBase
 from pony.orm import db_session, ObjectNotFound, select, flush
 
 
@@ -88,7 +90,7 @@ def get_card_from_deck(game_id: int):
         game = Game[game_id]
         if len(game.deck) == 0:
             raise Exception("Non existent cards in the deck")
-        
+
         # Select a card from the deck
         card = game.deck.select(lambda c: c.state == 2).random(1)
         if card == []:
@@ -97,12 +99,12 @@ def get_card_from_deck(game_id: int):
             for card in card_state_0:
                 card.state = 2
             flush()
-        
+
         card = game.deck.select(lambda c: c.state == 2).random(1)[0]
-    
+
         response = CardBase.model_validate(card)
         return response
-    
+
 
 def update_card(card_to_update: CardUpdate, game_id: int):
     """
@@ -115,4 +117,24 @@ def update_card(card_to_update: CardUpdate, game_id: int):
         card.state = card_to_update.state
         card.flush()
         response = CardBase.model_validate(card)
+    return response
+
+
+def remove_card_from_player(card_id: int, player_id: int, game_id: int):
+    """
+    This function removes a card from a player and returns the player
+    """
+    with db_session:
+        card = Card.get(game=Game[game_id], id=card_id)
+        if card is None:
+            raise ObjectNotFound(Card, pkval=card_id)
+        player = Player.get(game=Game[game_id], id=player_id)
+        if player is None:
+            raise ObjectNotFound(Player, pkval=player_id)
+        card.player = None
+        card.state = 0
+        flush()
+        # look for the player again to have his hand updated
+        player = Player.get(game=Game[game_id], id=player_id)
+        response = PlayerBase.model_validate(player)
     return response

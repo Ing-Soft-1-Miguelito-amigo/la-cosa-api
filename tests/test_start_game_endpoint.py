@@ -88,5 +88,7 @@ def test_start_game_with_invalid_host(test_db):
 
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "The player provided is not the host of the game"}
+    assert response.json() == {
+        "detail": "The player provided is not the host of the game"
+    }
     rollback()
