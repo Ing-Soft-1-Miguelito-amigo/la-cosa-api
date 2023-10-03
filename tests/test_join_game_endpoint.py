@@ -34,6 +34,7 @@ def test_join_game_success(test_db):
         assert response.json() == {
             "message": "Player joined game successfully",
             "player_id": playerid,
+            "game_id": 1,
         }
         playerid += 1
 
@@ -141,6 +142,7 @@ def test_join_same_name_diff_games(test_db):
     assert response.json() == {
         "message": "Player joined game successfully",
         "player_id": 8,
+        "game_id": id_game_A,
     }
 
     join_data = {"game_id": id_game_B, "player_name": "Test Player SameName"}
@@ -148,6 +150,7 @@ def test_join_same_name_diff_games(test_db):
     assert response.json() == {
         "message": "Player joined game successfully",
         "player_id": 9,
+        "game_id": id_game_B,
     }
 
     rollback()

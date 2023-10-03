@@ -34,6 +34,7 @@ def test_create_deck_4_players_success(test_db):
         assert response.json() == {
             "message": "Player joined game successfully",
             "player_id": playerid,
+            "game_id": 1,
         }
         playerid += 1
 
@@ -79,6 +80,7 @@ def test_create_deck_6_players_success(test_db):
         assert response.json() == {
             "message": "Player joined game successfully",
             "player_id": playerid,
+            "game_id": 2,
         }
         playerid += 1
 
