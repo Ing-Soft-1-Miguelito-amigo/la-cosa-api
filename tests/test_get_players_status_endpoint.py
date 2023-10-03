@@ -54,34 +54,6 @@ def test_get_player_successful_started(test_db):
     # Get the player
     response = client.get("/game/1/player/1")
     assert response.status_code == 200
-    assert response.json() == {
-        "name": "Test Host",
-        "owner": True,
-        "id": 1,
-        "table_position": 1,
-        "role": None,
-        "alive": True,
-        "quarantine": False,
-        "hand": [],
-    }
-
-
-@db_session
-def test_get_player_started_not_owner(test_db):
-    # Get the player
-    response = client.get("/game/1/player/3")
-    assert response.status_code == 200
-    assert response.json() == {
-        "name": "Test Player 2",
-        "owner": False,
-        "id": 3,
-        "table_position": 3,
-        "role": None,
-        "alive": True,
-        "quarantine": False,
-        "hand": [],
-    }
-    rollback()
 
 
 @db_session

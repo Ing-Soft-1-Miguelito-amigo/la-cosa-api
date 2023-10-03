@@ -5,13 +5,14 @@ from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player
 from ..cards.schemas import CardBase
 from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
-from .crud import create_game, get_game, update_game, get_full_game
+from .crud import create_game, get_game, update_game, get_full_game, create_game_deck
 from .utils import (
     verify_data_create,
     verify_data_start,
     verify_finished_game,
     verify_data_play_card,
     play_action_card,
+    assign_hands
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
@@ -93,10 +94,6 @@ async def start_game(game_start_info: dict):
             - 404 (Not Found): If the specified game does not exist.
             - 422 (Unprocessable Entity): If there is an issue updating the game
               status or if the data integrity check fails.
-
-    TODO:
-        - Assign initial hands and roles to players.
-        - Create the initial game deck.
     """
     game_id = game_start_info["game_id"]
     host_name = game_start_info["player_name"]
@@ -117,8 +114,12 @@ async def start_game(game_start_info: dict):
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # TODO: Assign initial hands and roles to players
-    # TODO: Create initial deck
+    # Create the initial game deck
+    create_game_deck(game_id, len(game.players))
+
+    # Assign initial hands to players
+    game_with_deck = get_full_game(game_id)
+    assign_hands(game_with_deck)
 
     return {"message": f"Game {game_id} started successfully"}
 

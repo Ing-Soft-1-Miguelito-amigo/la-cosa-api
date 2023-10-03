@@ -20,6 +20,6 @@ class Card(db.Entity):
 
     def before_insert(self):
         self.state = 2
-        # check if kind is 0 1 2 3 4 5
+        # chek if kind is 0 1 2 3 4 5
         if self.kind not in [0, 1, 2, 3, 4, 5]:
             raise ValueError("The kind of the card is not valid")

@@ -1,6 +1,9 @@
 from . import schemas, models
 from pony.orm import db_session
 from src.theThing.players.models import Player
+from src.theThing.cards.schemas import CardCreate
+from src.theThing.cards.crud import create_card
+from src.theThing.cards.static_cards import dict_of_cards
 
 
 def create_game(game: schemas.GameCreate):
@@ -97,3 +100,27 @@ def update_game(game_id: int, game: schemas.GameUpdate):
         game_to_update.set(**game.model_dump())
         response = schemas.GameInDB.model_validate(game_to_update)
     return response
+
+
+def create_game_deck(game_id: int, players_amount: int):
+    """
+    This function creates a deck for the game 
+    PRE: The game exists
+    """
+    # Filter cards by number
+    filtered_dict = {
+        key: value for key, value in dict_of_cards.items() 
+        if value["number_in_card"] <= players_amount}
+    
+    # Create cards
+    for card in filtered_dict.values():
+        for _ in range(card["amount_in_deck"]):
+            new_card = CardCreate(
+                code=card["code"],
+                name=card["name"],
+                kind=card["kind"],
+                description=card["description"],
+                number_in_card=card["number_in_card"],
+                playable=True,
+            ) 
+            create_card(new_card, game_id)

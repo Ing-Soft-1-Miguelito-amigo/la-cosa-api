@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from .crud import get_full_game
 from .schemas import GameOut, GameInDB
-from ..cards.crud import get_card, remove_card_from_player, update_card
+from ..cards.crud import get_card, remove_card_from_player, update_card, give_card_to_player
 from ..cards.schemas import CardBase, CardUpdate
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
@@ -193,3 +193,36 @@ def play_action_card(
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
     return updated_game
+
+ 
+def assign_hands(game: GameInDB):
+    """
+    Assign the initial hands to the players following the process specified by game rules.
+
+    Parameters:
+    - game (GameInDB): The full game data.
+
+    Returns:
+    - None
+    """
+    amount_of_players = len(game.players)
+    full_deck = game.deck
+    # Remove infection, panic and The Thing cards from the deck
+    remaining_cards = [
+        card
+        for card in full_deck
+        if card.kind != 3 and card.kind != 4 and card.kind != 5
+    ]
+    the_thing_card = [card for card in full_deck if card.kind == 5][0]
+
+    # set aside 4 cards per player - 1
+    set_aside_amount = 4 * amount_of_players - 1
+    set_aside_cards = remaining_cards[:set_aside_amount]
+    set_aside_cards.append(the_thing_card)
+
+    # assign the cards to the players
+    for player in game.players:
+        player_cards = set_aside_cards[:4]
+        set_aside_cards = set_aside_cards[4:]
+        for card in player_cards:
+            give_card_to_player(card.id, player.id, game.id)
