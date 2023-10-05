@@ -297,28 +297,6 @@ async def play_card(play_data: dict):
     return {"message": "Card played successfully"}
 
 
-@router.get("/game/full/{game_id}")
-async def get_full_game_by_id(game_id: int):
-    """
-    Get a game by its ID.
-
-    Args:
-        game_id (int): The ID of the game to retrieve.
-
-    Returns:
-        dict: A JSON response containing the game information.
-
-    Raises:
-        HTTPException: If the game does not exist.
-    """
-    try:
-        game = get_full_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    return game
-
-
 @router.get("/game/{game_id}")
 async def get_game_by_id(game_id: int):
     """
