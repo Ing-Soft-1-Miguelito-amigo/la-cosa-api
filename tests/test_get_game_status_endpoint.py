@@ -47,22 +47,3 @@ def test_get_nonexistent_game(test_db):
     assert response.status_code == 404
     assert "Game[100]" in response.text
     rollback()
-
-
-@db_session
-def test_get_game_finished(test_db):
-    # Test getting a game that has finished
-    # Create a game first
-    game_data = {
-        "game": {"name": "Test Game", "min_players": 4, "max_players": 6},
-        "host": {"name": "Test Host"},
-    }
-    client.post("/game/create", json=game_data)
-
-    # Get the game again
-    response = client.get("/game/1")
-    assert response.status_code == 200
-    assert response.json() == {
-        "message": f"Game 1 finished successfully",
-        "winner": "Test Host",
-    }

@@ -12,7 +12,7 @@ from .utils import (
     verify_finished_game,
     verify_data_play_card,
     play_action_card,
-    assign_hands
+    assign_hands,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
@@ -283,13 +283,40 @@ async def play_card(play_data: dict):
 
     # Update game status
     try:
-        update_game(game_id, GameUpdate(state=game.state,
-                                        turn_owner=game.turn_owner,
-                                        play_direction=game.play_direction))
+        update_game(
+            game_id,
+            GameUpdate(
+                state=game.state,
+                turn_owner=game.turn_owner,
+                play_direction=game.play_direction,
+            ),
+        )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
     return {"message": "Card played successfully"}
+
+
+@router.get("/game/full/{game_id}")
+async def get_full_game_by_id(game_id: int):
+    """
+    Get a game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game information.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return game
 
 
 @router.get("/game/{game_id}")

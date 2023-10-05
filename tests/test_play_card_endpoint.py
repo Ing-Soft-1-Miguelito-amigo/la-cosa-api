@@ -99,10 +99,10 @@ def setup_module():
     card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
 
     # start the game
-    game_crud.update_game(created_game.id, game_schemas.GameUpdate(
-                            state=1,
-                            play_direction=True,
-                            turn_owner=1))
+    game_crud.update_game(
+        created_game.id,
+        game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
+    )
     # finish setup
     yield
 

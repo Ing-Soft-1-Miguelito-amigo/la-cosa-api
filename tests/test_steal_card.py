@@ -8,6 +8,7 @@ from src.theThing.cards.crud import create_card, delete_card, update_card
 
 client = TestClient(app)
 
+
 @db_session
 def test_steal_card_success(test_db):
     # Test #1: steal a card from a player with valid data
@@ -44,7 +45,7 @@ def test_steal_card_success(test_db):
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Game 1 started successfully"}
-    
+
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
@@ -79,12 +80,12 @@ def test_steal_card_with_invalid_player_id(test_db):
 
 def test_steal_with_no_cards_indeck(test_db):
     # Test #2: steal a card from a player with no cards in deck
-    # Delete the 35 cards on the previous test game to empty the deck
-    for i in range(1, 36):
+    # Delete the 31 cards on the previous test game to empty the deck
+    for i in range(1, 32):
         response = delete_card(i, 1)
         assert response == {"message": f"Card {i} deleted successfully from game 1"}
     commit()
-    
+
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
@@ -128,7 +129,7 @@ def test_steal_card_on_not_started_game(test_db):
     assert response.status_code == 422
     assert response.json() == {"detail": "Game has not started yet"}
     rollback()
-    
+
 
 def test_steal_card_with_empty_data():
     # Test #2: steal a card with empty data

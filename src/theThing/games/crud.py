@@ -104,14 +104,16 @@ def update_game(game_id: int, game: schemas.GameUpdate):
 
 def create_game_deck(game_id: int, players_amount: int):
     """
-    This function creates a deck for the game 
+    This function creates a deck for the game
     PRE: The game exists
     """
     # Filter cards by number
     filtered_dict = {
-        key: value for key, value in dict_of_cards.items() 
-        if value["number_in_card"] <= players_amount}
-    
+        key: value
+        for key, value in dict_of_cards.items()
+        if value["number_in_card"] <= players_amount
+    }
+
     # Create cards
     for card in filtered_dict.values():
         for _ in range(card["amount_in_deck"]):
@@ -122,5 +124,5 @@ def create_game_deck(game_id: int, players_amount: int):
                 description=card["description"],
                 number_in_card=card["number_in_card"],
                 playable=True,
-            ) 
+            )
             create_card(new_card, game_id)
