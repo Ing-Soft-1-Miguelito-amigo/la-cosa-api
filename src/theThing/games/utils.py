@@ -2,7 +2,12 @@ from fastapi import HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from .crud import get_full_game
 from .schemas import GameOut, GameInDB
-from ..cards.crud import get_card, remove_card_from_player, update_card, give_card_to_player
+from ..cards.crud import (
+    get_card,
+    remove_card_from_player,
+    update_card,
+    give_card_to_player,
+)
 from ..cards.schemas import CardBase, CardUpdate
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
@@ -151,11 +156,14 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(destination_player.table_position)
     # check if the destination player is adjacent to the player,
     # the first and the last player are adjacent
-    if (index_destination_player == (index_player + 1) % len(alive_players) or index_destination_player == (index_player - 1) % len(alive_players)):
+    if index_destination_player == (index_player + 1) % len(
+        alive_players
+    ) or index_destination_player == (index_player - 1) % len(alive_players):
         pass
     else:
         raise HTTPException(
-            status_code=422, detail="The destination player is not adjacent to the player"
+            status_code=422,
+            detail="The destination player is not adjacent to the player",
         )
     return game, player, card, destination_player
 
@@ -176,7 +184,9 @@ def play_action_card(
             pass
         case _:  # other cards
             if len(player.hand) <= 4:
-                raise HTTPException(status_code=404, detail="Player has less than minimum cards to play")
+                raise HTTPException(
+                    status_code=404, detail="Player has less than minimum cards to play"
+                )
             card.state = 0
             player = remove_card_from_player(card.id, player.id, game.id)
             # check that the player has 4 cards in hand
@@ -185,16 +195,21 @@ def play_action_card(
 
     # push the changes to the database
     updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    updated_destination_player = update_player(PlayerUpdate(id=destination_player.id,
-                                                            table_position=destination_player.table_position,
-                                                            role=destination_player.role,
-                                                            alive=destination_player.alive,
-                                                            quarantine=destination_player.quarantine), game.id)
+    updated_destination_player = update_player(
+        PlayerUpdate(
+            id=destination_player.id,
+            table_position=destination_player.table_position,
+            role=destination_player.role,
+            alive=destination_player.alive,
+            quarantine=destination_player.quarantine,
+        ),
+        game.id,
+    )
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
     return updated_game
 
- 
+
 def assign_hands(game: GameInDB):
     """
     Assign the initial hands to the players following the process specified by game rules.

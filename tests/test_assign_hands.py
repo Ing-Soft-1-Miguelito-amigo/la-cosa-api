@@ -44,17 +44,17 @@ def test_the_thing_is_assigned(test_db):
         "host": {"name": "Test Host"},
     }
     response = client.post("/game/create", json=game_data)
-    
+
     game_id = response.json().get("game_id")
-    
+
     # join a few players
     client.post("/game/join", json={"game_id": game_id, "player_name": "P1"})
     client.post("/game/join", json={"game_id": game_id, "player_name": "P2"})
     client.post("/game/join", json={"game_id": game_id, "player_name": "P3"})
-    
+
     player_name = "Test Host"
     game_data = {"game_id": game_id, "player_name": player_name}
-    
+
     client.post("/game/start", json=game_data)
 
     full_game = get_full_game(game_id)

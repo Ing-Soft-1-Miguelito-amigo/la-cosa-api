@@ -12,7 +12,7 @@ from .utils import (
     verify_finished_game,
     verify_data_play_card,
     play_action_card,
-    assign_hands
+    assign_hands,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 
@@ -283,9 +283,14 @@ async def play_card(play_data: dict):
 
     # Update game status
     try:
-        update_game(game_id, GameUpdate(state=game.state,
-                                        turn_owner=game.turn_owner,
-                                        play_direction=game.play_direction))
+        update_game(
+            game_id,
+            GameUpdate(
+                state=game.state,
+                turn_owner=game.turn_owner,
+                play_direction=game.play_direction,
+            ),
+        )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
