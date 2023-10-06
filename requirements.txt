@@ -1,0 +1,10 @@
+black
+pytest
+pytest-cov
+httpx
+fastapi
+pydantic
+pony
+uvicorn
+pydantic-settings
+httpx
