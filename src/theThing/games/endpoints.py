@@ -2,10 +2,17 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate
 from ..players.schemas import PlayerCreate
-from ..players.crud import create_player, get_player
+from ..players.crud import create_player, get_player, delete_player
 from ..cards.schemas import CardBase
 from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
-from .crud import create_game, get_game, update_game, get_full_game, create_game_deck
+from .crud import (
+    create_game,
+    get_game,
+    update_game,
+    get_full_game,
+    create_game_deck,
+    delete_game,
+)
 from .utils import (
     verify_data_create,
     verify_data_start,
@@ -346,3 +353,37 @@ async def get_player_by_id(game_id: int, player_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     return player
+
+
+@router.put("/game/{game_id}/player/{player_id}/leave")
+async def leave_game(game_id: int, player_id: int):
+    """
+    Leave a game.
+
+    Args:
+        game_id (int): The ID of the game the player belongs to.
+        player_id (int): The ID of the player to retrieve.
+
+    Returns:
+        dict: A JSON response containing the player information.
+
+    Raises:
+        HTTPException: If the game or player do not exist.
+    """
+    try:
+        game = get_game(game_id)
+        if game.state != 0:
+            raise HTTPException(status_code=422, detail="Game already started")
+        player = get_player(player_id, game_id)
+        if not player.owner:
+            delete_player(player_id, game_id)
+            response = {
+                "message": f"Player {player_id} left game {game_id} successfully"
+            }
+        else:  # delete all players and the game
+            delete_game(game_id)
+            response = {"message": f"Game {game_id} finished successfully by host"}
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return response

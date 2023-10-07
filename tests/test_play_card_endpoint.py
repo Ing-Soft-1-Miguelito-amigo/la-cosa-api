@@ -1,6 +1,6 @@
 import pytest
 
-from .test_setup import test_db
+from .test_setup import test_db, clear_db
 from src.theThing.cards import crud as card_crud
 from src.theThing.cards.schemas import CardCreate, CardBase, CardUpdate
 from src.theThing.games import crud as game_crud
