@@ -11,7 +11,7 @@ from ..cards.crud import (
 from ..cards.schemas import CardBase, CardUpdate
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
-from src.theThing.players.sockets import update_player_status
+from src.theThing.players.websocket_handler import update_player_status
 
 
 # Function to verify configuration data integrity
@@ -120,7 +120,7 @@ def verify_data_play_card(
         player = get_player(player_id, game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=422, detail=str("Player not found"))
-    if game.turn_owner != player_id or not player.alive:
+    if game.turn_owner != player.table_position or not player.alive:
         raise HTTPException(status_code=422, detail="It is not the player turn")
 
     # Verify that the card exists and it is in the player hand

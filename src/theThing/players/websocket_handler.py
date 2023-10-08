@@ -14,7 +14,7 @@ player_ws_connections: Dict[
 ] = {}  # It saves the websocket with the game id
 
 
-@router.websocket("/ws/game-status/{game_id}/player-status/{player-id}")
+@router.websocket("/ws/game-status/{game_id}/player-status/{player_id}")
 async def player_status_ws_endpoint(websocket: WebSocket, game_id: int, player_id: int):
     """
     This endpoint is used to get the status of a player in a game.
@@ -33,6 +33,9 @@ async def player_status_ws_endpoint(websocket: WebSocket, game_id: int, player_i
     # Accept the websocket and add it to the connections
     await websocket.accept()
     player_ws_connections[player_id] = (game_id, websocket)
+    # send a message to the client to let it know that the connection was successful
+    # and tell the key of the player in the dictionary
+    await websocket.send_json({"message": "Connection successful", "key": player_id})
     while True:
         try:
             await websocket.receive_text()
@@ -44,10 +47,34 @@ async def player_status_ws_endpoint(websocket: WebSocket, game_id: int, player_i
 
 @router.on_event("startup")
 async def startup_player_status_event():
-    asyncio.create_task(send_player_status())
+    asyncio.create_task(ws_send_player_status())
 
+stop_send_player_status = asyncio.Event()
+
+
+@router.on_event("shutdown")
+async def shutdown_player_status_event():
+    # Signal the send_player_status loop to stop on shutdown
+    stop_send_player_status.set()
 
 modified_players: List[int] = []
+
+
+async def ws_send_player_status():
+    """
+    This function is used to send the player status to the clients
+    """
+    while not stop_send_player_status.is_set():
+        for player_id in modified_players:
+            try:
+                game_id, websocket = player_ws_connections[player_id]
+                player = player_crud.get_player(player_id, game_id)
+            except Exception as e:
+                raise HTTPException(status_code=404, detail=e.args[0])
+            finally:
+                modified_players.remove(player_id)
+            await websocket.send_json(player.model_dump_json())
+        await asyncio.sleep(0.1)
 
 
 def update_player_status(
@@ -60,15 +87,8 @@ def update_player_status(
     player_crud.update_player(player, player_id, game_id)
 
 
-async def send_player_status():
+def send_player_new_status(player_id: int):
     """
-    This function is used to send the player status to the clients
+    This function is used to add a player to the modified players list
     """
-    while True:
-        for player_id in modified_players:
-            try:
-                game_id, websocket = player_ws_connections[player_id]
-                player = player_crud.get_player(player_id, game_id)
-            except Exception as e:
-                raise HTTPException(status_code=404, detail=e.args[0])
-            await websocket.send_json(player)
+    modified_players.append(player_id)
