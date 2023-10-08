@@ -34,7 +34,6 @@ class PlayerForGame(BaseModel):
 
 class PlayerUpdate(BaseModel):
     # This is used to update a player
-    id: int
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None

@@ -168,13 +168,12 @@ def test_get_player_wrong_game(test_db):
 @db_session
 def test_update_player(test_db):
     updated_data = {
-        "id": 1,
         "table_position": 1,
         "role": 2,
         "alive": False,
         "quarantine": True,
     }
-    updated_player = crud.update_player(PlayerUpdate(**updated_data), game_id=1)
+    updated_player = crud.update_player(PlayerUpdate(**updated_data), 1, game_id=1)
 
     assert updated_player.model_dump() == {
         "id": 1,

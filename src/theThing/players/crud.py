@@ -50,16 +50,16 @@ def get_player(player_id: int, game_id: int):
     return response
 
 
-def update_player(player: PlayerUpdate, game_id: int):
+def update_player(player: PlayerUpdate, player_id: int, game_id: int):
     """
     This function updates a player from the database
     and returns the PlayerBase schema with the updated data
     """
     with db_session:
         game = Game[game_id]
-        player_to_update = Player.get(game=game, id=player.id)
+        player_to_update = Player.get(game=game, id=player_id)
         if player_to_update is None:
-            raise ObjectNotFound(Player, pkval=player.id)
+            raise ObjectNotFound(Player, pkval=player_id)
         player_to_update.set(**player.model_dump())
         player_to_update.flush()
         response = PlayerBase.model_validate(player_to_update)
