@@ -32,6 +32,12 @@ socketio_app = socketio.ASGIApp(sio, app, socketio_path='/sockets')
 @sio.event
 def connect(sid, environ):
     print("connect ", sid)
+    player_id = environ['HTTP_PLAYER_ID']
+    game_id = environ['HTTP_GAME_ID']
+    sio.enter_room(sid, 'g'+game_id)
+    sio.enter_room(sid, 'p'+player_id)
+    print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
+    print(sio.rooms(sid))
 
 
 @sio.on('message')
