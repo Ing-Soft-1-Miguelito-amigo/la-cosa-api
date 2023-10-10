@@ -70,7 +70,7 @@ def test_get_all_games(test_db):
     games = crud.get_all_games()
 
     assert len(games) == 2
-    assert games == [GameBase(**game1.to_dict()), GameBase(**game2.to_dict())]
+    assert games == [GameOut(**game1.to_dict()), GameOut(**game2.to_dict())]
 
     rollback()
 

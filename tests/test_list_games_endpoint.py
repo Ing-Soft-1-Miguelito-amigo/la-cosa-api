@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 @db_session
-def get_empty_game_list(test_db):
+def test_get_empty_game_list(test_db):
     # Test get an empty game list
     response = client.get("/game/list")
     assert response.status_code == 200
@@ -16,7 +16,7 @@ def get_empty_game_list(test_db):
 
 
 @db_session
-def get_game_list(test_db):
+def test_get_game_list(test_db):
     # Test get a game list
     # start by creating a game
     game_data = {

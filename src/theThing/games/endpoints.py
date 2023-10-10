@@ -12,7 +12,7 @@ from .crud import (
     get_full_game,
     create_game_deck,
     delete_game,
-    get_all_games
+    get_all_games,
 )
 from .utils import (
     verify_data_create,
