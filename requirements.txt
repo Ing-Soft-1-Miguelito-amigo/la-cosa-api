@@ -8,3 +8,5 @@ pony
 uvicorn
 pydantic-settings
 httpx
+socketio
+python-socketio
