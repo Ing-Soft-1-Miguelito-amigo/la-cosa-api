@@ -363,6 +363,8 @@ async def get_player_by_id(game_id: int, player_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+    # order hand by card id
+
     return player
 
 

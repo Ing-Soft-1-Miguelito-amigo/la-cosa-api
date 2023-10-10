@@ -4,10 +4,11 @@ from src.theThing.models.db import db
 from src.theThing.games import endpoints as games_endpoints
 from fastapi.middleware.cors import CORSMiddleware
 import socketio
-from src.theThing.games.socket_handler import sio
+from src.theThing.games.socket_handler import socketio_app
 
 app = FastAPI()
 app.include_router(games_endpoints.router)
+app.mount('/sio', socketio_app)
 
 origins = ["*"]
 app.add_middleware(
@@ -24,8 +25,7 @@ async def root():
     return {"message": "La Cosa"}
 
 
-socketio_app = socketio.ASGIApp(sio, app)
-
+# socketio_app = socketio.ASGIApp(sio, app)
 
 db.bind(provider="sqlite", filename=DATABASE_FILENAME, create_db=True)
 db.generate_mapping(create_tables=True)
