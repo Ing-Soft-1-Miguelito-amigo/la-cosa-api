@@ -45,6 +45,7 @@ class GameOut(BaseModel):
 class GamePlayerAmount(GameBase):
     # This is used to return a game with the amount of players
     # It is used in the list of games
+    id: int
     amount_of_players: int
 
     model_config = ConfigDict(from_attributes=True)
