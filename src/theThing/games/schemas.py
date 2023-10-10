@@ -42,6 +42,14 @@ class GameOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class GamePlayerAmount(GameBase):
+    # This is used to return a game with the amount of players
+    # It is used in the list of games
+    amount_of_players: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GameUpdate(BaseModel):
     # This is used to update a game
     state: Optional[int] = None
