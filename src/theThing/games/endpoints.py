@@ -320,6 +320,7 @@ async def get_list_of_games():
         if game.state == 0:
             game_with_amount = GamePlayerAmount(
                 name=game.name,
+                id=game.id,
                 min_players=game.min_players,
                 max_players=game.max_players,
                 amount_of_players=len(game.players),
