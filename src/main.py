@@ -3,12 +3,11 @@ from src.settings import DATABASE_FILENAME
 from src.theThing.models.db import db
 from src.theThing.games import endpoints as games_endpoints
 from fastapi.middleware.cors import CORSMiddleware
-from src.theThing.players.websocket_handler import router as players_router
 import socketio
+from src.theThing.games.socket_handler import sio
 
 app = FastAPI()
 app.include_router(games_endpoints.router)
-app.include_router(players_router)
 
 origins = ["*"]
 app.add_middleware(
@@ -25,34 +24,7 @@ async def root():
     return {"message": "La Cosa"}
 
 
-sio = socketio.AsyncServer(cors_allowed_origins='*', async_mode='asgi')
-socketio_app = socketio.ASGIApp(sio, app, socketio_path='/sockets')
-
-
-@sio.event
-def connect(sid, environ):
-    print("connect ", sid)
-    player_id = environ['HTTP_PLAYER_ID']
-    game_id = environ['HTTP_GAME_ID']
-    sio.enter_room(sid, 'g'+game_id)
-    sio.enter_room(sid, 'p'+player_id)
-    print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
-    print(sio.rooms(sid))
-
-
-@sio.on('message')
-async def chat_message(sid, data):
-    print("message ", data, "hola")
-    await sio.emit('response', 'hola mundo')
-
-
-@sio.on('join')
-async def join(sid, data):
-    print("join ", data)
-    await sio.emit('response', 'te uniste'+data, room=sid)
-@sio.event
-def disconnect(sid):
-    print('disconnect ', sid)
+socketio_app = socketio.ASGIApp(sio, app)
 
 
 db.bind(provider="sqlite", filename=DATABASE_FILENAME, create_db=True)

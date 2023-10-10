@@ -22,7 +22,7 @@ from .utils import (
     assign_hands,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.players.websocket_handler import send_player_new_status
+from src.theThing.games.socket_handler import send_player_status_to_player
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -224,7 +224,8 @@ async def steal_card(steal_data: dict):
         else:
             raise HTTPException(status_code=422, detail=str("Player not found"))
 
-    send_player_new_status(player_id)
+    player = get_player(player_id, game_id)
+    await send_player_status_to_player(player_id, player)
     return {"message": "Card stolen successfully"}
 
 
@@ -307,7 +308,10 @@ async def play_card(play_data: dict):
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
-    send_player_new_status(player_id)
+    player = get_player(player_id, game_id)
+    destination_player = get_player(destination_player.id, game_id)
+    await send_player_status_to_player(player_id, player)
+    await send_player_status_to_player(destination_player.id, destination_player)
     return {"message": "Card played successfully"}
 
 

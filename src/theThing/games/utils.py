@@ -11,7 +11,6 @@ from ..cards.crud import (
 from ..cards.schemas import CardBase, CardUpdate
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
-from src.theThing.players.websocket_handler import update_player_status
 
 
 # Function to verify configuration data integrity
@@ -196,7 +195,7 @@ def play_action_card(
 
     # push the changes to the database
     updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    updated_destination_player = update_player_status(
+    updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,
             role=destination_player.role,
