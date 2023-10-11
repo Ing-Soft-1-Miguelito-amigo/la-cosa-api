@@ -75,7 +75,9 @@ def verify_data_start(game: GameOut, host_name: str):
         )
 
     if host_name not in [player.name for player in game.players]:
-        raise HTTPException(status_code=422, detail="The host is not in the game")
+        raise HTTPException(
+            status_code=422, detail="The host is not in the game"
+        )
 
     for player in game.players:
         if player.name == host_name:
@@ -88,7 +90,9 @@ def verify_data_start(game: GameOut, host_name: str):
                 break
 
     if game.state != 0:
-        raise HTTPException(status_code=422, detail="The game has already started")
+        raise HTTPException(
+            status_code=422, detail="The game has already started"
+        )
 
 
 def verify_finished_game(game: GameOut):
@@ -129,7 +133,8 @@ def verify_data_play_card(
         raise HTTPException(status_code=422, detail=str("Card not found"))
     if card not in player.hand or card not in game.deck or card.state == 0:
         raise HTTPException(
-            status_code=422, detail="The card is not in the player hand or in the deck"
+            status_code=422,
+            detail="The card is not in the player hand or in the deck",
         )
     if card.playable is False:
         raise HTTPException(status_code=422, detail="The card is not playable")
@@ -141,10 +146,13 @@ def verify_data_play_card(
             destination_player = p
             break
     if destination_player is None:
-        raise HTTPException(status_code=422, detail="Destination player not found")
+        raise HTTPException(
+            status_code=422, detail="Destination player not found"
+        )
     if destination_player.id == player.id:
         raise HTTPException(
-            status_code=422, detail="The destination player cannot be the same player"
+            status_code=422,
+            detail="The destination player cannot be the same player",
         )
     if not destination_player.alive:
         raise HTTPException(
@@ -153,7 +161,9 @@ def verify_data_play_card(
     alive_players = [p.table_position for p in game.players if p.alive]
     alive_players.sort()
     index_player = alive_players.index(player.table_position)
-    index_destination_player = alive_players.index(destination_player.table_position)
+    index_destination_player = alive_players.index(
+        destination_player.table_position
+    )
     # check if the destination player is adjacent to the player,
     # the first and the last player are adjacent
     if index_destination_player == (index_player + 1) % len(
@@ -169,13 +179,17 @@ def verify_data_play_card(
 
 
 def play_action_card(
-    game: GameInDB, player: PlayerBase, card: CardBase, destination_player: PlayerBase
+    game: GameInDB,
+    player: PlayerBase,
+    card: CardBase,
+    destination_player: PlayerBase,
 ):
     match card.code:
         case "lla":  # flamethrower
             if len(player.hand) <= 4:
                 raise HTTPException(
-                    status_code=404, detail="Player has less than minimum cards to play"
+                    status_code=404,
+                    detail="Player has less than minimum cards to play",
                 )
             card.state = 0
             destination_player.alive = False
@@ -185,7 +199,8 @@ def play_action_card(
         case _:  # other cards
             if len(player.hand) <= 4:
                 raise HTTPException(
-                    status_code=404, detail="Player has less than minimum cards to play"
+                    status_code=404,
+                    detail="Player has less than minimum cards to play",
                 )
             card.state = 0
             player = remove_card_from_player(card.id, player.id, game.id)
@@ -194,7 +209,9 @@ def play_action_card(
             pass
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
     updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,

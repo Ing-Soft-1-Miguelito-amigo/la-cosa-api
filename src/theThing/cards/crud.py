@@ -61,7 +61,9 @@ def delete_card(card_id: int, game_id: int):
         if card is None:
             raise ObjectNotFound(Card, pkval=card_id)
         card.delete()
-    return {"message": f"Card {card_id} deleted successfully from game {game_id}"}
+    return {
+        "message": f"Card {card_id} deleted successfully from game {game_id}"
+    }
 
 
 def give_card_to_player(card_id: int, player_id: int, game_id: int):

@@ -8,7 +8,7 @@ from src.theThing.games.socket_handler import socketio_app
 
 app = FastAPI()
 app.include_router(games_endpoints.router)
-app.mount('/sio', socketio_app)
+app.mount("/sio", socketio_app)
 
 origins = ["*"]
 app.add_middleware(

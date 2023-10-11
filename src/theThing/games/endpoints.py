@@ -22,7 +22,11 @@ from .utils import (
     assign_hands,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.games.socket_handler import send_player_status_to_player, send_game_status_to_player
+from src.theThing.games.socket_handler import (
+    send_player_status_to_player,
+    send_game_status_to_player,
+    send_game_and_player_status_to_player,
+)
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -60,7 +64,9 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
+    game = GameCreate(
+        name=game_name, min_players=min_players, max_players=max_players
+    )
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -129,6 +135,10 @@ async def start_game(game_start_info: dict):
     game_with_deck = get_full_game(game_id)
     assign_hands(game_with_deck)
 
+    # Send game and player status to all players
+    updated_game = get_full_game(game_id)
+    await send_game_and_player_status_to_player(updated_game)
+
     return {"message": f"Game {game_id} started successfully"}
 
 
@@ -152,7 +162,9 @@ async def join_game(join_info: dict):
 
     # Check that name is not empty
     if not player_name:
-        raise HTTPException(status_code=422, detail="Player name cannot be empty")
+        raise HTTPException(
+            status_code=422, detail="Player name cannot be empty"
+        )
 
     new_player = PlayerCreate(name=player_name, owner=False)
 
@@ -190,8 +202,14 @@ async def steal_card(steal_data: dict):
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
     # Check valid inputs
-    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
-        raise HTTPException(status_code=422, detail="Input data cannot be empty")
+    if (
+        not steal_data
+        or not steal_data["game_id"]
+        or not steal_data["player_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="Input data cannot be empty"
+        )
 
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
@@ -203,16 +221,19 @@ async def steal_card(steal_data: dict):
         raise HTTPException(status_code=404, detail=str("Game not found"))
     if game.state != 1:
         raise HTTPException(status_code=422, detail="Game has not started yet")
-    # Verify that it actually is the player turn
-    if game.turn_owner != player_id:
-        raise HTTPException(status_code=422, detail="It is not the player turn") 
 
+    # Check valid player status
     try:
         player = get_player(player_id, game_id)
         if len(player.hand) >= 5:
             raise HTTPException(status_code=422, detail="Player hand is full")
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=422, detail=str("Player not found"))
+
+    # Verify that it actually is the player turn
+    if game.turn_owner != player.table_position:
+        raise HTTPException(status_code=422, detail="It is not your turn")
+
     # Perform logic to steal the card
     try:
         card = get_card_from_deck(game_id)
@@ -253,7 +274,9 @@ async def play_card(play_data: dict):
         or not play_data["card_id"]
         or not play_data["destination_name"]
     ):
-        raise HTTPException(status_code=422, detail="Input data cannot be empty")
+        raise HTTPException(
+            status_code=422, detail="Input data cannot be empty"
+        )
 
     game_id = play_data["game_id"]
     player_id = play_data["player_id"]
@@ -285,7 +308,9 @@ async def play_card(play_data: dict):
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player.table_position for player in game.players if player.alive]
+    alive_players = [
+        player.table_position for player in game.players if player.alive
+    ]
     alive_players.sort()
     if game.play_direction:
         game.turn_owner = alive_players[
@@ -312,7 +337,9 @@ async def play_card(play_data: dict):
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)
     await send_player_status_to_player(player_id, player)
-    await send_player_status_to_player(destination_player.id, destination_player)
+    await send_player_status_to_player(
+        destination_player.id, destination_player
+    )
 
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
@@ -343,7 +370,10 @@ async def get_game_by_id(game_id: int):
     game, winner = verify_finished_game(game)
 
     if winner is not None:
-        return {"message": f"Game {game_id} finished successfully", "winner": winner}
+        return {
+            "message": f"Game {game_id} finished successfully",
+            "winner": winner,
+        }
 
     return game
 
@@ -400,7 +430,9 @@ async def leave_game(game_id: int, player_id: int):
             }
         else:  # delete all players and the game
             delete_game(game_id)
-            response = {"message": f"Game {game_id} finished successfully by host"}
+            response = {
+                "message": f"Game {game_id} finished successfully by host"
+            }
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
