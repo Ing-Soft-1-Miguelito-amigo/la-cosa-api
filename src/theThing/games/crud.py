@@ -17,7 +17,7 @@ def create_game(game: schemas.GameCreate):
     """
     with db_session:
         if models.Game.exists(name=game.name):
-            raise Exception("Game already exists")
+            raise Exception("Ya existe una partida con el mismo nombre")
         elif game.password:
             game = models.Game(
                 name=game.name,
@@ -77,7 +77,7 @@ def delete_game(game_id: int):
     with db_session:
         game = models.Game[game_id]
         game.delete()
-    return {"message": f"Game {game_id} deleted successfully"}
+    return {"message": f"Partida {game_id} eliminada con éxito"}
 
 
 def get_all_games_in_db():
