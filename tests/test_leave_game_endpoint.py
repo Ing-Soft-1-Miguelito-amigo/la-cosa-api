@@ -112,3 +112,5 @@ def test_host_leaves_game(test_db):
         game = game_crud.get_full_game(1)
     except Exception as e:
         assert e.args[0] == "Game[1]"
+    finally:
+        assert game.state == 3

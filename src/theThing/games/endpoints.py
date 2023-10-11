@@ -429,10 +429,9 @@ async def leave_game(game_id: int, player_id: int):
                 "message": f"Player {player_id} left game {game_id} successfully"
             }
         else:  # delete all players and the game
-            delete_game(game_id)
-            response = {
-                "message": f"Game {game_id} finished successfully by host"
-            }
+            # delete_game(game_id) instead of deleting the game update game and set status = 3
+            update_game(game_id, GameUpdate(state=3))
+            response = {"message": f"Game {game_id} finished successfully by host"}
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
