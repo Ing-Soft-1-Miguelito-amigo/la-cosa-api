@@ -184,7 +184,7 @@ def test_add_card_wrong_player(test_db):
             created_card1.id, created_player.id + 1, created_game.id
         )
     except Exception as e:
-        assert e.args[0] == f"Player not found"
+        assert e.args[0] == f"No se encontró el jugador"
 
     rollback()
 

@@ -42,7 +42,7 @@ def test_create_wrong_game(test_db):
     try:
         created_game = crud.create_game(GameCreate(**game_data))
     except Exception as e:
-        assert e.args[0] == "Game already exists"
+        assert e.args[0] == "Ya existe una partida con el mismo nombre"
 
     rollback()
 

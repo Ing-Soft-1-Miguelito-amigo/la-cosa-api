@@ -123,7 +123,7 @@ def test_play_card_itself(setup_module):
     )
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "The destination player cannot be the same player"
+        "detail": "No se puede aplicar el efecto a sí mismo"
     }
 
     rollback()  # rollback the changes made in the database
@@ -142,7 +142,7 @@ def test_play_card_not_turn_owner(setup_module):
         },
     )
     assert response.status_code == 422
-    assert response.json() == {"detail": "It is not the player turn"}
+    assert response.json() == {"detail": "No es el turno del jugador especificado"}
 
     rollback()
 
@@ -161,7 +161,7 @@ def test_play_card_not_in_hand(setup_module):
     )
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "The card is not in the player hand or in the deck"
+        "detail": "La carta no pertenece a la mano del jugador o al mazo de la partida"
     }
 
     rollback()
@@ -180,7 +180,7 @@ def test_play_card_not_playable(setup_module):
         },
     )
     assert response.status_code == 422
-    assert response.json() == {"detail": "The card is not playable"}
+    assert response.json() == {"detail": "La carta seleccionada no es jugable"}
 
     rollback()
 
@@ -199,7 +199,7 @@ def test_play_card_not_adjacent(setup_module):
     )
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "The destination player is not adjacent to the player"
+        "detail": "El jugador destino no está sentado en una posición adyacente"
     }
 
     rollback()
@@ -239,7 +239,7 @@ def test_play_card_not_enough_cards(setup_module):
     )
     assert response.status_code == 404
     assert response.json() == {
-        "detail": "Player has less than minimum cards to play"
+        "detail": "El jugador tiene menos cartas de las necesarias para jugar"
     }
 
 
@@ -273,7 +273,7 @@ def test_play_card_kill_player(setup_module):
     # get thegame directly from the database to have the updated data
     game_status = game_crud.get_game(1)
 
-    assert response.json() == {"message": "Card played successfully"}
+    assert response.json() == {"message": "Carta jugada con éxito"}
     assert response.status_code == 200
     assert len(player2_status.hand) == 4  # because the card is played
     assert card_status.state == 0  # because the card is played

@@ -35,7 +35,7 @@ def test_steal_card_success(test_db):
         response = client.post("/game/join", json=player)
         assert response.status_code == 200
         assert response.json() == {
-            "message": "Player joined game successfully",
+            "message": "El jugador se unió con éxito",
             "player_id": playerid,
             "game_id": 1,
         }
@@ -45,13 +45,13 @@ def test_steal_card_success(test_db):
     game_data = {"game_id": 1, "player_name": "Test Host"}
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Game 1 started successfully"}
+    assert response.json() == {"message": "Partida 1 iniciada con éxito"}
 
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 1}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Card stolen successfully"}
+    assert response.json() == {"message": "Carta robada con éxito"}
 
 
 def test_steal_card_empty_deck(test_db):
@@ -71,7 +71,7 @@ def test_steal_card_empty_deck(test_db):
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Card stolen successfully"}
+    assert response.json() == {"message": "Carta robada con éxito"}
     rollback()
 
 
@@ -80,7 +80,7 @@ def test_steal_card_with_invalid_player_id(test_db):
     steal_data = {"game_id": 1, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Player not found"}
+    assert response.json() == {"detail": "No se encontró el jugador"}
     rollback()
 
 
@@ -91,7 +91,7 @@ def test_steal_with_no_cards_indeck(test_db):
     for card in game.deck:
         response = delete_card(card.id, 1)
         assert response == {
-            "message": f"Card {card.id} deleted successfully from game 1"
+            "message": f"Carta {card.id} eliminada con éxito de la partida 1"
         }
     commit()
 
@@ -102,7 +102,7 @@ def test_steal_with_no_cards_indeck(test_db):
     steal_data = {"game_id": 1, "player_id": 3}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Non existent cards in the deck"}
+    assert response.json() == {"detail": "La carta no existe en el mazo"}
 
 
 def test_steal_card_on_not_started_game(test_db):
@@ -128,7 +128,7 @@ def test_steal_card_on_not_started_game(test_db):
         response = client.post("/game/join", json=player)
         assert response.status_code == 200
         assert response.json() == {
-            "message": "Player joined game successfully",
+            "message": "El jugador se unió con éxito",
             "player_id": playerid,
             "game_id": 2,
         }
@@ -138,7 +138,7 @@ def test_steal_card_on_not_started_game(test_db):
     steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Game has not started yet"}
+    assert response.json() == {"detail": "La partida aún no ha comenzado"}
 
 
 def test_steal_card_2_times(test_db):
@@ -147,19 +147,19 @@ def test_steal_card_2_times(test_db):
     game_data = {"game_id": 2, "player_name": "Test Host"}
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Game 2 started successfully"}
+    assert response.json() == {"message": "Partida 2 iniciada con éxito"}
 
     # Steal a card
     steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Card stolen successfully"}
+    assert response.json() == {"message": "Carta robada con éxito"}
 
     # Steal a card again
     steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Player hand is full"}
+    assert response.json() == {"detail": "La mano del jugador está llena"}
     rollback()
 
 
@@ -168,7 +168,7 @@ def test_steal_card_with_empty_data():
     steal_data = {}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Input data cannot be empty"}
+    assert response.json() == {"detail": "La entrada no puede ser vacía"}
 
 
 def test_steal_card_with_invalid_game_id(test_db):
@@ -176,4 +176,4 @@ def test_steal_card_with_invalid_game_id(test_db):
     steal_data = {"game_id": 3, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 404
-    assert response.json() == {"detail": "Game not found"}
+    assert response.json() == {"detail": "No se encontró la partida"}
