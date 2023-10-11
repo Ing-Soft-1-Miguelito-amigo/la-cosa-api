@@ -17,7 +17,7 @@ def test_create_game_success(test_db):
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 201
     assert response.json() == {
-        "message": "Game 'Test Game' created by 'Test Host' successfully",
+        "message": "Partida 'Test Game' creada por 'Test Host' con éxito",
         "game_id": 1,
         "player_id": 1,
     }
@@ -33,7 +33,7 @@ def test_create_game_empty_name(test_db):
     }
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 422
-    assert "Game name cannot be empty" in response.text
+    assert "El nombre de la partida no puede ser vacío" in response.text
     rollback()
 
 
@@ -46,7 +46,7 @@ def test_create_game_invalid_min_players(test_db):
     }
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 422
-    assert "Minimum players cannot be less than 4" in response.text
+    assert "El mínimo de jugadores no puede ser menor a 4" in response.text
     rollback()
 
 
@@ -59,7 +59,7 @@ def test_create_game_invalid_max_players(test_db):
     }
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 422
-    assert "Maximum players cannot be greater than 12" in response.text
+    assert "El máximo de jugadores no puede ser mayor a 12" in response.text
     rollback()
 
 
@@ -72,5 +72,5 @@ def test_create_game_empty_host(test_db):
     }
     response = client.post("/game/create", json=game_data)
     assert response.status_code == 422
-    assert "Host name cannot be empty" in response.text
+    assert "El nombre del host no puede ser vacío" in response.text
     rollback()

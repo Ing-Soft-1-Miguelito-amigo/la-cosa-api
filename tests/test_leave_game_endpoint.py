@@ -65,7 +65,7 @@ def test_leave_game_started(test_db):
     )  # start the game 2, the  try to leave it
     response = client.put(f"/game/2/player/{players[0].id}/leave")
     assert response.status_code == 422
-    assert response.json() == {"detail": "Game already started"}
+    assert response.json() == {"detail": "La partida ya ha comenzado"}
     # check that the player is still in the game
     game = game_crud.get_full_game(2)
     players_after = [player for player in game.players if player.owner is False]
@@ -79,7 +79,7 @@ def test_leave_game_successful(test_db):
     response = client.put(f"/game/1/player/{players[0].id}/leave")
     assert response.status_code == 200
     assert response.json() == {
-        "message": f"Player {players[0].id} left game {game.id} successfully"
+        "message": f"Jugador {players[0].id} abandonó la partida {game.id} con éxito"
     }
     # check that the player is not in the game anymore
     game = game_crud.get_full_game(1)
@@ -94,7 +94,7 @@ def test_host_leaves_game(test_db):
     response = client.put(f"/game/1/player/{players[0].id}/leave")
     assert response.status_code == 200
     assert response.json() == {
-        "message": f"Player {players[0].id} left game {game.id} successfully"
+        "message": f"Jugador {players[0].id} abandonó la partida {game.id} con éxito"
     }
     # check that the player is not in the game anymore
     game = game_crud.get_full_game(1)
@@ -106,7 +106,7 @@ def test_host_leaves_game(test_db):
     response = client.put(f"/game/1/player/{host.id}/leave")
     assert response.status_code == 200
     assert response.json() == {
-        "message": "Game 1 finished successfully by host"
+        "message": "Partida 1 finalizada por el host"
     }
     try:
         game = game_crud.get_full_game(1)

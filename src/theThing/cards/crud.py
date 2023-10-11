@@ -22,7 +22,7 @@ def create_card(card: CardCreate, game_id: int):
         try:
             game = Game[game_id]
         except ObjectNotFound:
-            raise Exception("Game not found")
+            raise Exception("No se encontró la partida")
 
         card = Card(
             code=card.code,
@@ -62,7 +62,7 @@ def delete_card(card_id: int, game_id: int):
             raise ObjectNotFound(Card, pkval=card_id)
         card.delete()
     return {
-        "message": f"Card {card_id} deleted successfully from game {game_id}"
+        "message": f"Carta {card_id} eliminada con éxito de la partida {game_id}"
     }
 
 
@@ -73,10 +73,10 @@ def give_card_to_player(card_id: int, player_id: int, game_id: int):
     with db_session:
         card = Card.get(game=Game[game_id], id=card_id)
         if card is None:
-            raise Exception("Card not found")
+            raise Exception("No se encontró la carta")
         player = Player.get(game=Game[game_id], id=player_id)
         if player is None:
-            raise Exception("Player not found")
+            raise Exception("No se encontró el jugador")
         card.player = player
         card.state = 1
         card.flush()
@@ -91,7 +91,7 @@ def get_card_from_deck(game_id: int):
     with db_session:
         game = Game[game_id]
         if len(game.deck) == 0:
-            raise Exception("Non existent cards in the deck")
+            raise Exception("La carta no existe en el mazo")
 
         # Select a card from the deck
         card = game.deck.select(lambda c: c.state == 2).random(1)

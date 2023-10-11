@@ -68,7 +68,7 @@ def test_create_wrong_player(test_db):
             PlayerCreate(**player2_data), created_game.id
         )
     except Exception as e:
-        assert str(e) == "Player with same name exists"
+        assert str(e) == "Ya existe un jugador con el mismo nombre"
 
     assert game_crud.get_game(created_game.id).model_dump() == {
         "id": 1,
@@ -117,7 +117,7 @@ def test_add_player_to_full_game(test_db):
             PlayerCreate(**player3_data), created_game.id
         )
     except Exception as e:
-        assert str(e) == "Game is full"
+        assert str(e) == "La partida está llena"
     expected_game = GameOut(
         **{
             "id": 1,
@@ -202,7 +202,7 @@ def test_update_player(test_db):
 @db_session
 def test_delete_player(test_db):
     response = crud.delete_player(2, game_id=1)
-    assert response == {"message": "Player 2 deleted successfully"}
+    assert response == {"message": "Jugador 2 eliminado con éxito"}
 
     try:
         deleted_player = crud.delete_player(2, game_id=1)

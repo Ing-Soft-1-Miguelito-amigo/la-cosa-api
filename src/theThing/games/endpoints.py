@@ -83,7 +83,7 @@ async def create_new_game(game_data: GameWithHost):
     host_player = full_game.players[0]
 
     return {
-        "message": f"Game '{game_name}' created by '{host_name}' successfully",
+        "message": f"Partida '{game_name}' creada por '{host_name}' con éxito",
         "game_id": created_game.id,
         "player_id": host_player.id,
     }
@@ -140,7 +140,7 @@ async def start_game(game_start_info: dict):
     updated_game = get_full_game(game_id)
     await send_game_and_player_status_to_player(updated_game)
 
-    return {"message": f"Game {game_id} started successfully"}
+    return {"message": f"Partida {game_id} iniciada con éxito"}
 
 
 # Endpoint to join a player to a game
@@ -164,7 +164,7 @@ async def join_game(join_info: dict):
     # Check that name is not empty
     if not player_name:
         raise HTTPException(
-            status_code=422, detail="Player name cannot be empty"
+            status_code=422, detail="El nombre del jugador no puede ser vacío"
         )
 
     new_player = PlayerCreate(name=player_name, owner=False)
@@ -173,13 +173,13 @@ async def join_game(join_info: dict):
     try:
         created_player = create_player(new_player, game_id)
     except Exception as e:
-        if str(e) == "Game not found":
+        if str(e) == "No se encontró la partida":
             raise HTTPException(status_code=404, detail=str(e))
         else:
             raise HTTPException(status_code=422, detail=str(e))
 
     return {
-        "message": "Player joined game successfully",
+        "message": "El jugador se unió con éxito",
         "player_id": created_player.id,
         "game_id": game_id,
     }
@@ -209,7 +209,7 @@ async def steal_card(steal_data: dict):
         or not steal_data["player_id"]
     ):
         raise HTTPException(
-            status_code=422, detail="Input data cannot be empty"
+            status_code=422, detail="La entrada no puede ser vacía"
         )
 
     game_id = steal_data["game_id"]
@@ -219,21 +219,21 @@ async def steal_card(steal_data: dict):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("Game not found"))
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="Game has not started yet")
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
 
     # Check valid player status
     try:
         player = get_player(player_id, game_id)
         if len(player.hand) >= 5:
-            raise HTTPException(status_code=422, detail="Player hand is full")
+            raise HTTPException(status_code=422, detail="La mano del jugador está llena")
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=422, detail=str("Player not found"))
+        raise HTTPException(status_code=422, detail=str("No se encontró el jugador"))
 
     # Verify that it actually is the player turn
     if game.turn_owner != player.table_position:
-        raise HTTPException(status_code=422, detail="It is not your turn")
+        raise HTTPException(status_code=422, detail="No es tu turno")
 
     # Perform logic to steal the card
     try:
@@ -248,7 +248,7 @@ async def steal_card(steal_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
 
-    return {"message": "Card stolen successfully"}
+    return {"message": "Carta robada con éxito"}
 
 
 @router.put("/game/play", status_code=200)
@@ -276,7 +276,7 @@ async def play_card(play_data: dict):
         or not play_data["destination_name"]
     ):
         raise HTTPException(
-            status_code=422, detail="Input data cannot be empty"
+            status_code=422, detail="La entrada no puede ser vacía"
         )
 
     game_id = play_data["game_id"]
@@ -305,7 +305,7 @@ async def play_card(play_data: dict):
             # TODO: implement panic card logic
             pass
         case _:  # LaCosa or wrong kind
-            raise HTTPException(status_code=422, detail="Card kind not valid")
+            raise HTTPException(status_code=422, detail="El tipo de carta no es válido")
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
@@ -345,7 +345,7 @@ async def play_card(play_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
 
-    return {"message": "Card played successfully"}
+    return {"message": "Carta jugada con éxito"}
 
 
 @router.get("/game/list")
@@ -398,7 +398,7 @@ async def get_game_by_id(game_id: int):
 
     if winner is not None:
         return {
-            "message": f"Game {game_id} finished successfully",
+            "message": f"Partida {game_id} finalizada con éxito",
             "winner": winner,
         }
 
@@ -448,17 +448,17 @@ async def leave_game(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
         if game.state != 0:
-            raise HTTPException(status_code=422, detail="Game already started")
+            raise HTTPException(status_code=422, detail="La partida ya ha comenzado")
         player = get_player(player_id, game_id)
         if not player.owner:
             delete_player(player_id, game_id)
             response = {
-                "message": f"Player {player_id} left game {game_id} successfully"
+                "message": f"Jugador {player_id} abandonó la partida {game_id} con éxito"
             }
         else:  # delete all players and the game
             # delete_game(game_id) instead of deleting the game update game and set status = 3
             update_game(game_id, GameUpdate(state=3))
-            response = {"message": f"Game {game_id} finished successfully by host"}
+            response = {"message": f"Partida {game_id} finalizada por el host"}
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
