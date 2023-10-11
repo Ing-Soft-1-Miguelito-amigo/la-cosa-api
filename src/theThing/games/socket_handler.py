@@ -1,5 +1,6 @@
 import socketio
 from src.theThing.players.schemas import PlayerBase
+from src.theThing.games.schemas import GameOut
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode='asgi')
 # define an asgi app
@@ -26,4 +27,8 @@ async def disconnect(sid):
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
     await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
+
+
+async def send_game_status_to_player(game_id: int, game_data: GameOut):
+    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
 

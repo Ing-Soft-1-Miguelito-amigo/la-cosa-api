@@ -71,10 +71,10 @@ def give_card_to_player(card_id: int, player_id: int, game_id: int):
     with db_session:
         card = Card.get(game=Game[game_id], id=card_id)
         if card is None:
-            raise ObjectNotFound(Card, pkval=card_id)
+            raise Exception("Card not found")
         player = Player.get(game=Game[game_id], id=player_id)
         if player is None:
-            raise ObjectNotFound(Player, pkval=player_id)
+            raise Exception("Player not found")
         card.player = player
         card.state = 1
         card.flush()

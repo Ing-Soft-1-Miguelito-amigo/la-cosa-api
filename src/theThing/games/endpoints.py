@@ -22,7 +22,7 @@ from .utils import (
     assign_hands,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.games.socket_handler import send_player_status_to_player
+from src.theThing.games.socket_handler import send_player_status_to_player, send_game_status_to_player
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -203,11 +203,10 @@ async def steal_card(steal_data: dict):
         raise HTTPException(status_code=404, detail=str("Game not found"))
     if game.state != 1:
         raise HTTPException(status_code=422, detail="Game has not started yet")
-    """
-    Then it will be useful 
+    # Verify that it actually is the player turn
     if game.turn_owner != player_id:
         raise HTTPException(status_code=422, detail="It is not the player turn") 
-    """
+
     try:
         player = get_player(player_id, game_id)
         if len(player.hand) >= 5:
@@ -219,13 +218,14 @@ async def steal_card(steal_data: dict):
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
     except Exception as e:
-        if str(e) == "Non existent cards in the deck":
-            raise HTTPException(status_code=422, detail=str(e))
-        else:
-            raise HTTPException(status_code=422, detail=str("Player not found"))
+        raise HTTPException(status_code=422, detail=str(e))
 
-    player = get_player(player_id, game_id)
-    await send_player_status_to_player(player_id, player)
+    updated_player = get_player(player_id, game_id)
+    await send_player_status_to_player(player_id, updated_player)
+
+    updated_game = get_game(game_id)
+    await send_game_status_to_player(game_id, updated_game)
+
     return {"message": "Card stolen successfully"}
 
 
@@ -308,10 +308,15 @@ async def play_card(play_data: dict):
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
+
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)
     await send_player_status_to_player(player_id, player)
     await send_player_status_to_player(destination_player.id, destination_player)
+
+    updated_game = get_game(game_id)
+    await send_game_status_to_player(game_id, updated_game)
+
     return {"message": "Card played successfully"}
 
 
