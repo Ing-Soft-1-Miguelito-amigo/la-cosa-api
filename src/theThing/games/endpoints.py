@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .schemas import GameCreate, GameUpdate
+from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
 from ..cards.schemas import CardBase
@@ -12,6 +12,7 @@ from .crud import (
     get_full_game,
     create_game_deck,
     delete_game,
+    get_all_games,
 )
 from .utils import (
     verify_data_create,
@@ -302,6 +303,32 @@ async def play_card(play_data: dict):
         raise HTTPException(status_code=422, detail=str(e))
 
     return {"message": "Card played successfully"}
+
+
+@router.get("/game/list")
+async def get_list_of_games():
+    """
+    Get a list of games.
+
+    Returns:
+        list: A list of JSON responses containing the game information.
+    """
+    full_list = get_all_games()
+    games_to_return = []
+
+    for game in full_list:
+        if game.state == 0:
+            game_with_amount = GamePlayerAmount(
+                name=game.name,
+                id=game.id,
+                min_players=game.min_players,
+                max_players=game.max_players,
+                amount_of_players=len(game.players),
+            )
+
+            games_to_return.append(game_with_amount)
+
+    return games_to_return
 
 
 @router.get("/game/{game_id}")

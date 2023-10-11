@@ -61,11 +61,11 @@ def get_full_game(game_id: int):
 def get_all_games():
     """
     This function returns all the games in the database
-    in a list of GameBase schemas
+    in a list of GameOut schemas
     """
     with db_session:
         games = models.Game.select()
-        result = [schemas.GameBase.model_validate(game) for game in games]
+        result = [schemas.GameOut.model_validate(game) for game in games]
     return result
 
 
