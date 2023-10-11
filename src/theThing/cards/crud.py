@@ -61,7 +61,9 @@ def delete_card(card_id: int, game_id: int):
         if card is None:
             raise ObjectNotFound(Card, pkval=card_id)
         card.delete()
-    return {"message": f"Card {card_id} deleted successfully from game {game_id}"}
+    return {
+        "message": f"Card {card_id} deleted successfully from game {game_id}"
+    }
 
 
 def give_card_to_player(card_id: int, player_id: int, game_id: int):
@@ -71,10 +73,10 @@ def give_card_to_player(card_id: int, player_id: int, game_id: int):
     with db_session:
         card = Card.get(game=Game[game_id], id=card_id)
         if card is None:
-            raise ObjectNotFound(Card, pkval=card_id)
+            raise Exception("Card not found")
         player = Player.get(game=Game[game_id], id=player_id)
         if player is None:
-            raise ObjectNotFound(Player, pkval=player_id)
+            raise Exception("Player not found")
         card.player = player
         card.state = 1
         card.flush()

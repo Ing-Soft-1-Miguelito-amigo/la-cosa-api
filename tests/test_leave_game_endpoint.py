@@ -105,8 +105,12 @@ def test_host_leaves_game(test_db):
     # now the host leaves
     response = client.put(f"/game/1/player/{host.id}/leave")
     assert response.status_code == 200
-    assert response.json() == {"message": "Game 1 finished successfully by host"}
+    assert response.json() == {
+        "message": "Game 1 finished successfully by host"
+    }
     try:
         game = game_crud.get_full_game(1)
     except Exception as e:
         assert e.args[0] == "Game[1]"
+    finally:
+        assert game.state == 3

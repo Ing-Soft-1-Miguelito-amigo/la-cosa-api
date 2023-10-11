@@ -2,7 +2,8 @@ from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback, commit
 from .test_setup import test_db, clear_db
-from src.theThing.games.crud import get_full_game
+from src.theThing.games.crud import get_full_game, update_game
+from src.theThing.games.schemas import GameUpdate
 from src.theThing.cards.schemas import CardCreate, CardUpdate
 from src.theThing.cards.crud import create_card, delete_card, update_card
 
@@ -47,7 +48,7 @@ def test_steal_card_success(test_db):
     assert response.json() == {"message": "Game 1 started successfully"}
 
     # Steal a card
-    steal_data = {"game_id": 1, "player_id": 2}
+    steal_data = {"game_id": 1, "player_id": 1}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Card stolen successfully"}
@@ -55,14 +56,19 @@ def test_steal_card_success(test_db):
 
 def test_steal_card_empty_deck(test_db):
     # Test #2: steal a card with empty deck
-    # Update cards state in the previous game
-    card_to_update1 = CardUpdate(id=1, state=0)
-    update_card(card_to_update1, 1)
-    card_to_update2 = CardUpdate(id=2, state=0)
-    update_card(card_to_update2, 1)
 
+    # Update cards state to played in the previous game
+    game = get_full_game(1)
+    for card in game.deck:
+        card_to_update = CardUpdate(id=card.id, state=0)
+        update_card(card_to_update, 1)
+    commit()
+
+    gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=2)
+    update_game(1, gameupdate)
+    commit()
     # Steal a card. It should not generate any problems
-    steal_data = {"game_id": 1, "player_id": 1}
+    steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Card stolen successfully"}
@@ -81,15 +87,20 @@ def test_steal_card_with_invalid_player_id(test_db):
 def test_steal_with_no_cards_indeck(test_db):
     # Test #2: steal a card from a player with no cards in deck
     # Delete the 31 cards on the previous test game to empty the deck
-    for i in range(1, 32):
-        response = delete_card(i, 1)
-        assert response == {"message": f"Card {i} deleted successfully from game 1"}
+    game = get_full_game(1)
+    for card in game.deck:
+        response = delete_card(card.id, 1)
+        assert response == {
+            "message": f"Card {card.id} deleted successfully from game 1"
+        }
     commit()
 
+    gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=3)
+    update_game(1, gameupdate)
+    commit()
     # Steal a card
-    steal_data = {"game_id": 1, "player_id": 2}
+    steal_data = {"game_id": 1, "player_id": 3}
     response = client.put("/game/steal", json=steal_data)
-    print(response.json())
     assert response.status_code == 422
     assert response.json() == {"detail": "Non existent cards in the deck"}
 
@@ -124,10 +135,31 @@ def test_steal_card_on_not_started_game(test_db):
         playerid += 1
 
     # Steal a card
-    steal_data = {"game_id": 2, "player_id": 6}
+    steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
     assert response.json() == {"detail": "Game has not started yet"}
+
+
+def test_steal_card_2_times(test_db):
+    # Test: try to steal a card 2 times
+    # start the previous game
+    game_data = {"game_id": 2, "player_name": "Test Host"}
+    response = client.post("/game/start", json=game_data)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Game 2 started successfully"}
+
+    # Steal a card
+    steal_data = {"game_id": 2, "player_id": 5}
+    response = client.put("/game/steal", json=steal_data)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Card stolen successfully"}
+
+    # Steal a card again
+    steal_data = {"game_id": 2, "player_id": 5}
+    response = client.put("/game/steal", json=steal_data)
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Player hand is full"}
     rollback()
 
 

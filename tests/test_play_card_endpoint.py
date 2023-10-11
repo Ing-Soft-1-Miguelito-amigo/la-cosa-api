@@ -96,7 +96,9 @@ def setup_module():
     )
 
     extra_card = card_crud.create_card(extra_card_data, created_game.id)
-    card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
+    card_crud.give_card_to_player(
+        extra_card.id, created_player.id, created_game.id
+    )
 
     # start the game
     game_crud.update_game(
@@ -236,7 +238,9 @@ def test_play_card_not_enough_cards(setup_module):
         },
     )
     assert response.status_code == 404
-    assert response.json() == {"detail": "Player has less than minimum cards to play"}
+    assert response.json() == {
+        "detail": "Player has less than minimum cards to play"
+    }
 
 
 # test case 8: the card is played correctly and kills a player
