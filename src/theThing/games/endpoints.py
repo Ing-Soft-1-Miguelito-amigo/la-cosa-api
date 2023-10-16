@@ -4,7 +4,7 @@ from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
 from ..cards.schemas import CardBase
-from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
+from ..cards.crud import get_card_from_deck, give_card_to_player, get_card, remove_card_from_player
 from .crud import (
     create_game,
     get_game,
@@ -19,6 +19,7 @@ from .utils import (
     verify_data_start,
     verify_finished_game,
     verify_data_play_card,
+    verify_data_discard_card,
     play_action_card,
     assign_hands,
     calculate_winners
@@ -347,6 +348,76 @@ async def play_card(play_data: dict):
     await send_game_status_to_player(game_id, updated_game)
 
     return {"message": "Carta jugada con éxito"}
+
+
+@router.put("/game/discard", status_code=200)
+async def discard_card(discard_data: dict):
+    """
+    Discard card from the player hand. It updates the state of the turn.
+    Therefore, it also updates the player hand.
+
+    Parameters:
+        discard_data (dict): A dict containing game_id, player_id and card_id.
+
+    Returns:
+        dict: A JSON response indicating the success of the card playing.
+        socket event: a socket event containing the updated player and 
+        game status.
+
+    Raises:
+        HTTPException:
+            - 404 (Not Found): If the specified game, or player, or card
+              does not exists.
+            - 422 (Unprocessable Entity): 
+                Multiple possible errors. Description on "detail".
+    """
+    # Check valid inputs
+    if (
+        not discard_data
+        or not discard_data["game_id"]
+        or not discard_data["player_id"]
+        or not discard_data["card_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
+
+    game_id = discard_data["game_id"]
+    player_id = discard_data["player_id"]
+    card_id = discard_data["card_id"]
+
+    try:
+        game, player, card = verify_data_discard_card(
+            game_id, player_id, card_id
+        )
+    except Exception as e:
+        return e
+
+    # Perform logic to discard the card
+    try:
+        updated_player = remove_card_from_player(card_id, player_id, game_id)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    """     
+    # Change turn state
+    try:
+        update_turn (
+            game_id,
+            Turn(
+                owner = game.turn_owner,
+                state = 5 # Has to be 3 in the future
+            ),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    """
+    # Send new status via socket
+    await send_player_status_to_player(player_id, updated_player)
+    updated_game = get_game(game_id)
+    await send_game_status_to_player(game_id, updated_game)
+    # TODO: send turn status
+
+    return {"message": "Carta descartada con éxito"}
 
 
 @router.get("/game/list")

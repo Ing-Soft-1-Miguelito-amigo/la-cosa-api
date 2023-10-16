@@ -230,6 +230,41 @@ def play_action_card(
     return updated_game
 
 
+def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
+    # Verify that the game exists and it is started
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+    if game.state != 1:
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+
+    # Verify that the player exists, and it is the turn owner, is alive and has already stealed a card.
+    try:
+        player = get_player(player_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str("No se encontró el jugador especificado"))
+    if game.turn_owner != player.table_position or not player.alive:
+        raise HTTPException(status_code=422, detail="No es el turno del jugador especificado")
+    if len(player.hand) <= 4:
+        raise HTTPException(status_code=422, detail="No es posible descartar sin levantar una carta primero")
+
+    # Verify that the card exists and it is in the player hand
+    try:
+        card = get_card(card_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str("No se encontró la carta especificada"))
+    if card not in player.hand or card not in game.deck or card.state == 0:
+        raise HTTPException(
+            status_code=422,
+            detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
+        )
+    if card.playable is False:
+        raise HTTPException(status_code=422, detail="La carta seleccionada no es jugable")
+    
+    return game, player, card
+
+
 def assign_hands(game: GameInDB):
     """
     Assign the initial hands to the players following the process specified by game rules.
