@@ -261,3 +261,15 @@ def assign_hands(game: GameInDB):
         set_aside_cards = set_aside_cards[4:]
         for card in player_cards:
             give_card_to_player(card.id, player.id, game.id)
+
+
+def calculate_winners(game_id: int):
+    """
+    Calculate the winners of the game.
+    PRE: the game exists and it is finished.
+    """
+    game = get_full_game(game_id)
+    players = game.players
+    winners = [player.id for player in players if player.alive]
+
+    return winners
