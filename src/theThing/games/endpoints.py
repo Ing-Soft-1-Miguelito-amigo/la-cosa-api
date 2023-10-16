@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
+from ..turn.crud import create_turn
 from ..cards.schemas import CardBase
 from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
 from .crud import (
@@ -127,6 +128,12 @@ async def start_game(game_start_info: dict):
     new_game_status = GameUpdate(state=1, play_direction=True, turn_owner=1)
     try:
         update_game(game_id, new_game_status)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # Create turn structure
+    try:
+        create_turn(game_id, 1)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
