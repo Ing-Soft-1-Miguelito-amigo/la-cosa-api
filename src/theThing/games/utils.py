@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from .crud import get_full_game
-from .schemas import GameOut, GameInDB
+from .crud import get_full_game, update_game, get_game
+from .schemas import GameOut, GameInDB, GameUpdate
 from ..cards.crud import (
     get_card,
     remove_card_from_player,
@@ -100,11 +100,14 @@ def verify_finished_game(game: GameOut):
 
     if len(alive_players) == 1 and game.state == 1:
         game.state = 2
-        winner = alive_players[0].name
+        game_id = game.id
+        game_new_state = GameUpdate(state=game.state)
+        game_updated = update_game(game_id, game_new_state)
+        game_updated_id = game_updated.id
+        game_out_updated = get_game(game_updated_id)
+        return game_out_updated
 
-        return game, winner
-
-    return game, None
+    return game
 
 
 def verify_data_play_card(

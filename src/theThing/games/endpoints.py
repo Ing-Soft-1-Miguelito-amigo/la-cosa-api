@@ -394,13 +394,7 @@ async def get_game_by_id(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     # Check if the game is finished
-    game, winner = verify_finished_game(game)
-
-    if winner is not None:
-        return {
-            "message": f"Partida {game_id} finalizada con éxito",
-            "winner": winner,
-        }
+    game = verify_finished_game(game)
 
     return game
 
