@@ -21,6 +21,7 @@ from .utils import (
     verify_data_play_card,
     play_action_card,
     assign_hands,
+    calculate_winners
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
@@ -394,15 +395,42 @@ async def get_game_by_id(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     # Check if the game is finished
-    game, winner = verify_finished_game(game)
-
-    if winner is not None:
-        return {
-            "message": f"Partida {game_id} finalizada con éxito",
-            "winner": winner,
-        }
+    game = verify_finished_game(game)
 
     return game
+
+
+@router.get("/game/{game_id}/results")
+async def get_game_results(game_id: int):
+    """
+    Get the results of a game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game results.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    if game.state != 2:
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha finalizado"
+        )
+
+    winners = calculate_winners(game_id)
+
+    return {
+        "message": "Partida finalizada con éxito",
+        "game_id": game_id,
+        "winners": winners
+    }
 
 
 @router.get("/game/{game_id}/player/{player_id}")
