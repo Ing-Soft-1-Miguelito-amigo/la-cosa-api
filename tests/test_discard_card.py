@@ -57,7 +57,6 @@ def test_discard_card_succesfully(test_db):
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta descartada con éxito"}
-    
 
 
 def test_discard_wrong_game(test_db):
@@ -88,7 +87,9 @@ def test_discard_without_stealing(test_db):
     discard_data = {"game_id": 1, "player_id": 3, "card_id": player.hand[0].id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "No es posible descartar sin levantar una carta primero"}
+    assert response.json() == {
+        "detail": "No es posible descartar sin levantar una carta primero"
+    }
 
 
 def test_discard_2_times(test_db):
@@ -108,7 +109,9 @@ def test_discard_2_times(test_db):
     discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "No es posible descartar en este momento"}
+    assert response.json() == {
+        "detail": "No es posible descartar en este momento"
+    }
 
 
 def test_discard_not_existent_card(test_db):
@@ -122,16 +125,19 @@ def test_discard_not_existent_card(test_db):
 
     # get a card id which is not in the player's hand, but exists in the game
     player = player_crud.get_player(1, 1)
-    for i in range(1,len(player.hand)):
-        if i != player.hand[i-1].id:
+    for i in range(1, len(player.hand)):
+        if i != player.hand[i - 1].id:
             card_id = i
 
     if card_id is None:
-        card_id=player.hand[-1].id+1
+        card_id = player.hand[-1].id + 1
 
     discard_data = {"game_id": 1, "player_id": 1, "card_id": card_id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "La carta no pertenece a la mano del jugador o al mazo de la partida"}
+    assert response.json() == {
+        "detail": "La carta no pertenece a la mano del jugador o al mazo de la partida"
+    }
+
 
 rollback()

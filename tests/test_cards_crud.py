@@ -116,8 +116,12 @@ def test_player_hand(test_db):
     )
 
     # add the cards to the player
-    card_crud.give_card_to_player(created_card1.id, created_player.id, created_game.id)
-    card_crud.give_card_to_player(created_card2.id, created_player.id, created_game.id)
+    card_crud.give_card_to_player(
+        created_card1.id, created_player.id, created_game.id
+    )
+    card_crud.give_card_to_player(
+        created_card2.id, created_player.id, created_game.id
+    )
 
     player_data = player_crud.get_player(created_player.id, created_game.id)
     expected_cards = [

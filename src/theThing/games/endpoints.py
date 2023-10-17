@@ -6,7 +6,12 @@ from ..players.crud import create_player, get_player, delete_player
 from ..turn.crud import create_turn, update_turn
 from ..cards.schemas import CardBase
 from ..turn.schemas import TurnCreate
-from ..cards.crud import get_card_from_deck, give_card_to_player, get_card, remove_card_from_player
+from ..cards.crud import (
+    get_card_from_deck,
+    give_card_to_player,
+    get_card,
+    remove_card_from_player,
+)
 from .crud import (
     create_game,
     get_game,
@@ -69,7 +74,9 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
+    game = GameCreate(
+        name=game_name, min_players=min_players, max_players=max_players
+    )
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -211,8 +218,14 @@ async def steal_card(steal_data: dict):
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
     # Check valid inputs
-    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
-        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
+    if (
+        not steal_data
+        or not steal_data["game_id"]
+        or not steal_data["player_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
 
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
@@ -221,9 +234,13 @@ async def steal_card(steal_data: dict):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
 
     # Check valid player status
     try:
@@ -233,7 +250,9 @@ async def steal_card(steal_data: dict):
                 status_code=422, detail="La mano del jugador está llena"
             )
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=422, detail=str("No se encontró el jugador"))
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró el jugador")
+        )
 
     # Verify that it actually is the player turn
     if game.turn_owner != player.table_position:
@@ -279,7 +298,9 @@ async def play_card(play_data: dict):
         or not play_data["card_id"]
         or not play_data["destination_name"]
     ):
-        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
 
     game_id = play_data["game_id"]
     player_id = play_data["player_id"]
@@ -307,11 +328,15 @@ async def play_card(play_data: dict):
             # TODO: implement panic card logic
             pass
         case _:  # LaCosa or wrong kind
-            raise HTTPException(status_code=422, detail="El tipo de carta no es válido")
+            raise HTTPException(
+                status_code=422, detail="El tipo de carta no es válido"
+            )
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player.table_position for player in game.players if player.alive]
+    alive_players = [
+        player.table_position for player in game.players if player.alive
+    ]
     alive_players.sort()
     if game.play_direction:
         game.turn_owner = alive_players[
@@ -338,7 +363,9 @@ async def play_card(play_data: dict):
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)
     await send_player_status_to_player(player_id, player)
-    await send_player_status_to_player(destination_player.id, destination_player)
+    await send_player_status_to_player(
+        destination_player.id, destination_player
+    )
 
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
@@ -356,14 +383,14 @@ async def discard_card(discard_data: dict):
 
     Returns:
         dict: A JSON response indicating the success of the card playing.
-        socket event: a socket event containing the updated player and 
+        socket event: a socket event containing the updated player and
         game status.
 
     Raises:
         HTTPException:
             - 404 (Not Found): If the specified game, or player, or card
               does not exists.
-            - 422 (Unprocessable Entity): 
+            - 422 (Unprocessable Entity):
                 Multiple possible errors. Description on "detail".
     """
     # Check valid inputs
@@ -393,18 +420,16 @@ async def discard_card(discard_data: dict):
         updated_player = remove_card_from_player(card_id, player_id, game_id)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
-        
+
     # Change turn state
     try:
-        update_turn (
+        update_turn(
             game_id,
-            TurnCreate(
-                state = 5 # Has to be 3 in the future
-            ),
+            TurnCreate(state=5),  # Has to be 3 in the future
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
-    
+
     # Send new status via socket
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
@@ -484,7 +509,9 @@ async def get_game_results(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 2:
-        raise HTTPException(status_code=422, detail="La partida aún no ha finalizado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha finalizado"
+        )
 
     winners = calculate_winners(game_id)
 
@@ -538,7 +565,9 @@ async def leave_game(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
         if game.state != 0:
-            raise HTTPException(status_code=422, detail="La partida ya ha comenzado")
+            raise HTTPException(
+                status_code=422, detail="La partida ya ha comenzado"
+            )
         player = get_player(player_id, game_id)
         if not player.owner:
             delete_player(player_id, game_id)
