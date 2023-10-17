@@ -28,6 +28,7 @@ def test_get_game_success(test_db):
         "state": 0,
         "play_direction": None,
         "turn_owner": None,
+        "turn": None,
         "players": [
             {
                 "name": "Test Host",

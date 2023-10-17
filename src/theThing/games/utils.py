@@ -32,10 +32,14 @@ def verify_data_create(game_name, min_players, max_players, host_name):
     - None
     """
     if not game_name:
-        raise HTTPException(status_code=422, detail="El nombre de la partida no puede ser vacío")
+        raise HTTPException(
+            status_code=422, detail="El nombre de la partida no puede ser vacío"
+        )
 
     if not host_name:
-        raise HTTPException(status_code=422, detail="El nombre del host no puede ser vacío")
+        raise HTTPException(
+            status_code=422, detail="El nombre del host no puede ser vacío"
+        )
 
     if min_players < 4:
         raise HTTPException(
@@ -71,7 +75,8 @@ def verify_data_start(game: GameOut, host_name: str):
     """
     if len(game.players) < game.min_players:
         raise HTTPException(
-            status_code=422, detail="No hay suficientes jugadores para iniciar la partida"
+            status_code=422,
+            detail="No hay suficientes jugadores para iniciar la partida",
         )
 
     if len(game.players) > game.max_players:
@@ -130,22 +135,30 @@ def verify_data_play_card(
     try:
         player = get_player(player_id, game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=422, detail=str("No se encontró el jugador especificado"))
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró el jugador especificado")
+        )
     if game.turn_owner != player.table_position or not player.alive:
-        raise HTTPException(status_code=422, detail="No es el turno del jugador especificado")
+        raise HTTPException(
+            status_code=422, detail="No es el turno del jugador especificado"
+        )
 
     # Verify that the card exists and it is in the player hand
     try:
         card = get_card(card_id, game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=422, detail=str("No se encontró la carta especificada"))
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró la carta especificada")
+        )
     if card not in player.hand or card not in game.deck or card.state == 0:
         raise HTTPException(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
     if card.playable is False:
-        raise HTTPException(status_code=422, detail="La carta seleccionada no es jugable")
+        raise HTTPException(
+            status_code=422, detail="La carta seleccionada no es jugable"
+        )
 
     # Get the destination player by his name and check that is not the same player and exists and is alive
     destination_player = None
@@ -163,15 +176,11 @@ def verify_data_play_card(
             detail="No se puede aplicar el efecto a sí mismo",
         )
     if not destination_player.alive:
-        raise HTTPException(
-            status_code=422, detail="El jugador objetivo no está vivo"
-        )
+        raise HTTPException(status_code=422, detail="El jugador objetivo no está vivo")
     alive_players = [p.table_position for p in game.players if p.alive]
     alive_players.sort()
     index_player = alive_players.index(player.table_position)
-    index_destination_player = alive_players.index(
-        destination_player.table_position
-    )
+    index_destination_player = alive_players.index(destination_player.table_position)
     # check if the destination player is adjacent to the player,
     # the first and the last player are adjacent
     if index_destination_player == (index_player + 1) % len(
@@ -217,9 +226,7 @@ def play_action_card(
             pass
 
     # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
     updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,

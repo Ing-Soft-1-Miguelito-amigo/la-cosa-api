@@ -3,7 +3,9 @@ from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
+from ..turn.crud import create_turn, update_turn
 from ..cards.schemas import CardBase
+from ..turn.schemas import TurnCreate
 from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
 from .crud import (
     create_game,
@@ -21,7 +23,7 @@ from .utils import (
     verify_data_play_card,
     play_action_card,
     assign_hands,
-    calculate_winners
+    calculate_winners,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
@@ -66,9 +68,7 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(
-        name=game_name, min_players=min_players, max_players=max_players
-    )
+    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -127,6 +127,12 @@ async def start_game(game_start_info: dict):
     new_game_status = GameUpdate(state=1, play_direction=True, turn_owner=1)
     try:
         update_game(game_id, new_game_status)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # Create turn structure
+    try:
+        create_turn(game_id, 1)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -204,14 +210,8 @@ async def steal_card(steal_data: dict):
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
     # Check valid inputs
-    if (
-        not steal_data
-        or not steal_data["game_id"]
-        or not steal_data["player_id"]
-    ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
@@ -228,7 +228,9 @@ async def steal_card(steal_data: dict):
     try:
         player = get_player(player_id, game_id)
         if len(player.hand) >= 5:
-            raise HTTPException(status_code=422, detail="La mano del jugador está llena")
+            raise HTTPException(
+                status_code=422, detail="La mano del jugador está llena"
+            )
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=422, detail=str("No se encontró el jugador"))
 
@@ -276,9 +278,7 @@ async def play_card(play_data: dict):
         or not play_data["card_id"]
         or not play_data["destination_name"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = play_data["game_id"]
     player_id = play_data["player_id"]
@@ -310,9 +310,7 @@ async def play_card(play_data: dict):
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [
-        player.table_position for player in game.players if player.alive
-    ]
+    alive_players = [player.table_position for player in game.players if player.alive]
     alive_players.sort()
     if game.play_direction:
         game.turn_owner = alive_players[
@@ -339,9 +337,7 @@ async def play_card(play_data: dict):
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)
     await send_player_status_to_player(player_id, player)
-    await send_player_status_to_player(
-        destination_player.id, destination_player
-    )
+    await send_player_status_to_player(destination_player.id, destination_player)
 
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
@@ -420,16 +416,14 @@ async def get_game_results(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 2:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha finalizado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha finalizado")
 
     winners = calculate_winners(game_id)
 
     return {
         "message": "Partida finalizada con éxito",
         "game_id": game_id,
-        "winners": winners
+        "winners": winners,
     }
 
 
