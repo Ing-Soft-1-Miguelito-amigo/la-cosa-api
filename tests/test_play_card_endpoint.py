@@ -96,9 +96,7 @@ def setup_module():
     )
 
     extra_card = card_crud.create_card(extra_card_data, created_game.id)
-    card_crud.give_card_to_player(
-        extra_card.id, created_player.id, created_game.id
-    )
+    card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
 
     # start the game
     game_crud.update_game(
@@ -122,9 +120,7 @@ def test_play_card_itself(setup_module):
         },
     )
     assert response.status_code == 422
-    assert response.json() == {
-        "detail": "No se puede aplicar el efecto a sí mismo"
-    }
+    assert response.json() == {"detail": "No se puede aplicar el efecto a sí mismo"}
 
     rollback()  # rollback the changes made in the database
 
