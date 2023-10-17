@@ -33,6 +33,7 @@ def test_create_player(test_db):
         "state": 0,
         "play_direction": None,
         "turn_owner": None,
+        "turn": None,
         "players": [
             {
                 "name": "Test Player",
@@ -78,6 +79,7 @@ def test_create_wrong_player(test_db):
         "state": 0,
         "play_direction": None,
         "turn_owner": None,
+        "turn": None,
         "players": [
             {
                 "name": "Test Player",
@@ -127,6 +129,7 @@ def test_add_player_to_full_game(test_db):
             "state": 0,
             "play_direction": None,
             "turn_owner": None,
+            "turn": None,
             "players": [
                 {
                     "name": "Test Player 1",
