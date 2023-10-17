@@ -3,8 +3,9 @@ from pydantic import BaseModel
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
-from ..turn.crud import create_turn
+from ..turn.crud import create_turn, update_turn
 from ..cards.schemas import CardBase
+from ..turn.schemas import TurnCreate
 from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
 from .crud import (
     create_game,

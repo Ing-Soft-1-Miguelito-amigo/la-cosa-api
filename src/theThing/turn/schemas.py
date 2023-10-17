@@ -3,12 +3,17 @@ from typing import Optional, List
 from src.theThing.cards.schemas import CardBase
 
 
-class Turn(BaseModel):
+class TurnCreate(BaseModel):
     # This is used to return a turn
     owner: int
-    played_card: Optional[CardBase] = None
+    played_card: Optional[int] = None #card_id
     destination_player: Optional[str] = None
-    response_card: Optional[CardBase] = None
+    response_card: Optional[int] = None #card_id
     state: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TurnOut(TurnCreate):
+    played_card: Optional[CardBase] = None
+    response_card: Optional[CardBase] = None

@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from src.theThing.players.schemas import PlayerForGame, PlayerBase
 from src.theThing.cards.schemas import CardBase
-from src.theThing.turn.schemas import Turn
+from src.theThing.turn.schemas import TurnOut
 
 
 class GameBase(BaseModel):
@@ -25,7 +25,7 @@ class GameInDB(GameCreate):
     state: int = 0
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
-    turn: Optional[Turn] = None
+    turn: Optional[TurnOut] = None
     players: List[PlayerBase] = None
     deck: List[CardBase] = None
 
@@ -39,7 +39,7 @@ class GameOut(BaseModel):
     state: int = 0
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
-    turn: Optional[Turn] = None
+    turn: Optional[TurnOut] = None
     players: List[PlayerForGame] = None
 
     model_config = ConfigDict(from_attributes=True)

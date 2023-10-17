@@ -43,7 +43,41 @@ def get_game(game_id: int):
     """
     with db_session:
         game = models.Game[game_id]
-        response = schemas.GameOut.model_validate(game)
+        if game.turn is not None:
+            played_card = None
+            response_card = None
+            destination_player = ""
+
+            if game.turn.played_card is not None:
+                played_card = models.Card[game.turn.played_card]
+            if game.turn.response_card is not None:
+                response_card = models.Card[game.turn.response_card]
+            if game.turn.destination_player is not None:
+                destination_player = game.turn.destination_player
+
+            return_turn = schemas.TurnOut(
+                owner=game.turn.owner,
+                played_card=played_card,
+                destination_player=destination_player,
+                response_card=response_card,
+                state=game.turn.state,
+            )
+
+            return_game = schemas.GameOut(
+                id=game.id,
+                name=game.name,
+                min_players=game.min_players,
+                max_players=game.max_players,
+                state=game.state,
+                play_direction=game.play_direction,
+                turn_owner=game.turn_owner,
+                turn=return_turn,
+                players=game.players,
+            )
+
+            response = schemas.GameOut.model_validate(return_game)
+        else:
+            response = schemas.GameOut.model_validate(game)
     return response
 
 
