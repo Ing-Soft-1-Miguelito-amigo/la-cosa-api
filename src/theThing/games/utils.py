@@ -160,7 +160,11 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
         )
-
+    if len(player.hand) <= 4:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador tiene menos cartas de las necesarias para jugar",
+        )
     # Get the destination player by his name and check that is not the same player and exists and is alive
     destination_player = None
     for p in game.players:

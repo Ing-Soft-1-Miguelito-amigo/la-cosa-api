@@ -4,9 +4,15 @@ from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
 from ..turn.crud import create_turn, update_turn
-from ..cards.schemas import CardBase
+from ..cards.schemas import CardBase, CardUpdate
 from ..turn.schemas import TurnCreate
-from ..cards.crud import get_card_from_deck, give_card_to_player, get_card
+from ..cards.crud import (
+    get_card_from_deck,
+    give_card_to_player,
+    get_card,
+    update_card,
+    remove_card_from_player,
+)
 from .crud import (
     create_game,
     get_game,
@@ -288,7 +294,9 @@ async def play_card(play_data: dict):
     game, turn_player, card, destination_player = verify_data_play_card(
         game_id, player_id, card_id, destination_name
     )
-
+    # set the card to played
+    update_card(CardUpdate(id=card_id, state=0), game_id)
+    remove_card_from_player(card_id, player_id, game_id)
     # Update the turn structure
     game_turn = get_game(game_id).turn
     update_turn(
