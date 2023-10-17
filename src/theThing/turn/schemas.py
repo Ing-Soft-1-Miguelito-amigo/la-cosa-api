@@ -17,4 +17,3 @@ class TurnCreate(BaseModel):
 class TurnOut(TurnCreate):
     played_card: Optional[CardBase] = None
     response_card: Optional[CardBase] = None
-    state: Optional[int] = None
