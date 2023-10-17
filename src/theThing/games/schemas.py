@@ -40,7 +40,7 @@ class GameOut(BaseModel):
     play_direction: Optional[bool] = None
     turn_owner: Optional[int] = None
     turn: Optional[TurnOut] = None
-    players: List[PlayerForGame] = None
+    players: List[PlayerForGame] = []
 
     model_config = ConfigDict(from_attributes=True)
 

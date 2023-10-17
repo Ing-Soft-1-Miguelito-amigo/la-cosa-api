@@ -5,7 +5,7 @@ from src.theThing.cards.schemas import CardBase
 
 class TurnCreate(BaseModel):
     # This is used to return a turn
-    owner: int
+    owner: Optional[int] = None #player_id
     played_card: Optional[int] = None #card_id
     destination_player: Optional[str] = None
     response_card: Optional[int] = None #card_id
