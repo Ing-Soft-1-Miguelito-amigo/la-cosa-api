@@ -350,7 +350,6 @@ async def play_card(play_data: dict):
 async def discard_card(discard_data: dict):
     """
     Discard card from the player hand. It updates the state of the turn.
-    Therefore, it also updates the player hand.
 
     Parameters:
         discard_data (dict): A dict containing game_id, player_id and card_id.
@@ -387,31 +386,29 @@ async def discard_card(discard_data: dict):
             game_id, player_id, card_id
         )
     except Exception as e:
-        return e
+        raise e
 
     # Perform logic to discard the card
     try:
         updated_player = remove_card_from_player(card_id, player_id, game_id)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
-    """     
+        
     # Change turn state
     try:
         update_turn (
             game_id,
-            Turn(
-                owner = game.turn_owner,
+            TurnCreate(
                 state = 5 # Has to be 3 in the future
             ),
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
-    """
+    
     # Send new status via socket
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
-    # TODO: send turn status
 
     return {"message": "Carta descartada con éxito"}
 

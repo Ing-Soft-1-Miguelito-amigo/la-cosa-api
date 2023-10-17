@@ -242,25 +242,30 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     try:
         game = get_full_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
         raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+    if game.turn.state != 1:
+        raise HTTPException(status_code=422, detail="No es posible descartar en este momento")
 
     # Verify that the player exists, and it is the turn owner, is alive and has already stealed a card.
     try:
         player = get_player(player_id, game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró el jugador especificado"))
+        raise HTTPException(status_code=404, detail="No se encontró el jugador especificado")
     if game.turn_owner != player.table_position or not player.alive:
         raise HTTPException(status_code=422, detail="No es el turno del jugador especificado")
     if len(player.hand) <= 4:
         raise HTTPException(status_code=422, detail="No es posible descartar sin levantar una carta primero")
 
+    # TODO: check the turn status
+
+     
     # Verify that the card exists and it is in the player hand
     try:
         card = get_card(card_id, game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la carta especificada"))
+        raise HTTPException(status_code=404, detail="No se encontró la carta especificada")
     if card not in player.hand or card not in game.deck or card.state == 0:
         raise HTTPException(
             status_code=422,
