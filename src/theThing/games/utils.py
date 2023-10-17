@@ -53,7 +53,8 @@ def verify_data_create(game_name, min_players, max_players, host_name):
 
     if min_players > max_players:
         raise HTTPException(
-            status_code=422, detail="El mínimo de jugadores no puede ser mayor al máximo"
+            status_code=422,
+            detail="El mínimo de jugadores no puede ser mayor al máximo",
         )
 
 

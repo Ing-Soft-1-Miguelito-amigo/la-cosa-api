@@ -291,7 +291,10 @@ async def play_card(play_data: dict):
 
     # Update the turn structure
     game_turn = get_game(game_id).turn
-    update_turn(game_id, TurnCreate(played_card=card_id, destination_player=destination_name, state=2))
+    update_turn(
+        game_id,
+        TurnCreate(played_card=card_id, destination_player=destination_name, state=2),
+    )
 
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)
