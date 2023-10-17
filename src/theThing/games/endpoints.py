@@ -257,7 +257,7 @@ async def steal_card(steal_data: dict):
 @router.put("/game/play", status_code=200)
 async def play_card(play_data: dict):
     """
-    Plays a card and apply its effect.
+    Plays a card and Updates the turn structure
 
     Parameters:
         play_data (dict): A dict containing game_id, player_id(who plays the card), card_id and destination_name.
@@ -289,50 +289,9 @@ async def play_card(play_data: dict):
         game_id, player_id, card_id, destination_name
     )
 
-    # Perform logic to play the card
-    match card.kind:
-        case 0:  # action
-            game = play_action_card(game, turn_player, card, destination_player)
-        case 1:  # defense
-            # TODO: implement defense card logic
-            pass
-        case 2:  # obstacle
-            # TODO: implement obstacle card logic
-            pass
-        case 3:  # infection
-            # TODO: implement infection card logic
-            pass
-        case 4:  # panic
-            # TODO: implement panic card logic
-            pass
-        case _:  # LaCosa or wrong kind
-            raise HTTPException(status_code=422, detail="El tipo de carta no es válido")
-
-    # Assign new turn owner, must be an alive player
-    # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player.table_position for player in game.players if player.alive]
-    alive_players.sort()
-    if game.play_direction:
-        game.turn_owner = alive_players[
-            (alive_players.index(game.turn_owner) + 1) % len(alive_players)
-        ]
-    else:
-        game.turn_owner = alive_players[
-            (alive_players.index(game.turn_owner) - 1) % len(alive_players)
-        ]
-
-    # Update game status
-    try:
-        update_game(
-            game_id,
-            GameUpdate(
-                state=game.state,
-                turn_owner=game.turn_owner,
-                play_direction=game.play_direction,
-            ),
-        )
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    # Update the turn structure
+    game_turn = get_game(game_id).turn
+    update_turn(game_id, TurnCreate(played_card=card_id, destination_player=destination_name, state=2))
 
     player = get_player(player_id, game_id)
     destination_player = get_player(destination_player.id, game_id)

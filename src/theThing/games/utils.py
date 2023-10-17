@@ -170,7 +170,7 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id:
+    if destination_player.id == player.id and card.code != "whk":
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
