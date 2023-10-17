@@ -251,6 +251,41 @@ def play_action_card(
     return updated_game
 
 
+def verify_data_steal_card(game_id: int, player_id: int):
+    # Verify that the game exists and it is started
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
+    if game.state != 1:
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
+    if game.turn.state != 0:
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible robar una carta en este momento",
+        )
+
+    # Check valid player status
+    try:
+        player = get_player(player_id, game_id)
+        if len(player.hand) >= 5:
+            raise HTTPException(
+                status_code=422, detail="La mano del jugador está llena"
+            )
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró el jugador")
+        )
+
+    # Verify that it actually is the player turn
+    if game.turn_owner != player.table_position:
+        raise HTTPException(status_code=422, detail="No es tu turno")
+
+
 def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     # Verify that the game exists and it is started
     try:
@@ -280,7 +315,7 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     if len(player.hand) <= 4:
         raise HTTPException(
             status_code=422,
-            detail="No es posible descartar sin levantar una carta primero",
+            detail="No es posible descartar sin robar una carta primero",
         )
 
     # TODO: check the turn status

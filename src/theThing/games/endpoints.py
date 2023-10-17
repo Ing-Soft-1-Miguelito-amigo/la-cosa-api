@@ -26,6 +26,7 @@ from .utils import (
     verify_data_start,
     verify_finished_game,
     verify_data_play_card,
+    verify_data_steal_card,
     verify_data_discard_card,
     play_action_card,
     assign_hands,
@@ -230,38 +231,22 @@ async def steal_card(steal_data: dict):
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
 
-    # Verify that the game exists and it is started
+    # Verify data integrity
     try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=404, detail=str("No se encontró la partida")
-        )
-    if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
-
-    # Check valid player status
-    try:
-        player = get_player(player_id, game_id)
-        if len(player.hand) >= 5:
-            raise HTTPException(
-                status_code=422, detail="La mano del jugador está llena"
-            )
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=422, detail=str("No se encontró el jugador")
-        )
-
-    # Verify that it actually is the player turn
-    if game.turn_owner != player.table_position:
-        raise HTTPException(status_code=422, detail="No es tu turno")
+        verify_data_steal_card(game_id, player_id)
+    except Exception as e:
+        raise e
 
     # Perform logic to steal the card
     try:
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    # Change turn state
+    try:
+        update_turn(game_id, TurnCreate(state=1))
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 

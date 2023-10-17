@@ -40,7 +40,7 @@ def setup_module():
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
     # update turn state
-    update_turn(1, TurnCreate(state=1))
+    update_turn(1, TurnCreate(state=0))
 
 
 def test_discard_card_succesfully(test_db):
@@ -57,11 +57,13 @@ def test_discard_card_succesfully(test_db):
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta descartada con éxito"}
+    game1 = game_crud.get_game(1)
+    assert game1.turn.state == 5
 
 
 def test_discard_wrong_game(test_db):
     # Test #2: discard card with wrong game
-    update_turn(1, TurnCreate(state=1))
+    update_turn(1, TurnCreate(state=0))
     game_crud.update_game(1, game_schemas.GameUpdate(turn_owner=2))
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 2}
@@ -88,13 +90,13 @@ def test_discard_without_stealing(test_db):
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "No es posible descartar sin levantar una carta primero"
+        "detail": "No es posible descartar sin robar una carta primero"
     }
 
 
 def test_discard_2_times(test_db):
     # Test #4: discard card 2 times in a row
-    update_turn(1, TurnCreate(state=1))
+    update_turn(1, TurnCreate(state=0))
     game_crud.update_game(1, game_schemas.GameUpdate(turn_owner=4))
     steal_data = {"game_id": 1, "player_id": 4}
     response = client.put("/game/steal", json=steal_data)
@@ -105,6 +107,10 @@ def test_discard_2_times(test_db):
     discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
+
+    game1 = game_crud.get_game(1)
+    assert game1.turn.state == 5
+
     player = player_crud.get_player(4, 1)
     discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
     response = client.put("/game/discard", json=discard_data)
@@ -116,7 +122,7 @@ def test_discard_2_times(test_db):
 
 def test_discard_not_existent_card(test_db):
     # Test #5: discard card that doesn't exist in the player's hand
-    update_turn(1, TurnCreate(state=1))
+    update_turn(1, TurnCreate(state=0))
     game_crud.update_game(1, game_schemas.GameUpdate(turn_owner=1))
     # steal a card
     steal_data = {"game_id": 1, "player_id": 1}
@@ -138,6 +144,3 @@ def test_discard_not_existent_card(test_db):
     assert response.json() == {
         "detail": "La carta no pertenece a la mano del jugador o al mazo de la partida"
     }
-
-
-rollback()
