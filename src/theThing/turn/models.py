@@ -7,6 +7,7 @@ class Turn(db.Entity):
     """
     Represent a turn inside a game
     """
+
     game = PrimaryKey("Game", reverse="turn")
     owner = Optional(int)
     played_card = Optional(int)

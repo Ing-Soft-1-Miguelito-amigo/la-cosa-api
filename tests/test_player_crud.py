@@ -19,9 +19,7 @@ def test_create_player(test_db):
         "owner": False,
     }
 
-    created_player = crud.create_player(
-        PlayerCreate(**player_data), created_game.id
-    )
+    created_player = crud.create_player(PlayerCreate(**player_data), created_game.id)
 
     assert created_player.name == player_data["name"]
     assert created_player.owner == player_data["owner"]
@@ -56,9 +54,7 @@ def test_create_wrong_player(test_db):
         "owner": False,
     }
 
-    created_player = crud.create_player(
-        PlayerCreate(**player_data), created_game.id
-    )
+    created_player = crud.create_player(PlayerCreate(**player_data), created_game.id)
 
     player2_data = {
         "name": "Test Player",
@@ -108,12 +104,8 @@ def test_add_player_to_full_game(test_db):
         "name": "Test Player 3",
         "owner": False,
     }
-    created_player1 = crud.create_player(
-        PlayerCreate(**player1_data), created_game.id
-    )
-    created_player2 = crud.create_player(
-        PlayerCreate(**player2_data), created_game.id
-    )
+    created_player1 = crud.create_player(PlayerCreate(**player1_data), created_game.id)
+    created_player2 = crud.create_player(PlayerCreate(**player2_data), created_game.id)
     try:
         created_player3 = crud.create_player(
             PlayerCreate(**player3_data), created_game.id
@@ -150,9 +142,7 @@ def test_add_player_to_full_game(test_db):
     assert retrieved_game.id == expected_game.id
     assert retrieved_game.name == expected_game.name
     assert retrieved_game.state == expected_game.state
-    assert [
-        player in retrieved_game.players for player in expected_game.players
-    ]
+    assert [player in retrieved_game.players for player in expected_game.players]
 
 
 @db_session
@@ -186,9 +176,7 @@ def test_update_player(test_db):
         "alive": False,
         "quarantine": True,
     }
-    updated_player = crud.update_player(
-        PlayerUpdate(**updated_data), 1, game_id=1
-    )
+    updated_player = crud.update_player(PlayerUpdate(**updated_data), 1, game_id=1)
 
     assert updated_player.model_dump() == {
         "id": 1,

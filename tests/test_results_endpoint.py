@@ -23,15 +23,9 @@ def test_get_result_of_inplay_game(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
-    )
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
 
     response = client.post("/game/start", json=game_data)
 
@@ -68,33 +62,21 @@ def test_get_result_of_finished_game(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
-    )
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
 
     client.post("/game/start", json=game_data)
 
-    update_player(
-        PlayerUpdate(alive=False), 2, game_id
-    )
-    update_player(
-        PlayerUpdate(alive=False), 3, game_id
-    )
-    update_player(
-        PlayerUpdate(alive=False), 4, game_id
-    )
+    update_player(PlayerUpdate(alive=False), 2, game_id)
+    update_player(PlayerUpdate(alive=False), 3, game_id)
+    update_player(PlayerUpdate(alive=False), 4, game_id)
 
     response = client.get(f"/game/{game_id}/results")
     assert response.status_code == 200
     assert response.json() == {
         "message": "Partida finalizada con éxito",
         "game_id": game_id,
-        "winners": [1]
+        "winners": [1],
     }
     rollback()

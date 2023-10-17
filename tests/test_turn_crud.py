@@ -18,9 +18,7 @@ def test_create_turn(test_db):
         "owner": 1,
     }
 
-    created_turn = crud.create_turn(
-        turn_data["game"], turn_data["owner"]
-    )
+    created_turn = crud.create_turn(turn_data["game"], turn_data["owner"])
 
     assert created_turn.owner == turn_data["owner"]
     assert game_crud.get_game(created_game.id).model_dump() == {
@@ -36,7 +34,7 @@ def test_create_turn(test_db):
             "owner": 1,
             "played_card": None,
             "response_card": None,
-            "state": 0
+            "state": 0,
         },
         "players": [],
     }
@@ -44,10 +42,16 @@ def test_create_turn(test_db):
 
 @db_session
 def test_update_turn(test_db):
-    updated_turn = crud.update_turn(1,
-                                    TurnCreate(owner=1, played_card=1, destination_player="TestPlayer1", response_card=3, state=1))
-
-
+    updated_turn = crud.update_turn(
+        1,
+        TurnCreate(
+            owner=1,
+            played_card=1,
+            destination_player="TestPlayer1",
+            response_card=3,
+            state=1,
+        ),
+    )
 
     assert updated_turn.owner == 1
     assert updated_turn.played_card == 1
@@ -67,7 +71,7 @@ def test_update_turn(test_db):
             "owner": 1,
             "played_card": 1,
             "response_card": 3,
-            "state": 1
+            "state": 1,
         },
         "players": [],
     }
