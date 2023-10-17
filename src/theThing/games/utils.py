@@ -47,6 +47,11 @@ def verify_data_create(game_name, min_players, max_players, host_name):
             status_code=422, detail="El máximo de jugadores no puede ser mayor a 12"
         )
 
+    if min_players > max_players:
+        raise HTTPException(
+            status_code=422, detail="El mínimo de jugadores no puede ser mayor al máximo"
+        )
+
 
 # Function to verify configuration data integrity
 def verify_data_start(game: GameOut, host_name: str):
