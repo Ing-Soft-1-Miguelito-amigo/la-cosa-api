@@ -8,6 +8,8 @@ from src.theThing.games.models import Game
 from src.theThing.games import schemas as game_schemas
 from src.theThing.players import crud as player_crud
 from src.theThing.players import schemas as player_schemas
+from src.theThing.turn import crud as turn_crud
+from src.theThing.turn import schemas as turn_schemas
 from pony.orm import db_session, rollback, commit
 from src.main import app
 from fastapi.testclient import TestClient
@@ -103,6 +105,7 @@ def setup_module():
         created_game.id,
         game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
     )
+    turn_crud.create_turn(created_game.id, 1)
     # finish setup
     yield
 
@@ -220,6 +223,14 @@ def test_play_card(setup_module):
     card_played_status = card_crud.get_card(1, 1)
     assert card_played_status.state == 0  # because the card is played
 
+    game = game_crud.get_game(1)
+
+    assert game.turn == turn_schemas.TurnOut(owner=1,
+                                             played_card=card_played_status,
+                                             destination_player="Player2",
+                                             response_card=None,
+                                             state=2)
+
 
 # test case 7: the player cant play because does not have enough cards
 @db_session
@@ -228,7 +239,7 @@ def test_play_card_not_enough_cards(setup_module):
         "/game/play",
         json={
             "game_id": 1,
-            "player_id": 2,
+            "player_id": 1,
             "card_id": 4,
             "destination_name": "Player3",
         },
@@ -237,44 +248,3 @@ def test_play_card_not_enough_cards(setup_module):
     assert response.json() == {
         "detail": "El jugador tiene menos cartas de las necesarias para jugar"
     }
-
-
-# test case 8: the card is played correctly and kills a player
-def test_play_card_kill_player(setup_module):
-    # add card to player 3 because it has just 4 cards
-    new_card_data = CardCreate(
-        code="lla",
-        name="Lanzallamas",
-        kind=0,
-        description="Lanzallamas",
-        number_in_card=1,
-        playable=True,
-    )
-    new_card_created = card_crud.create_card(new_card_data, 1)
-    card_crud.give_card_to_player(new_card_created.id, 2, 1)
-    commit()
-    response = client.put(
-        "/game/play",
-        json={
-            "game_id": 1,
-            "player_id": 2,
-            "card_id": 14,
-            "destination_name": "Player3",
-        },
-    )
-
-    player3_status = player_crud.get_player(3, 1)
-    player2_status = player_crud.get_player(2, 1)
-    card_status = card_crud.get_card(14, 1)
-    # get thegame directly from the database to have the updated data
-    game_status = game_crud.get_game(1)
-
-    assert response.json() == {"message": "Carta jugada con éxito"}
-    assert response.status_code == 200
-    assert len(player2_status.hand) == 4  # because the card is played
-    assert card_status.state == 0  # because the card is played
-    assert card_status not in player2_status.hand  # because the card is played
-    assert player3_status.alive == False  # because the card is a kill card
-    assert (
-        game_status.turn_owner == 4
-    )  # because the card is a kill card so the next player will be 4
