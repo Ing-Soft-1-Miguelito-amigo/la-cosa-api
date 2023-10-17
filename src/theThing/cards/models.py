@@ -13,7 +13,7 @@ class Card(db.Entity):
     number_in_card = Required(int)
     state = Required(
         int, default=2, unsigned=True
-    )  # 0 = played, 1 = in player hand, 2 = not played (in deck)
+    )  # 0 = played/discarded, 1 = in player hand, 2 = not played (in deck)
     playable = Required(bool)
     game = Required("Game", reverse="deck")
     player = Optional("Player", reverse="hand")

@@ -19,5 +19,6 @@ def update_turn(game_id: int, new_turn: TurnCreate):
     with db_session:
         turn_to_update = models.Turn[game_id]
         turn_to_update.set(**new_turn.model_dump(exclude_unset=True))
+        turn_to_update.flush()
         response = schemas.TurnCreate.model_validate(turn_to_update)
     return response
