@@ -4,12 +4,10 @@ from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from ..players.schemas import PlayerCreate
 from ..players.crud import create_player, get_player, delete_player
 from ..turn.crud import create_turn, update_turn
-from ..cards.schemas import CardBase
 from ..turn.schemas import TurnCreate
 from ..cards.crud import (
     get_card_from_deck,
     give_card_to_player,
-    get_card,
     remove_card_from_player,
 )
 from .crud import (
@@ -18,7 +16,6 @@ from .crud import (
     update_game,
     get_full_game,
     create_game_deck,
-    delete_game,
     get_all_games,
 )
 from .utils import (
@@ -590,5 +587,9 @@ async def finish_turn(finish_data: dict):
     game = get_game(game_id)
 
     assign_turn_owner(game)
+
+    # send new status via socket
+    updated_game = get_game(game_id)
+    await send_game_status_to_player(game_id, updated_game)
 
     return {"message": "Turno finalizado con éxito"}
