@@ -297,16 +297,13 @@ async def play_card(play_data: dict):
     # set the card to played
     remove_card_from_player(card_id, player_id, game_id)
     # Update the turn structure
-    game_turn = get_game(game_id).turn
     update_turn(
         game_id,
-        TurnCreate(played_card=card_id, destination_player=destination_name, state=2)
+        TurnCreate(played_card=card_id, destination_player=destination_name, state=2),
     )
 
     player = get_player(player_id, game_id)
-    destination_player = get_player(destination_player.id, game_id)
     await send_player_status_to_player(player_id, player)
-    await send_player_status_to_player(destination_player.id, destination_player)
 
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
