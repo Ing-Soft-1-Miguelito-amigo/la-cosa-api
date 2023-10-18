@@ -24,6 +24,8 @@ from .utils import (
     play_action_card,
     assign_hands,
     calculate_winners,
+    verify_data_finish_turn,
+    assign_turn_owner,
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
@@ -485,3 +487,22 @@ async def leave_game(game_id: int, player_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     return response
+
+
+@router.put("/turn/finish")
+async def finish_turn(finish_data: dict):
+    """
+    Finish a turn.
+    """
+    # Check valid inputs
+    if not finish_data or not finish_data["game_id"] or not finish_data["player_id"]:
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
+
+    game_id = finish_data["game_id"]
+    player_id = finish_data["player_id"]
+
+    verify_data_finish_turn(game_id, player_id)
+
+    game = get_game(game_id)
+
+    assign_turn_owner(game)
