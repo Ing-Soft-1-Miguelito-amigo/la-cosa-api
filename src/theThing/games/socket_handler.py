@@ -38,7 +38,7 @@ async def send_game_status_to_player(game_id: int, game_data: GameOut):
     )
 
 
-async def send_game_and_player_status_to_player(game_data: GameInDB):
+async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
         await sio.emit(
             "player_status", player.model_dump(), room="p" + str(player.id)
@@ -46,4 +46,11 @@ async def send_game_and_player_status_to_player(game_data: GameInDB):
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
+    )
+
+
+async def send_discard_event_to_players(game_id: int, player_name: str):
+    await sio.emit(
+        "discard", {"player_name": player_name,
+                    "message": player_name + " descartó una carta"}, room="g" + str(game_id)
     )

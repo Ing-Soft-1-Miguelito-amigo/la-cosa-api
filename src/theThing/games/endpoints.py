@@ -36,7 +36,8 @@ from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
     send_player_status_to_player,
     send_game_status_to_player,
-    send_game_and_player_status_to_player,
+    send_game_and_player_status_to_players,
+    send_discard_event_to_players
 )
 
 # Create an APIRouter instance for grouping related endpoints
@@ -154,7 +155,7 @@ async def start_game(game_start_info: dict):
 
     # Send game and player status to all players
     updated_game = get_full_game(game_id)
-    await send_game_and_player_status_to_player(updated_game)
+    await send_game_and_player_status_to_players(updated_game)
 
     return {"message": f"Partida {game_id} iniciada con éxito"}
 
@@ -419,6 +420,7 @@ async def discard_card(discard_data: dict):
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
     await send_game_status_to_player(game_id, updated_game)
+    await send_discard_event_to_players(game_id, updated_player.name)
 
     return {"message": "Carta descartada con éxito"}
 
