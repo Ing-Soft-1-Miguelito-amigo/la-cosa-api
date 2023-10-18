@@ -106,6 +106,7 @@ def setup_module():
         game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
     )
     turn_crud.create_turn(created_game.id, 1)
+    turn_crud.update_turn(created_game.id, turn_schemas.TurnCreate(state=1))
     # finish setup
     yield
 
@@ -237,6 +238,9 @@ def test_play_card(setup_module):
 # test case 7: the player cant play because does not have enough cards
 @db_session
 def test_play_card_not_enough_cards(setup_module):
+    # set back the turn to state 1 to allow the player to play
+    turn_crud.update_turn(1, turn_schemas.TurnCreate(state=1))
+    commit()
     response = client.put(
         "/game/play",
         json={

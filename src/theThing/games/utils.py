@@ -139,11 +139,14 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail=str("No se encontró el jugador especificado")
         )
-    if game.turn_owner != player.table_position or not player.alive:
+    if game.turn.owner != player.table_position or not player.alive:
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
         )
-
+    if game.turn.state != 1:
+        raise HTTPException(
+            status_code=422, detail="El jugador todavia no puede jugar en este turno"
+        )
     # Verify that the card exists and it is in the player hand
     try:
         card = get_card(card_id, game_id)
