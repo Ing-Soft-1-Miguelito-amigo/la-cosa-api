@@ -2,7 +2,9 @@ from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback, commit
 from .test_setup import test_db, clear_db
-from src.theThing.games.crud import get_full_game, update_game
+from src.theThing.games.crud import get_full_game, update_game, get_game
+from src.theThing.turn.crud import update_turn
+from src.theThing.turn.schemas import TurnCreate
 from src.theThing.games.schemas import GameUpdate
 from src.theThing.cards.schemas import CardCreate, CardUpdate
 from src.theThing.cards.crud import create_card, delete_card, update_card
@@ -52,6 +54,8 @@ def test_steal_card_success(test_db):
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta robada con éxito"}
+    game1 = get_game(1)
+    assert game1.turn.state == 1
 
 
 def test_steal_card_empty_deck(test_db):
@@ -67,21 +71,22 @@ def test_steal_card_empty_deck(test_db):
     gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=2)
     update_game(1, gameupdate)
     commit()
+
+    update_turn(1, TurnCreate(state=0))
     # Steal a card. It should not generate any problems
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta robada con éxito"}
-    rollback()
 
 
 def test_steal_card_with_invalid_player_id(test_db):
     # Test #2: steal a card with invalid player id
     steal_data = {"game_id": 1, "player_id": 5}
+    update_turn(1, TurnCreate(state=0))
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
     assert response.json() == {"detail": "No se encontró el jugador"}
-    rollback()
 
 
 def test_steal_with_no_cards_indeck(test_db):
@@ -98,6 +103,7 @@ def test_steal_with_no_cards_indeck(test_db):
     gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=3)
     update_game(1, gameupdate)
     commit()
+    update_turn(1, TurnCreate(state=0))
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 3}
     response = client.put("/game/steal", json=steal_data)
@@ -134,6 +140,7 @@ def test_steal_card_on_not_started_game(test_db):
         }
         playerid += 1
 
+    update_turn(1, TurnCreate(state=0))
     # Steal a card
     steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
@@ -151,6 +158,7 @@ def test_steal_card_2_times(test_db):
 
     # Steal a card
     steal_data = {"game_id": 2, "player_id": 5}
+    update_turn(1, TurnCreate(state=0))
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta robada con éxito"}
@@ -159,8 +167,9 @@ def test_steal_card_2_times(test_db):
     steal_data = {"game_id": 2, "player_id": 5}
     response = client.put("/game/steal", json=steal_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "La mano del jugador está llena"}
-    rollback()
+    assert response.json() == {
+        "detail": "No es posible robar una carta en este momento"
+    }
 
 
 def test_steal_card_with_empty_data():

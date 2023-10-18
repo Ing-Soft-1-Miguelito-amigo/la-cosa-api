@@ -50,7 +50,9 @@ def test_join_player_with_empty_name(test_db):
     # Join player to the game
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "El nombre del jugador no puede ser vacío"}
+    assert response.json() == {
+        "detail": "El nombre del jugador no puede ser vacío"
+    }
 
     rollback()
 
@@ -63,7 +65,9 @@ def test_join_player_with_existing_name(test_db):
     # Join player to the game
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Ya existe un jugador con el mismo nombre"}
+    assert response.json() == {
+        "detail": "Ya existe un jugador con el mismo nombre"
+    }
 
     rollback()
 
