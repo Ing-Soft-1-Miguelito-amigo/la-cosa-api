@@ -225,11 +225,13 @@ def test_play_card(setup_module):
 
     game = game_crud.get_game(1)
 
-    assert game.turn == turn_schemas.TurnOut(owner=1,
-                                             played_card=card_played_status,
-                                             destination_player="Player2",
-                                             response_card=None,
-                                             state=2)
+    assert game.turn == turn_schemas.TurnOut(
+        owner=1,
+        played_card=card_played_status,
+        destination_player="Player2",
+        response_card=None,
+        state=2,
+    )
 
 
 # test case 7: the player cant play because does not have enough cards
@@ -240,11 +242,11 @@ def test_play_card_not_enough_cards(setup_module):
         json={
             "game_id": 1,
             "player_id": 1,
-            "card_id": 4,
-            "destination_name": "Player3",
+            "card_id": 2,
+            "destination_name": "Player2",
         },
     )
-    assert response.status_code == 404
+    assert response.status_code == 422
     assert response.json() == {
         "detail": "El jugador tiene menos cartas de las necesarias para jugar"
     }
