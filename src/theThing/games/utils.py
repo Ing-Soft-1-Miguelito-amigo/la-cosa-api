@@ -55,7 +55,8 @@ def verify_data_create(game_name, min_players, max_players, host_name):
 
     if min_players > max_players:
         raise HTTPException(
-            status_code=422, detail="El mínimo de jugadores no puede ser mayor al máximo"
+            status_code=422,
+            detail="El mínimo de jugadores no puede ser mayor al máximo",
         )
 
 
@@ -146,11 +147,14 @@ def verify_data_play_card(
             status_code=422,
             detail=str("No se encontró el jugador especificado"),
         )
-    if game.turn_owner != player.table_position or not player.alive:
+    if game.turn.owner != player.table_position or not player.alive:
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
         )
-
+    if game.turn.state != 1:
+        raise HTTPException(
+            status_code=422, detail="El jugador todavia no puede jugar en este turno"
+        )
     # Verify that the card exists and it is in the player hand
     try:
         card = get_card(card_id, game_id)
@@ -167,7 +171,11 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
         )
-
+    if len(player.hand) <= 4:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador tiene menos cartas de las necesarias para jugar",
+        )
     # Get the destination player by his name and check that is not the same player and exists and is alive
     destination_player = None
     for p in game.players:
@@ -178,7 +186,7 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id:
+    if destination_player.id == player.id and card.code != "whk":
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
