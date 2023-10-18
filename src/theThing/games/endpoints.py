@@ -590,3 +590,5 @@ async def finish_turn(finish_data: dict):
     game = get_game(game_id)
 
     assign_turn_owner(game)
+
+    return {"message": "Turno finalizado con éxito"}
