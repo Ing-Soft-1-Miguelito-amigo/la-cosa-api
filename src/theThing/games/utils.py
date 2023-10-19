@@ -169,6 +169,8 @@ def verify_data_play_card(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
+    if card.kind not in [0,2]:
+        raise HTTPException(status_code=422, detail="No puedes jugar esta carta")
     if card.playable is False:
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
@@ -203,67 +205,19 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    # check if the destination player is adjacent to the player,
-    # the first and the last player are adjacent
-    if index_destination_player == (index_player + 1) % len(
-        alive_players
-    ) or index_destination_player == (index_player - 1) % len(alive_players):
-        pass
-    else:
-        raise HTTPException(
-            status_code=422,
-            detail="El jugador destino no está sentado en una posición adyacente",
-        )
+    if card.code != "mvc":
+        # check if the destination player is adjacent to the player,
+        # the first and the last player are adjacent
+        if index_destination_player == (index_player + 1) % len(
+            alive_players
+        ) or index_destination_player == (index_player - 1) % len(alive_players):
+            pass
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail="El jugador destino no está sentado en una posición adyacente",
+            )
     return game, player, card, destination_player
-
-
-def play_action_card(
-    game: GameInDB,
-    player: PlayerBase,
-    card: CardBase,
-    destination_player: PlayerBase,
-):
-    match card.code:
-        case "lla":  # flamethrower
-            if len(player.hand) <= 4:
-                raise HTTPException(
-                    status_code=404,
-                    detail="El jugador tiene menos cartas de las necesarias para jugar",
-                )
-            card.state = 0
-            destination_player.alive = False
-            player = remove_card_from_player(card.id, player.id, game.id)
-            # check that the player has 4 cards in hand
-            pass
-        case _:  # other cards
-            if len(player.hand) <= 4:
-                raise HTTPException(
-                    status_code=404,
-                    detail="El jugador tiene menos cartas de las necesarias para jugar",
-                )
-            card.state = 0
-            player = remove_card_from_player(card.id, player.id, game.id)
-            # check that the player has 4 cards in hand
-            # TODO: Implement other cards
-            pass
-
-    # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
-    updated_destination_player = update_player(
-        PlayerUpdate(
-            table_position=destination_player.table_position,
-            role=destination_player.role,
-            alive=destination_player.alive,
-            quarantine=destination_player.quarantine,
-        ),
-        destination_player.id,
-        game.id,
-    )
-    # get the full game again to have the list of players updated
-    updated_game = get_full_game(game.id)
-    return updated_game
 
 
 def verify_data_steal_card(game_id: int, player_id: int):
@@ -340,6 +294,10 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
         raise HTTPException(
             status_code=404, detail="No se encontró la carta especificada"
         )
+    if card.kind == 5:
+        raise HTTPException(
+            status_code=422, detail="No es posible descartar esta carta"
+        )
     if card not in player.hand or card not in game.deck or card.state == 0:
         raise HTTPException(
             status_code=422,
@@ -408,6 +366,8 @@ def verify_data_response_card(game_id: int, defending_player: PlayerBase, respon
         raise HTTPException(
             status_code=404, detail="No se encontró la carta de defensa especificada"
         )
+    if response_card.kind != 1:
+        raise HTTPException(status_code=422, detail="No te puedes defender con esta carta")
     # Player checks
     if len(defending_player.hand) != 4:
         raise HTTPException(
