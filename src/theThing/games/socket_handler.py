@@ -1,4 +1,5 @@
 import socketio
+from src.theThing.cards.schemas import CardBase
 from src.theThing.players.schemas import PlayerBase
 from src.theThing.games.schemas import GameOut, GameInDB
 
@@ -53,4 +54,25 @@ async def send_discard_event_to_players(game_id: int, player_name: str):
     await sio.emit(
         "discard", {"player_name": player_name,
                     "message": player_name + " descartó una carta"}, room="g" + str(game_id)
+    )
+
+
+async def send_action_event_to_players(game_id: int, attacking_player: PlayerBase, defending_player: PlayerBase, action_card: CardBase):
+    await sio.emit(
+        "action", 
+        data={
+        "message": attacking_player.name + " le aplicó la carta "
+        + action_card.name + " a " + defending_player.name
+        }, 
+        room="g" + str(game_id)
+    )
+
+
+async def send_defense_event_to_players(game_id: int, attacking_player: PlayerBase, defending_player: PlayerBase, action_card: CardBase, defense_card: CardBase):
+    await sio.emit(
+        "defense", 
+        data={
+        "message": defending_player.name + " se defendió del ataque de " 
+        + action_card.name + " jugado por " + attacking_player.name + " con la carta " + defense_card.name}, 
+        room="g" + str(game_id)
     )

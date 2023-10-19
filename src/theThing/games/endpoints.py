@@ -6,6 +6,7 @@ from ..players.crud import create_player, get_player, delete_player
 from ..turn.crud import create_turn, update_turn
 from ..cards.schemas import CardBase, CardUpdate
 from ..turn.schemas import TurnCreate
+from ..cards.effect_applications import effect_applications
 from ..cards.crud import (
     get_card_from_deck,
     give_card_to_player,
@@ -29,7 +30,8 @@ from .utils import (
     verify_data_play_card,
     verify_data_steal_card,
     verify_data_discard_card,
-    play_action_card,
+    verify_data_response_basic,
+    verify_data_response_card,
     assign_hands,
     calculate_winners,
 )
@@ -38,7 +40,9 @@ from src.theThing.games.socket_handler import (
     send_player_status_to_player,
     send_game_status_to_player,
     send_game_and_player_status_to_players,
-    send_discard_event_to_players
+    send_discard_event_to_players,
+    send_action_event_to_players,
+    send_defense_event_to_players,
 )
 
 # Create an APIRouter instance for grouping related endpoints
@@ -378,6 +382,84 @@ async def discard_card(discard_data: dict):
     await send_discard_event_to_players(game_id, updated_player.name)
 
     return {"message": "Carta descartada con éxito"}
+
+
+@router.put("/game/response", status_code=200)
+async def respond_to_action_card(response_data: dict):
+    """
+    Respond to an action card. It has to be requested just after a call to 
+    /game/play endpoint.
+    Parameters:
+        play_data (dict): A dict containing game_id, player_id(who is 
+        the destination_player in play card) and response_card_id.
+
+    Returns:
+        dict: A JSON response indicating the success of the event, either if the
+        affected player could defend himself or not.
+
+    Raises:
+        HTTPException:
+            - 404 (Not Found): If the specified game does not exist.
+            - 422 (Unprocessable Entity): If the card cannot be played.
+    """
+    # Check valid inputs
+    if (
+        not response_data
+        or not response_data["game_id"]
+        or not response_data["player_id"]
+        or not response_data["response_card_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
+
+    game_id = response_data["game_id"]
+    defending_player_id = response_data["player_id"]
+    response_card_id = response_data["response_card_id"]
+
+    # Verify data and recover game, action_card, attacking_player, and defending player
+    try:
+        game, attacking_player, defending_player, action_card = verify_data_response_basic(game_id, defending_player_id)
+    except Exception as e:
+        raise e
+        
+    if response_card_id is None:
+        # Apply the effect of the played card. Call the function from the effect_applications dict
+        if action_card.code not in effect_applications:
+            effect_applications["default"](game, attacking_player, defending_player, action_card)
+        else: 
+            effect_applications[action_card.code](game, attacking_player, defending_player, action_card)
+
+        update_turn(game_id, TurnCreate(state=5)) # Has to be 3 in the future
+        # Send event description to all players
+        await send_action_event_to_players(game_id, attacking_player, defending_player, action_card)
+    else:
+        try:
+            response_card_id = int(response_card_id)
+            # First some routine checks
+            response_card = verify_data_response_card(game_id, defending_player, response_card_id)
+            # Discard the response card from the defending player hand, and give him a new one from the deck.
+            remove_card_from_player(response_card_id, defending_player_id, game_id)
+            new_card = get_card_from_deck(game_id)
+            give_card_to_player(new_card.id, defending_player_id, game_id)
+        except Exception as e:
+            raise e
+        
+        update_turn(game_id, TurnCreate(response_card=response_card_id, state=5)) # Has to be 3 in the future
+        # Send event description to all players
+        await send_defense_event_to_players(game_id, attacking_player, defending_player, action_card, response_card)
+        
+    # Send the updated states via sockets
+    updated_game = get_game(game_id)
+    await send_game_status_to_player(game_id, updated_game)
+
+    updated_defending_player = get_player(defending_player_id, game_id)
+    await send_player_status_to_player(defending_player_id, updated_defending_player)
+
+    updated_attacking_player = get_player(attacking_player.id, game_id)
+    await send_player_status_to_player(attacking_player.id, updated_attacking_player)
+
+    return {"message": "Efecto de jugada aplicado con éxito"}
 
 
 @router.get("/game/list")

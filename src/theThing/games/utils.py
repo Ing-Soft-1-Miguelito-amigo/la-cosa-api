@@ -331,8 +331,6 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
             detail="No es posible descartar sin robar una carta primero",
         )
 
-    # TODO: check the turn status
-
     # Verify that the card exists and it is in the player hand
     try:
         card = get_card(card_id, game_id)
@@ -351,6 +349,72 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
         )
 
     return game, player, card
+
+
+def verify_data_response_basic(game_id: int, defending_player_id: int):
+    # It also returns the game, the attacking player, the defending player and the action card
+    # Game checks
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail="No se encontró la partida")
+    if game.state != 1:
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
+    if game.turn.state != 2:
+        raise HTTPException(
+            status_code=422, detail="No es posible defenderse en este momento"
+        )
+    
+    # Check if the attacking player exists and its alive
+    for player in game.players:
+        if player.table_position == game.turn.owner:
+            attacking_player = player
+            break
+    if attacking_player is None:
+        raise HTTPException(status_code=404, detail="No se encontró el jugador atacante")
+    if not attacking_player.alive:
+        raise HTTPException(status_code=422, detail="El jugador atacante está muerto")
+    # Check the defending player exists and its alive
+    try: 
+        defending_player = get_player(defending_player_id, game_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="No se encontró el jugador destino")
+    
+    # Check the action card state
+    try:
+        action_card = get_card(game.turn.played_card.id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(
+            status_code=404, detail="No se encontró la carta de ataque especificada"
+        )
+    if action_card.state != 0:
+        raise HTTPException(
+            status_code=422, detail="La carta de ataque no ha sido jugada"
+        )
+
+    return game, attacking_player, defending_player, action_card
+
+
+def verify_data_response_card(game_id: int, defending_player: PlayerBase, response_card_id: int):
+    # It also returns the response card
+    # Get defense card
+    try:
+        response_card = get_card(response_card_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(
+            status_code=404, detail="No se encontró la carta de defensa especificada"
+        )
+    # Player checks
+    if len(defending_player.hand) != 4:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador tiene menos o más de 4 cartas en su mano. Debería tener 4.",
+        )
+    if response_card not in defending_player.hand:
+        raise HTTPException(status_code=404, detail="La carta de defensa no está en la mano del jugador")
+    return response_card
 
 
 def assign_hands(game: GameInDB):
