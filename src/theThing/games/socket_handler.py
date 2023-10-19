@@ -125,7 +125,7 @@ async def send_suspicion_to_player(
 async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
     data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
     await sio.emit(
-        "whk",
+        "whisky",
         data={
             "message": player + "jugo whisky y estas son sus cartas!",
             "cards": data_to_send,
