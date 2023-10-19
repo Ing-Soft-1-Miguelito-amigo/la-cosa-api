@@ -70,7 +70,6 @@ def get_game(game_id: int):
                 max_players=game.max_players,
                 state=game.state,
                 play_direction=game.play_direction,
-                turn_owner=game.turn_owner,
                 turn=return_turn,
                 players=game.players,
             )
@@ -115,7 +114,6 @@ def get_full_game(game_id: int):
                 max_players=game.max_players,
                 state=game.state,
                 play_direction=game.play_direction,
-                turn_owner=game.turn_owner,
                 turn=return_turn,
                 players=game.players,
                 deck=game.deck,

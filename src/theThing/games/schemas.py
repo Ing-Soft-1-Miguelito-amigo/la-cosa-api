@@ -24,7 +24,6 @@ class GameInDB(GameCreate):
     id: int
     state: int = 0
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
     turn: Optional[TurnOut] = None
     players: List[PlayerBase] = None
     deck: List[CardBase] = None
@@ -38,7 +37,6 @@ class GameOut(BaseModel):
     max_players: int
     state: int = 0
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
     turn: Optional[TurnOut] = None
     players: List[PlayerForGame] = []
 
@@ -58,6 +56,5 @@ class GameUpdate(BaseModel):
     # This is used to update a game
     state: Optional[int] = None
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

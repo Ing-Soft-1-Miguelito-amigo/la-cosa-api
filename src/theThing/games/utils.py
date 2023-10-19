@@ -297,7 +297,7 @@ def verify_data_steal_card(game_id: int, player_id: int):
         )
 
     # Verify that it actually is the player turn
-    if game.turn_owner != player.table_position:
+    if game.turn.owner != player.table_position:
         raise HTTPException(status_code=422, detail="No es tu turno")
 
 
@@ -323,7 +323,7 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
         raise HTTPException(
             status_code=404, detail="No se encontró el jugador especificado"
         )
-    if game.turn_owner != player.table_position or not player.alive:
+    if game.turn.owner != player.table_position or not player.alive:
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
         )
