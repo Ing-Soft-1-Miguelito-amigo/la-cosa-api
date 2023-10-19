@@ -8,6 +8,8 @@ from ..cards.crud import (
     update_card,
     give_card_to_player,
 )
+from ..turn.crud import update_turn
+from ..turn.schemas import TurnCreate
 from ..cards.schemas import CardBase, CardUpdate
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
@@ -396,3 +398,87 @@ def calculate_winners(game_id: int):
     winners = [player.id for player in players if player.alive]
 
     return winners
+
+
+def verify_data_finish_turn(game_id: int, player_id: int):
+    """
+    Verify the integrity of finish turn data.
+    """
+
+    # Verify that the game exists and it is started
+    try:
+        game = get_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+
+    if game.state != 1:
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+
+    if game.turn.state != 5:
+        raise HTTPException(status_code=422, detail="El turno aún no ha terminado")
+
+    # Verify that the player exists, and it is the turn owner and it is alive
+    try:
+        player = get_player(player_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró el jugador especificado")
+        )
+
+    if game.turn.owner != player.table_position or not player.alive:
+        raise HTTPException(
+            status_code=422, detail="No es el turno del jugador especificado"
+        )
+
+    return game, player
+
+
+def assign_turn_owner(game: GameOut):
+    played_card = game.turn.played_card
+    if played_card is not None:
+        # If played_card is None, then it was discarded, and we need to skip this section
+        played_card_code = played_card.code
+        response_card = game.turn.response_card
+        if (played_card_code == "cdl" or played_card_code == "mvc") and response_card is None:
+            # If the played card is "cdl" or "mvc" and there's no response, the turn
+            # owner is in the same position of the last turn played.
+            update_turn(
+                game.id,
+                TurnCreate(
+                    state=0, played_card=None, response_card=None, destination_player=""
+                ),
+            )
+            return
+
+    # Assign new turn owner, must be an alive player
+    # if play direction is clockwise, turn owner is the next player. If not, the previous player
+    alive_players = [player.table_position for player in game.players if player.alive]
+    alive_players.sort()
+    if game.play_direction:
+        new_turn_owner = alive_players[
+            (alive_players.index(game.turn.owner) + 1) % len(alive_players)
+        ]
+        update_turn(
+            game.id,
+            TurnCreate(
+                owner=new_turn_owner,
+                state=0,
+                played_card=None,
+                response_card=None,
+                destination_player="",
+            ),
+        )
+    else:
+        new_turn_owner = alive_players[
+            (alive_players.index(game.turn.owner) - 1) % len(alive_players)
+        ]
+        update_turn(
+            game.id,
+            TurnCreate(
+                owner=new_turn_owner,
+                state=0,
+                played_card=None,
+                response_card=None,
+                destination_player="",
+            ),
+        )
