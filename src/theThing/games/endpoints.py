@@ -140,7 +140,7 @@ async def start_game(game_start_info: dict):
     verify_data_start(game, host_name)
 
     # Update game status to started and assign turn owner and play direction
-    new_game_status = GameUpdate(state=1, play_direction=True, turn_owner=1)
+    new_game_status = GameUpdate(state=1, play_direction=True)
     try:
         update_game(game_id, new_game_status)
     except Exception as e:
@@ -408,7 +408,6 @@ async def respond_to_action_card(response_data: dict):
         not response_data
         or not response_data["game_id"]
         or not response_data["player_id"]
-        or not response_data["response_card_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -430,7 +429,7 @@ async def respond_to_action_card(response_data: dict):
             effect_applications["default"](game, attacking_player, defending_player, action_card)
         else: 
             effect_applications[action_card.code](game, attacking_player, defending_player, action_card)
-
+        # Update turn status
         update_turn(game_id, TurnCreate(state=5)) # Has to be 3 in the future
         # Send event description to all players
         await send_action_event_to_players(game_id, attacking_player, defending_player, action_card)
@@ -445,7 +444,7 @@ async def respond_to_action_card(response_data: dict):
             give_card_to_player(new_card.id, defending_player_id, game_id)
         except Exception as e:
             raise e
-        
+        # Update turn and add the response_card
         update_turn(game_id, TurnCreate(response_card=response_card_id, state=5)) # Has to be 3 in the future
         # Send event description to all players
         await send_defense_event_to_players(game_id, attacking_player, defending_player, action_card, response_card)

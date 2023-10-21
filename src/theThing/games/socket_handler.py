@@ -28,22 +28,16 @@ async def disconnect(sid):
 
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
-    await sio.emit(
-        "player_status", player_data.model_dump(), room="p" + str(player_id)
-    )
+    await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
 
 
 async def send_game_status_to_player(game_id: int, game_data: GameOut):
-    await sio.emit(
-        "game_status", game_data.model_dump(), room="g" + str(game_id)
-    )
+    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
 
 
 async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
-        await sio.emit(
-            "player_status", player.model_dump(), room="p" + str(player.id)
-        )
+        await sio.emit("player_status", player.model_dump(), room="p" + str(player.id))
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
@@ -52,27 +46,89 @@ async def send_game_and_player_status_to_players(game_data: GameInDB):
 
 async def send_discard_event_to_players(game_id: int, player_name: str):
     await sio.emit(
-        "discard", {"player_name": player_name,
-                    "message": player_name + " descartó una carta"}, room="g" + str(game_id)
+        "discard",
+        {"player_name": player_name, "message": player_name + " descartó una carta"},
+        room="g" + str(game_id),
     )
 
 
-async def send_action_event_to_players(game_id: int, attacking_player: PlayerBase, defending_player: PlayerBase, action_card: CardBase):
+async def send_action_event_to_players(
+    game_id: int,
+    attacking_player: PlayerBase,
+    defending_player: PlayerBase,
+    action_card: CardBase,
+):
     await sio.emit(
-        "action", 
+        "action",
         data={
-        "message": attacking_player.name + " le aplicó la carta "
-        + action_card.name + " a " + defending_player.name
-        }, 
-        room="g" + str(game_id)
+            "message": attacking_player.name
+            + " le jugo la carta "
+            + action_card.name
+            + " a "
+            + defending_player.name
+        },
+        room="g" + str(game_id),
     )
 
 
-async def send_defense_event_to_players(game_id: int, attacking_player: PlayerBase, defending_player: PlayerBase, action_card: CardBase, defense_card: CardBase):
+async def send_defense_event_to_players(
+    game_id: int,
+    attacking_player: PlayerBase,
+    defending_player: PlayerBase,
+    action_card: CardBase,
+    defense_card: CardBase,
+):
     await sio.emit(
-        "defense", 
+        "defense",
         data={
-        "message": defending_player.name + " se defendió del ataque de " 
-        + action_card.name + " jugado por " + attacking_player.name + " con la carta " + defense_card.name}, 
-        room="g" + str(game_id)
+            "message": defending_player.name
+            + " se defendió del ataque de "
+            + action_card.name
+            + " jugado por "
+            + attacking_player.name
+            + " con la carta "
+            + defense_card.name
+        },
+        room="g" + str(game_id),
+    )
+
+
+async def send_analysis_to_player(
+    player_id: int, hand: [CardBase], attacked_player_name: str
+):
+    # include all data from the cards except the id
+    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    await sio.emit(
+        "analisis",
+        data={
+            "message": "Estas son las cartas de" + attacked_player_name,
+            "cards": data_to_send,
+        },
+        room="p" + str(player_id),
+    )
+
+
+async def send_suspicion_to_player(
+    player_id: int, card: CardBase, attacked_player_name: str
+):
+    data_to_send = card.model_dump(exclude={"id"})
+    await sio.emit(
+        "sospecha",
+        data={
+            "message": "Esta es una carta de" + attacked_player_name,
+            "card": data_to_send,
+        },
+        room="p" + str(player_id),
+    )
+
+
+async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
+    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    await sio.emit(
+        "whisky",
+        data={
+            "message": player + "jugo whisky y estas son sus cartas!",
+            "cards": data_to_send,
+        },
+        room="g" + str(game_id),
     )
