@@ -464,7 +464,7 @@ def calculate_winners(game_id: int):
     return winners
 
 
-def verify_data_finish_turn(game_id: int, player_id: int):
+def verify_data_finish_turn(game_id: int):
     """
     Verify the integrity of finish turn data.
     """
@@ -481,20 +481,7 @@ def verify_data_finish_turn(game_id: int, player_id: int):
     if game.turn.state != 5:
         raise HTTPException(status_code=422, detail="El turno aún no ha terminado")
 
-    # Verify that the player exists, and it is the turn owner and it is alive
-    try:
-        player = get_player(player_id, game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=422, detail=str("No se encontró el jugador especificado")
-        )
-
-    if game.turn.owner != player.table_position or not player.alive:
-        raise HTTPException(
-            status_code=422, detail="No es el turno del jugador especificado"
-        )
-
-    return game, player
+    return game
 
 
 def assign_turn_owner(game: GameOut):
