@@ -23,7 +23,7 @@ async def connect(sid, environ):
     sio.enter_room(sid, "g" + game_id)
     sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
-    game_to_send = await get_game(game_id)
+    game_to_send = get_game(game_id)
     await send_game_status_to_player(game_id, game_to_send)
 
 
