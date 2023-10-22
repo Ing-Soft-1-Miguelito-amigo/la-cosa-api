@@ -616,13 +616,12 @@ async def finish_turn(finish_data: dict):
     Finish a turn.
     """
     # Check valid inputs
-    if not finish_data or not finish_data["game_id"] or not finish_data["player_id"]:
+    if not finish_data or not finish_data["game_id"]:
         raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = finish_data["game_id"]
-    player_id = finish_data["player_id"]
 
-    verify_data_finish_turn(game_id, player_id)
+    verify_data_finish_turn(game_id)
 
     game = get_game(game_id)
 
