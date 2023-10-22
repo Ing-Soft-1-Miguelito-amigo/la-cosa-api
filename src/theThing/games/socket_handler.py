@@ -32,6 +32,12 @@ async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
 
 
 async def send_game_status_to_player(game_id: int, game_data: GameOut):
+    """
+    Sends the game status to ALL players in the game
+    :param game_id:
+    :param game_data:
+    :return:
+    """
     await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
 
 

@@ -99,6 +99,8 @@ async def create_new_game(game_data: GameWithHost):
     full_game = get_full_game(created_game.id)
     host_player = full_game.players[0]
 
+    # Send game and player status to all players
+    await send_game_and_player_status_to_players(full_game)
     return {
         "message": f"Partida '{game_name}' creada por '{host_name}' con éxito",
         "game_id": created_game.id,
@@ -200,7 +202,7 @@ async def join_game(join_info: dict):
             raise HTTPException(status_code=404, detail=str(e))
         else:
             raise HTTPException(status_code=422, detail=str(e))
-
+    await send_game_and_player_status_to_players(get_full_game(game_id))
     return {
         "message": "El jugador se unió con éxito",
         "player_id": created_player.id,
