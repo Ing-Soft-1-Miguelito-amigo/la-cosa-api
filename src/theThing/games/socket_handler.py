@@ -3,6 +3,7 @@ from src.theThing.cards.schemas import CardBase
 from src.theThing.players.schemas import PlayerBase
 from src.theThing.games.schemas import GameOut, GameInDB
 from urllib.parse import parse_qs
+from src.theThing.games.crud import get_game
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
 socketio_app = socketio.ASGIApp(sio, socketio_path="/")
@@ -22,6 +23,8 @@ async def connect(sid, environ):
     sio.enter_room(sid, "g" + game_id)
     sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
+    game_to_send = await get_game(game_id)
+    await send_game_status_to_player(game_id, game_to_send)
 
 
 @sio.event
