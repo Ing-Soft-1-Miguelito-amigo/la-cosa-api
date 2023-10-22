@@ -606,7 +606,9 @@ async def leave_game(game_id: int, player_id: int):
             response = {"message": f"Partida {game_id} finalizada por el host"}
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
-
+    # send game status to players
+    game_to_send = get_game(game_id)
+    await send_game_status_to_player(game_id, game_to_send)
     return response
 
 

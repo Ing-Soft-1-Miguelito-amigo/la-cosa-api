@@ -2,17 +2,19 @@ import socketio
 from src.theThing.cards.schemas import CardBase
 from src.theThing.players.schemas import PlayerBase
 from src.theThing.games.schemas import GameOut, GameInDB
-
+from urllib.parse import parse_qs
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
-socketio_app = socketio.ASGIApp(sio)
+socketio_app = socketio.ASGIApp(sio, socketio_path="/")
 
 
 @sio.event
 async def connect(sid, environ):
     print("connect ", sid)
-    player_id = environ.get("HTTP_PLAYER_ID")
-    game_id = environ.get("HTTP_GAME_ID")
+    query_string = environ.get("QUERY_STRING", "")
+    params = parse_qs(query_string)
+    player_id = params.get("Player-Id", [None])[0]
+    game_id = params.get("Game-Id", [None])[0]
     # if the parameters are not present, the connection is rejected
     if not player_id or not game_id:
         return False
