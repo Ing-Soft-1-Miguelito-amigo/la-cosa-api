@@ -441,7 +441,7 @@ async def respond_to_action_card(response_data: dict):
                 game, attacking_player, defending_player, action_card
             )
         else:
-            effect_applications[action_card.code](
+            await effect_applications[action_card.code](
                 game, attacking_player, defending_player, action_card
             )
         # Update turn status

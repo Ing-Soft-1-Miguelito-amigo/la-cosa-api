@@ -26,7 +26,7 @@ IMPORTANT: The parameters must be passed in the following order and types:
 
 
 # Functions implementation
-def apply_flamethrower(
+async def apply_flamethrower(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -54,7 +54,7 @@ def apply_flamethrower(
     return updated_game
 
 
-def apply_vte(
+async def apply_vte(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -70,7 +70,7 @@ def apply_vte(
     return updated_game
 
 
-def apply_cdl(
+async def apply_cdl(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -99,7 +99,7 @@ def apply_cdl(
     return updated_game
 
 
-def apply_mvc(
+async def apply_mvc(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -128,7 +128,7 @@ def apply_mvc(
     return updated_game
 
 
-def apply_ana(
+async def apply_ana(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -138,12 +138,12 @@ def apply_ana(
     destination_hand = destination_player.hand
 
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    sh.send_analysis_to_player(player.id, destination_hand, destination_player.name)
+    await sh.send_analysis_to_player(player.id, destination_hand, destination_player.name)
     updated_game = get_full_game(game.id)
     return updated_game
 
 
-def apply_sos(
+async def apply_sos(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -153,12 +153,12 @@ def apply_sos(
     destination_card = random.choice(destination_player.hand)
 
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    sh.send_suspicion_to_player(player.id, destination_card, destination_player.name)
+    await sh.send_suspicion_to_player(player.id, destination_card, destination_player.name)
     updated_game = get_full_game(game.id)
     return updated_game
 
 
-def apply_whk(
+async def apply_whk(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -168,13 +168,13 @@ def apply_whk(
     player_hand = player.hand
 
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    sh.send_whk_to_player(game.id, player.name, player_hand)
+    await sh.send_whk_to_player(game.id, player.name, player_hand)
 
     updated_game = get_full_game(game.id)
     return updated_game
 
 
-def just_discard(
+async def just_discard(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
