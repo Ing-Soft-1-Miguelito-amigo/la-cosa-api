@@ -198,7 +198,7 @@ def update_game(game_id: int, game: schemas.GameUpdate):
             )
             return return_game
         else:
-            response = schemas.GameInDB.model_validate(game)
+            response = schemas.GameInDB.model_validate(game_to_update)
     return response
 
 
