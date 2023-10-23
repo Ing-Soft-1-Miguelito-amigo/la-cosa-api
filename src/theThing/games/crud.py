@@ -164,6 +164,7 @@ def update_game(game_id: int, game: schemas.GameUpdate):
     with db_session:
         game_to_update = models.Game[game_id]
         game_to_update.set(**game.model_dump(exclude_unset=True))
+        game_to_update.flush()
         response = schemas.GameInDB.model_validate(game_to_update)
     return response
 
