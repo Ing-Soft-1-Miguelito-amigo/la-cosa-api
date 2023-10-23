@@ -2,8 +2,10 @@ import socketio
 from src.theThing.cards.schemas import CardBase
 from src.theThing.players.schemas import PlayerBase
 from src.theThing.games.schemas import GameOut, GameInDB
+from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
+
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
 socketio_app = socketio.ASGIApp(sio, socketio_path="/")
@@ -23,8 +25,11 @@ async def connect(sid, environ):
     sio.enter_room(sid, "g" + game_id)
     sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
+    # This is necessary for the client connection logic 
     game_to_send = get_game(game_id)
-    await send_game_status_to_player(game_id, game_to_send)
+    player_to_send = get_player(player_id, game_id)
+    await send_game_status_to_players(game_id, game_to_send)
+    await send_player_status_to_player(player_id, player_to_send)
 
 
 @sio.event
@@ -33,22 +38,28 @@ async def disconnect(sid):
 
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
-    await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
+    await sio.emit(
+        "player_status", player_data.model_dump(), room="p" + str(player_id)
+    )
 
 
-async def send_game_status_to_player(game_id: int, game_data: GameOut):
+async def send_game_status_to_players(game_id: int, game_data: GameOut):
     """
     Sends the game status to ALL players in the game
     :param game_id:
     :param game_data:
     :return:
     """
-    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
+    await sio.emit(
+        "game_status", game_data.model_dump(), room="g" + str(game_id)
+    )
 
 
 async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
-        await sio.emit("player_status", player.model_dump(), room="p" + str(player.id))
+        await sio.emit(
+            "player_status", player.model_dump(), room="p" + str(player.id)
+        )
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
@@ -58,7 +69,10 @@ async def send_game_and_player_status_to_players(game_data: GameInDB):
 async def send_discard_event_to_players(game_id: int, player_name: str):
     await sio.emit(
         "discard",
-        {"player_name": player_name, "message": player_name + " descartó una carta"},
+        {
+            "player_name": player_name,
+            "message": player_name + " descartó una carta",
+        },
         room="g" + str(game_id),
     )
 
@@ -73,7 +87,7 @@ async def send_action_event_to_players(
         "action",
         data={
             "message": attacking_player.name
-            + " le jugo la carta "
+            + " le jugó la carta "
             + action_card.name
             + " a "
             + defending_player.name
@@ -138,7 +152,7 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
     await sio.emit(
         "whisky",
         data={
-            "message": player + "jugo whisky y estas son sus cartas!",
+            "message": player + "jugó whisky y estas son sus cartas!",
             "cards": data_to_send,
         },
         room="g" + str(game_id),

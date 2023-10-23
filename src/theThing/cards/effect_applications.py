@@ -27,7 +27,10 @@ IMPORTANT: The parameters must be passed in the following order and types:
 
 # Functions implementation
 def apply_flamethrower(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     # check that the player has 4 cards in hand
     card.state = 0
@@ -52,16 +55,26 @@ def apply_flamethrower(
 
 
 def apply_vte(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
-    game.play_direction = not game.play_direction
-    update_game(game.id, GameUpdate(play_direction=game.play_direction))
+    # Remove the card played from the player
+    remove_card_from_player(card.id, player.id, game.id)
+
+    # Invert the game play direction
+    new_direction = not game.play_direction
+    update_game(game.id, GameUpdate(play_direction=new_direction))
     updated_game = get_full_game(game.id)
     return updated_game
 
 
 def apply_cdl(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -87,7 +100,10 @@ def apply_cdl(
 
 
 def apply_mvc(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -113,7 +129,10 @@ def apply_mvc(
 
 
 def apply_ana(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     destination_hand = destination_player.hand
@@ -125,7 +144,10 @@ def apply_ana(
 
 
 def apply_sos(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     destination_card = random.choice(destination_player.hand)
@@ -137,7 +159,10 @@ def apply_sos(
 
 
 def apply_whk(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     player_hand = player.hand
@@ -150,7 +175,10 @@ def apply_whk(
 
 
 def just_discard(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     # other cards
     card.state = 0
