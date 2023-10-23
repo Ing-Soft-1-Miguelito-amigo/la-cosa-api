@@ -27,7 +27,10 @@ IMPORTANT: The parameters must be passed in the following order and types:
 
 # Functions implementation
 def apply_flamethrower(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     # check that the player has 4 cards in hand
     card.state = 0
@@ -35,7 +38,9 @@ def apply_flamethrower(
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
     updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,
@@ -52,7 +57,10 @@ def apply_flamethrower(
 
 
 def apply_vte(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     game.play_direction = not game.play_direction
     update_game(game.id, GameUpdate(play_direction=game.play_direction))
@@ -61,7 +69,10 @@ def apply_vte(
 
 
 def apply_cdl(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -70,7 +81,9 @@ def apply_cdl(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -87,7 +100,10 @@ def apply_cdl(
 
 
 def apply_mvc(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -96,7 +112,9 @@ def apply_mvc(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -113,31 +131,44 @@ def apply_mvc(
 
 
 def apply_ana(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     destination_hand = destination_player.hand
 
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    sh.send_analysis_to_player(player.id, destination_hand, destination_player.name)
+    sh.send_analysis_to_player(
+        player.id, destination_hand, destination_player.name
+    )
     updated_game = get_full_game(game.id)
     return updated_game
 
 
 def apply_sos(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     destination_card = random.choice(destination_player.hand)
 
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    sh.send_suspicion_to_player(player.id, destination_card, destination_player.name)
+    sh.send_suspicion_to_player(
+        player.id, destination_card, destination_player.name
+    )
     updated_game = get_full_game(game.id)
     return updated_game
 
 
 def apply_whk(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     card.state = 0
     player_hand = player.hand
@@ -150,14 +181,19 @@ def apply_whk(
 
 
 def just_discard(
-    game: GameInDB, player: PlayerBase, destination_player: PlayerBase, card: CardBase
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
 ):
     # other cards
     card.state = 0
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
 
 effect_applications = {

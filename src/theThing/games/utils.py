@@ -155,7 +155,8 @@ def verify_data_play_card(
         )
     if game.turn.state != 1:
         raise HTTPException(
-            status_code=422, detail="El jugador todavia no puede jugar en este turno"
+            status_code=422,
+            detail="El jugador todavia no puede jugar en este turno",
         )
     # Verify that the card exists and it is in the player hand
     try:
@@ -169,8 +170,10 @@ def verify_data_play_card(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
-    if card.kind not in [0,2]:
-        raise HTTPException(status_code=422, detail="No puedes jugar esta carta")
+    if card.kind not in [0, 2]:
+        raise HTTPException(
+            status_code=422, detail="No puedes jugar esta carta"
+        )
     if card.playable is False:
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
@@ -205,12 +208,14 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    if card.code != "mvc":
-        # check if the destination player is adjacent to the player,
+    if card.code not in ["mvc", "whk"]:
+        # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
             alive_players
-        ) or index_destination_player == (index_player - 1) % len(alive_players):
+        ) or index_destination_player == (index_player - 1) % len(
+            alive_players
+        ):
             pass
         else:
             raise HTTPException(
@@ -326,28 +331,35 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         raise HTTPException(
             status_code=422, detail="No es posible defenderse en este momento"
         )
-    
+
     # Check if the attacking player exists and its alive
     for player in game.players:
         if player.table_position == game.turn.owner:
             attacking_player = player
             break
     if attacking_player is None:
-        raise HTTPException(status_code=404, detail="No se encontró el jugador atacante")
+        raise HTTPException(
+            status_code=404, detail="No se encontró el jugador atacante"
+        )
     if not attacking_player.alive:
-        raise HTTPException(status_code=422, detail="El jugador atacante está muerto")
+        raise HTTPException(
+            status_code=422, detail="El jugador atacante está muerto"
+        )
     # Check the defending player exists and its alive
-    try: 
+    try:
         defending_player = get_player(defending_player_id, game_id)
     except Exception as e:
-        raise HTTPException(status_code=404, detail="No se encontró el jugador destino")
-    
+        raise HTTPException(
+            status_code=404, detail="No se encontró el jugador destino"
+        )
+
     # Check the action card state
     try:
         action_card = get_card(game.turn.played_card.id, game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(
-            status_code=404, detail="No se encontró la carta de ataque especificada"
+            status_code=404,
+            detail="No se encontró la carta de ataque especificada",
         )
     if action_card.state != 0:
         raise HTTPException(
@@ -357,17 +369,22 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
     return game, attacking_player, defending_player, action_card
 
 
-def verify_data_response_card(game_id: int, defending_player: PlayerBase, response_card_id: int):
+def verify_data_response_card(
+    game_id: int, defending_player: PlayerBase, response_card_id: int
+):
     # It also returns the response card
     # Get defense card
     try:
         response_card = get_card(response_card_id, game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(
-            status_code=404, detail="No se encontró la carta de defensa especificada"
+            status_code=404,
+            detail="No se encontró la carta de defensa especificada",
         )
     if response_card.kind != 1:
-        raise HTTPException(status_code=422, detail="No te puedes defender con esta carta")
+        raise HTTPException(
+            status_code=422, detail="No te puedes defender con esta carta"
+        )
     # Player checks
     if len(defending_player.hand) != 4:
         raise HTTPException(
@@ -375,7 +392,10 @@ def verify_data_response_card(game_id: int, defending_player: PlayerBase, respon
             detail="El jugador tiene menos o más de 4 cartas en su mano. Debería tener 4.",
         )
     if response_card not in defending_player.hand:
-        raise HTTPException(status_code=404, detail="La carta de defensa no está en la mano del jugador")
+        raise HTTPException(
+            status_code=404,
+            detail="La carta de defensa no está en la mano del jugador",
+        )
     return response_card
 
 
@@ -433,13 +453,19 @@ def verify_data_finish_turn(game_id: int):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
 
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
 
     if game.turn.state != 5:
-        raise HTTPException(status_code=422, detail="El turno aún no ha terminado")
+        raise HTTPException(
+            status_code=422, detail="El turno aún no ha terminado"
+        )
 
     return game
 
@@ -450,20 +476,27 @@ def assign_turn_owner(game: GameOut):
         # If played_card is None, then it was discarded, and we need to skip this section
         played_card_code = played_card.code
         response_card = game.turn.response_card
-        if (played_card_code == "cdl" or played_card_code == "mvc") and response_card is None:
+        if (
+            played_card_code == "cdl" or played_card_code == "mvc"
+        ) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
             # owner is in the same position of the last turn played.
             update_turn(
                 game.id,
                 TurnCreate(
-                    state=0, played_card=None, response_card=None, destination_player=""
+                    state=0,
+                    played_card=None,
+                    response_card=None,
+                    destination_player="",
                 ),
             )
             return
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player.table_position for player in game.players if player.alive]
+    alive_players = [
+        player.table_position for player in game.players if player.alive
+    ]
     alive_players.sort()
     if game.play_direction:
         new_turn_owner = alive_players[
