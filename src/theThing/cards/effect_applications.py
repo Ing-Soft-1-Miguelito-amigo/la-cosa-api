@@ -62,8 +62,7 @@ def apply_vte(
     destination_player: PlayerBase,
     card: CardBase,
 ):
-    game.play_direction = not game.play_direction
-    update_game(game.id, GameUpdate(play_direction=game.play_direction))
+    update_game(game.id, GameUpdate(state=game.state,play_direction=not game.play_direction))
     updated_game = get_full_game(game.id)
     return updated_game
 
