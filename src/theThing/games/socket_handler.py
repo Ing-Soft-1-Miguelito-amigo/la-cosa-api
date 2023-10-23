@@ -2,6 +2,7 @@ import socketio
 from src.theThing.cards.schemas import CardBase
 from src.theThing.players.schemas import PlayerBase
 from src.theThing.games.schemas import GameOut, GameInDB
+from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 
@@ -24,8 +25,11 @@ async def connect(sid, environ):
     sio.enter_room(sid, "g" + game_id)
     sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
+    # This is necessary for the client connection logic 
     game_to_send = get_game(game_id)
-    await send_game_status_to_player(game_id, game_to_send)
+    player_to_send = get_player(player_id, game_id)
+    await send_game_status_to_players(game_id, game_to_send)
+    await send_player_status_to_player(player_id, player_to_send)
 
 
 @sio.event
@@ -39,7 +43,7 @@ async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
     )
 
 
-async def send_game_status_to_player(game_id: int, game_data: GameOut):
+async def send_game_status_to_players(game_id: int, game_data: GameOut):
     """
     Sends the game status to ALL players in the game
     :param game_id:
