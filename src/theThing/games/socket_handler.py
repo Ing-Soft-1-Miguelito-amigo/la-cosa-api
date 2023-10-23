@@ -87,7 +87,7 @@ async def send_action_event_to_players(
         "action",
         data={
             "message": attacking_player.name
-            + " le jugo la carta "
+            + " le jugó la carta "
             + action_card.name
             + " a "
             + defending_player.name
@@ -152,7 +152,7 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
     await sio.emit(
         "whisky",
         data={
-            "message": player + "jugo whisky y estas son sus cartas!",
+            "message": player + "jugó whisky y estas son sus cartas!",
             "cards": data_to_send,
         },
         room="g" + str(game_id),
