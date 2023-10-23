@@ -419,7 +419,7 @@ def calculate_winners(game_id: int):
     """
     game = get_full_game(game_id)
     players = game.players
-    winners = [player.id for player in players if player.alive]
+    winners = [player.name for player in players if player.alive]
 
     return winners
 

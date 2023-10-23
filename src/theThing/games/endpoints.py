@@ -540,11 +540,15 @@ async def get_game_results(game_id: int):
         )
 
     winners = calculate_winners(game_id)
+    winners_str = ""
+    for winner in winners:
+        winners_str += winner.name + ", "
+    winners_str = winners_str[:-2]
 
     return {
         "message": "Partida finalizada con éxito",
         "game_id": game_id,
-        "winners": winners,
+        "winners": f"Ganadores: {winners_str}",
     }
 
 
