@@ -39,7 +39,7 @@ from .utils import (
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
     send_player_status_to_player,
-    send_game_status_to_player,
+    send_game_status_to_players,
     send_game_and_player_status_to_players,
     send_discard_event_to_players,
     send_action_event_to_players,
@@ -99,8 +99,6 @@ async def create_new_game(game_data: GameWithHost):
     full_game = get_full_game(created_game.id)
     host_player = full_game.players[0]
 
-    # Send game and player status to all players
-    await send_game_and_player_status_to_players(full_game)
     return {
         "message": f"Partida '{game_name}' creada por '{host_name}' con éxito",
         "game_id": created_game.id,
@@ -108,6 +106,50 @@ async def create_new_game(game_data: GameWithHost):
     }
 
 
+# Endpoint to join a player to a game
+@router.post("/game/join", status_code=200)
+async def join_game(join_info: dict):
+    """
+    Join a player to a game. It creates a player and join it to the game.
+
+    Parameters:
+        join_info (dict): A dictionary containing the game_id and player_name.
+
+    Returns:
+        dict: A JSON response indicating the success of the player joining the game.
+
+    Raises:
+        HTTPException: If there is an error during player creation or data validation.
+    """
+    game_id = join_info["game_id"]
+    player_name = join_info["player_name"]
+
+    # Check that name is not empty
+    if not player_name:
+        raise HTTPException(
+            status_code=422, detail="El nombre del jugador no puede ser vacío"
+        )
+
+    new_player = PlayerCreate(name=player_name, owner=False)
+
+    # Perform logic to create and save the player in the DB
+    try:
+        created_player = create_player(new_player, game_id)
+    except Exception as e:
+        if str(e) == "No se encontró la partida":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+        
+
+    return {
+        "message": "El jugador se unió con éxito",
+        "player_id": created_player.id,
+        "game_id": game_id,
+    }
+
+
+# Endpoint to start a game
 @router.post("/game/start")
 async def start_game(game_start_info: dict):
     """
@@ -168,48 +210,6 @@ async def start_game(game_start_info: dict):
     return {"message": f"Partida {game_id} iniciada con éxito"}
 
 
-# Endpoint to join a player to a game
-@router.post("/game/join", status_code=200)
-async def join_game(join_info: dict):
-    """
-    Join a player to a game. It creates a player and join it to the game.
-
-    Parameters:
-        join_info (dict): A dictionary containing the game_id and player_name.
-
-    Returns:
-        dict: A JSON response indicating the success of the player joining the game.
-
-    Raises:
-        HTTPException: If there is an error during player creation or data validation.
-    """
-    game_id = join_info["game_id"]
-    player_name = join_info["player_name"]
-
-    # Check that name is not empty
-    if not player_name:
-        raise HTTPException(
-            status_code=422, detail="El nombre del jugador no puede ser vacío"
-        )
-
-    new_player = PlayerCreate(name=player_name, owner=False)
-
-    # Perform logic to create and save the player in the DB
-    try:
-        created_player = create_player(new_player, game_id)
-    except Exception as e:
-        if str(e) == "No se encontró la partida":
-            raise HTTPException(status_code=404, detail=str(e))
-        else:
-            raise HTTPException(status_code=422, detail=str(e))
-    await send_game_and_player_status_to_players(get_full_game(game_id))
-    return {
-        "message": "El jugador se unió con éxito",
-        "player_id": created_player.id,
-        "game_id": game_id,
-    }
-
-
 # Endpoint to steal a card
 @router.put("/game/steal", status_code=200)
 async def steal_card(steal_data: dict):
@@ -263,11 +263,12 @@ async def steal_card(steal_data: dict):
     await send_player_status_to_player(player_id, updated_player)
 
     updated_game = get_game(game_id)
-    await send_game_status_to_player(game_id, updated_game)
+    await send_game_status_to_players(game_id, updated_game)
 
     return {"message": "Carta robada con éxito"}
 
 
+# Endpoint to play a card
 @router.put("/game/play", status_code=200)
 async def play_card(play_data: dict):
     """
@@ -318,11 +319,12 @@ async def play_card(play_data: dict):
     await send_player_status_to_player(player_id, player)
 
     updated_game = get_game(game_id)
-    await send_game_status_to_player(game_id, updated_game)
+    await send_game_status_to_players(game_id, updated_game)
 
     return {"message": "Carta jugada con éxito"}
 
 
+# Endpoint to discard a card
 @router.put("/game/discard", status_code=200)
 async def discard_card(discard_data: dict):
     """
@@ -383,7 +385,7 @@ async def discard_card(discard_data: dict):
     # Send new status via socket
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
-    await send_game_status_to_player(game_id, updated_game)
+    await send_game_status_to_players(game_id, updated_game)
     await send_discard_event_to_players(game_id, updated_player.name)
 
     return {"message": "Carta descartada con éxito"}
@@ -478,7 +480,7 @@ async def respond_to_action_card(response_data: dict):
 
     # Send the updated states via sockets
     updated_game = get_game(game_id)
-    await send_game_status_to_player(game_id, updated_game)
+    await send_game_status_to_players(game_id, updated_game)
 
     updated_defending_player = get_player(defending_player_id, game_id)
     await send_player_status_to_player(
@@ -637,7 +639,7 @@ async def leave_game(game_id: int, player_id: int):
         raise HTTPException(status_code=404, detail=str(e))
     # send game status to players
     game_to_send = get_game(game_id)
-    await send_game_status_to_player(game_id, game_to_send)
+    await send_game_status_to_players(game_id, game_to_send)
     return response
 
 
@@ -662,6 +664,6 @@ async def finish_turn(finish_data: dict):
 
     # send new status via socket
     updated_game = get_game(game_id)
-    await send_game_status_to_player(game_id, updated_game)
+    await send_game_status_to_players(game_id, updated_game)
 
     return {"message": "Turno finalizado con éxito"}

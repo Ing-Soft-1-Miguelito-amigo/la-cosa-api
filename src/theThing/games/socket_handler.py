@@ -28,7 +28,7 @@ async def connect(sid, environ):
     # This is necessary for the client connection logic 
     game_to_send = get_game(game_id)
     player_to_send = get_player(player_id, game_id)
-    await send_game_status_to_player(game_id, game_to_send)
+    await send_game_status_to_players(game_id, game_to_send)
     await send_player_status_to_player(player_id, player_to_send)
 
 
@@ -43,7 +43,7 @@ async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
     )
 
 
-async def send_game_status_to_player(game_id: int, game_data: GameOut):
+async def send_game_status_to_players(game_id: int, game_data: GameOut):
     """
     Sends the game status to ALL players in the game
     :param game_id:
