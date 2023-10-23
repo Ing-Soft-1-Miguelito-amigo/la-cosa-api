@@ -170,31 +170,31 @@ def update_game(game_id: int, game: schemas.GameUpdate):
             response_card = None
             destination_player = ""
 
-            if game.turn.played_card is not None:
-                played_card = models.Card[game.turn.played_card]
-            if game.turn.response_card is not None:
-                response_card = models.Card[game.turn.response_card]
-            if game.turn.destination_player is not None:
-                destination_player = game.turn.destination_player
+            if game_to_update.turn.played_card is not None:
+                played_card = models.Card[game_to_update.turn.played_card]
+            if game_to_update.turn.response_card is not None:
+                response_card = models.Card[game_to_update.turn.response_card]
+            if game_to_update.turn.destination_player is not None:
+                destination_player = game_to_update.turn.destination_player
 
             return_turn = schemas.TurnOut(
-                owner=game.turn.owner,
+                owner=game_to_update.turn.owner,
                 played_card=played_card,
                 destination_player=destination_player,
                 response_card=response_card,
-                state=game.turn.state,
+                state=game_to_update.turn.state,
             )
 
             return_game = schemas.GameInDB(
-                id=game.id,
-                name=game.name,
-                min_players=game.min_players,
-                max_players=game.max_players,
-                state=game.state,
-                play_direction=game.play_direction,
+                id=game_to_update.id,
+                name=game_to_update.name,
+                min_players=game_to_update.min_players,
+                max_players=game_to_update.max_players,
+                state=game_to_update.state,
+                play_direction=game_to_update.play_direction,
                 turn=return_turn,
-                players=game.players,
-                deck=game.deck,
+                players=game_to_update.players,
+                deck=game_to_update.deck,
             )
             return return_game
         else:
