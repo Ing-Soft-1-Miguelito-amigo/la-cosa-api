@@ -668,6 +668,9 @@ async def finish_turn(finish_data: dict):
 
     # send new status via socket
     updated_game = get_game(game_id)
+
+    updated_game = verify_finished_game(updated_game)
+
     await send_game_status_to_players(game_id, updated_game)
 
     return {"message": "Turno finalizado con éxito"}
