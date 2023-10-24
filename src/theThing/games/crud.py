@@ -70,7 +70,6 @@ def get_game(game_id: int):
                 max_players=game.max_players,
                 state=game.state,
                 play_direction=game.play_direction,
-                turn_owner=game.turn_owner,
                 turn=return_turn,
                 players=game.players,
             )
@@ -115,7 +114,6 @@ def get_full_game(game_id: int):
                 max_players=game.max_players,
                 state=game.state,
                 play_direction=game.play_direction,
-                turn_owner=game.turn_owner,
                 turn=return_turn,
                 players=game.players,
                 deck=game.deck,
@@ -166,7 +164,41 @@ def update_game(game_id: int, game: schemas.GameUpdate):
     with db_session:
         game_to_update = models.Game[game_id]
         game_to_update.set(**game.model_dump(exclude_unset=True))
-        response = schemas.GameInDB.model_validate(game_to_update)
+        game_to_update.flush()
+        if game_to_update.turn is not None:
+            played_card = None
+            response_card = None
+            destination_player = ""
+
+            if game_to_update.turn.played_card is not None:
+                played_card = models.Card[game_to_update.turn.played_card]
+            if game_to_update.turn.response_card is not None:
+                response_card = models.Card[game_to_update.turn.response_card]
+            if game_to_update.turn.destination_player is not None:
+                destination_player = game_to_update.turn.destination_player
+
+            return_turn = schemas.TurnOut(
+                owner=game_to_update.turn.owner,
+                played_card=played_card,
+                destination_player=destination_player,
+                response_card=response_card,
+                state=game_to_update.turn.state,
+            )
+
+            return_game = schemas.GameInDB(
+                id=game_to_update.id,
+                name=game_to_update.name,
+                min_players=game_to_update.min_players,
+                max_players=game_to_update.max_players,
+                state=game_to_update.state,
+                play_direction=game_to_update.play_direction,
+                turn=return_turn,
+                players=game_to_update.players,
+                deck=game_to_update.deck,
+            )
+            return return_game
+        else:
+            response = schemas.GameInDB.model_validate(game_to_update)
     return response
 
 

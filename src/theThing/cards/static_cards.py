@@ -562,7 +562,7 @@ dict_of_cards = {
     "pat4": {
         "code": "ptr",
         "name": "Puerta atrancada",
-        "kind": 1,
+        "kind": 2,
         "description": "Coloca esta carta entre un jugador adyacente y tu. No se permiten acciones entre estos "
         "jugadores y tu.",
         "number_in_card": 4,
@@ -571,7 +571,7 @@ dict_of_cards = {
     "pat7": {
         "code": "ptr",
         "name": "Puerta atrancada",
-        "kind": 1,
+        "kind": 2,
         "description": "Coloca esta carta entre un jugador adyacente y tu. No se permiten acciones entre estos "
         "jugadores y tu.",
         "number_in_card": 7,
@@ -580,7 +580,7 @@ dict_of_cards = {
     "pat11": {
         "code": "ptr",
         "name": "Puerta atrancada",
-        "kind": 1,
+        "kind": 2,
         "description": "Coloca esta carta entre un jugador adyacente y tu. No se permiten acciones entre estos "
         "jugadores y tu.",
         "number_in_card": 11,
@@ -590,7 +590,7 @@ dict_of_cards = {
     "cua5": {
         "code": "cua",
         "name": "Cuarentena",
-        "kind": 1,
+        "kind": 2,
         "description": "Durante dos rondas, un jugador adyacente debe robar, descartar e intercambiar cartas boca "
         "arriba. No puede eliminar jugadores ni cambiar de sitio.",
         "number_in_card": 5,
@@ -599,7 +599,7 @@ dict_of_cards = {
     "cua9": {
         "code": "cua",
         "name": "Cuarentena",
-        "kind": 1,
+        "kind": 2,
         "description": "Durante dos rondas, un jugador adyacente debe robar, descartar e intercambiar cartas boca "
         "arriba. No puede eliminar jugadores ni cambiar de sitio.",
         "number_in_card": 9,

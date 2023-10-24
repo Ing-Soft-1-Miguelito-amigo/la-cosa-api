@@ -62,7 +62,7 @@ def update_player(player: PlayerUpdate, player_id: int, game_id: int):
         player_to_update = Player.get(game=game, id=player_id)
         if player_to_update is None:
             raise ObjectNotFound(Player, pkval=player_id)
-        player_to_update.set(**player.model_dump())
+        player_to_update.set(**player.model_dump(exclude_unset=True))
         player_to_update.flush()
         response = PlayerBase.model_validate(player_to_update)
     return response
