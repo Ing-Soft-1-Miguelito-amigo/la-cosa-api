@@ -573,7 +573,7 @@ async def get_game_results(game_id: int):
     winners = calculate_winners(game_id)
     winners_str = ""
     for winner in winners:
-        winners_str += winner.name + ", "
+        winners_str += winner + ", "
     winners_str = winners_str[:-2]
 
     return {
