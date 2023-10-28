@@ -3,7 +3,7 @@ from src.theThing.models.db import db
 from src.theThing.players.models import Player
 from src.theThing.cards.models import Card
 from src.theThing.turn.models import Turn
-
+from src.theThing.messages.models import Message
 
 class Game(db.Entity):
 
@@ -23,3 +23,4 @@ class Game(db.Entity):
     turn = Optional(Turn, reverse="game")
     players = Set(Player, reverse="game")
     deck = Set(Card, reverse="game")
+    chat = Set(Message)

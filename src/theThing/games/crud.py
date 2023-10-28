@@ -124,7 +124,7 @@ def get_full_game(game_id: int):
     return response
 
 
-def get_all_games():
+def get_all_games() -> list[schemas.GameOut]:
     """
     This function returns all the games in the database
     in a list of GameOut schemas
