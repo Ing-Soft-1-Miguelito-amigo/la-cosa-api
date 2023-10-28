@@ -17,7 +17,7 @@ def create_game(game: schemas.GameCreate):
     """
     with db_session:
         if models.Game.exists(name=game.name):
-            raise Exception("Game already exists")
+            raise Exception("Ya existe una partida con el mismo nombre")
         elif game.password:
             game = models.Game(
                 name=game.name,
@@ -43,7 +43,40 @@ def get_game(game_id: int):
     """
     with db_session:
         game = models.Game[game_id]
-        response = schemas.GameOut.model_validate(game)
+        if game.turn is not None:
+            played_card = None
+            response_card = None
+            destination_player = ""
+
+            if game.turn.played_card is not None:
+                played_card = models.Card[game.turn.played_card]
+            if game.turn.response_card is not None:
+                response_card = models.Card[game.turn.response_card]
+            if game.turn.destination_player is not None:
+                destination_player = game.turn.destination_player
+
+            return_turn = schemas.TurnOut(
+                owner=game.turn.owner,
+                played_card=played_card,
+                destination_player=destination_player,
+                response_card=response_card,
+                state=game.turn.state,
+            )
+
+            return_game = schemas.GameOut(
+                id=game.id,
+                name=game.name,
+                min_players=game.min_players,
+                max_players=game.max_players,
+                state=game.state,
+                play_direction=game.play_direction,
+                turn=return_turn,
+                players=game.players,
+            )
+
+            response = schemas.GameOut.model_validate(return_game)
+        else:
+            response = schemas.GameOut.model_validate(game)
     return response
 
 
@@ -54,18 +87,51 @@ def get_full_game(game_id: int):
     """
     with db_session:
         game = models.Game[game_id]
-        response = schemas.GameInDB.model_validate(game)
+        if game.turn is not None:
+            played_card = None
+            response_card = None
+            destination_player = ""
+
+            if game.turn.played_card is not None:
+                played_card = models.Card[game.turn.played_card]
+            if game.turn.response_card is not None:
+                response_card = models.Card[game.turn.response_card]
+            if game.turn.destination_player is not None:
+                destination_player = game.turn.destination_player
+
+            return_turn = schemas.TurnOut(
+                owner=game.turn.owner,
+                played_card=played_card,
+                destination_player=destination_player,
+                response_card=response_card,
+                state=game.turn.state,
+            )
+
+            return_game = schemas.GameInDB(
+                id=game.id,
+                name=game.name,
+                min_players=game.min_players,
+                max_players=game.max_players,
+                state=game.state,
+                play_direction=game.play_direction,
+                turn=return_turn,
+                players=game.players,
+                deck=game.deck,
+            )
+            return return_game
+        else:
+            response = schemas.GameInDB.model_validate(game)
     return response
 
 
 def get_all_games():
     """
     This function returns all the games in the database
-    in a list of GameBase schemas
+    in a list of GameOut schemas
     """
     with db_session:
         games = models.Game.select()
-        result = [schemas.GameBase.model_validate(game) for game in games]
+        result = [schemas.GameOut.model_validate(game) for game in games]
     return result
 
 
@@ -77,7 +143,7 @@ def delete_game(game_id: int):
     with db_session:
         game = models.Game[game_id]
         game.delete()
-    return {"message": f"Game {game_id} deleted successfully"}
+    return {"message": f"Partida {game_id} eliminada con éxito"}
 
 
 def get_all_games_in_db():
@@ -97,21 +163,57 @@ def update_game(game_id: int, game: schemas.GameUpdate):
     """
     with db_session:
         game_to_update = models.Game[game_id]
-        game_to_update.set(**game.model_dump())
-        response = schemas.GameInDB.model_validate(game_to_update)
+        game_to_update.set(**game.model_dump(exclude_unset=True))
+        game_to_update.flush()
+        if game_to_update.turn is not None:
+            played_card = None
+            response_card = None
+            destination_player = ""
+
+            if game_to_update.turn.played_card is not None:
+                played_card = models.Card[game_to_update.turn.played_card]
+            if game_to_update.turn.response_card is not None:
+                response_card = models.Card[game_to_update.turn.response_card]
+            if game_to_update.turn.destination_player is not None:
+                destination_player = game_to_update.turn.destination_player
+
+            return_turn = schemas.TurnOut(
+                owner=game_to_update.turn.owner,
+                played_card=played_card,
+                destination_player=destination_player,
+                response_card=response_card,
+                state=game_to_update.turn.state,
+            )
+
+            return_game = schemas.GameInDB(
+                id=game_to_update.id,
+                name=game_to_update.name,
+                min_players=game_to_update.min_players,
+                max_players=game_to_update.max_players,
+                state=game_to_update.state,
+                play_direction=game_to_update.play_direction,
+                turn=return_turn,
+                players=game_to_update.players,
+                deck=game_to_update.deck,
+            )
+            return return_game
+        else:
+            response = schemas.GameInDB.model_validate(game_to_update)
     return response
 
 
 def create_game_deck(game_id: int, players_amount: int):
     """
-    This function creates a deck for the game 
+    This function creates a deck for the game
     PRE: The game exists
     """
     # Filter cards by number
     filtered_dict = {
-        key: value for key, value in dict_of_cards.items() 
-        if value["number_in_card"] <= players_amount}
-    
+        key: value
+        for key, value in dict_of_cards.items()
+        if value["number_in_card"] <= players_amount
+    }
+
     # Create cards
     for card in filtered_dict.values():
         for _ in range(card["amount_in_deck"]):
@@ -122,5 +224,5 @@ def create_game_deck(game_id: int, players_amount: int):
                 description=card["description"],
                 number_in_card=card["number_in_card"],
                 playable=True,
-            ) 
+            )
             create_card(new_card, game_id)

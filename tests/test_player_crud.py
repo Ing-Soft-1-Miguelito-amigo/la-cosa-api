@@ -19,7 +19,9 @@ def test_create_player(test_db):
         "owner": False,
     }
 
-    created_player = crud.create_player(PlayerCreate(**player_data), created_game.id)
+    created_player = crud.create_player(
+        PlayerCreate(**player_data), created_game.id
+    )
 
     assert created_player.name == player_data["name"]
     assert created_player.owner == player_data["owner"]
@@ -31,6 +33,7 @@ def test_create_player(test_db):
         "state": 0,
         "play_direction": None,
         "turn_owner": None,
+        "turn": None,
         "players": [
             {
                 "name": "Test Player",
@@ -53,7 +56,9 @@ def test_create_wrong_player(test_db):
         "owner": False,
     }
 
-    created_player = crud.create_player(PlayerCreate(**player_data), created_game.id)
+    created_player = crud.create_player(
+        PlayerCreate(**player_data), created_game.id
+    )
 
     player2_data = {
         "name": "Test Player",
@@ -64,7 +69,7 @@ def test_create_wrong_player(test_db):
             PlayerCreate(**player2_data), created_game.id
         )
     except Exception as e:
-        assert str(e) == "Player with same name exists"
+        assert str(e) == "Ya existe un jugador con el mismo nombre"
 
     assert game_crud.get_game(created_game.id).model_dump() == {
         "id": 1,
@@ -74,6 +79,7 @@ def test_create_wrong_player(test_db):
         "state": 0,
         "play_direction": None,
         "turn_owner": None,
+        "turn": None,
         "players": [
             {
                 "name": "Test Player",
@@ -102,14 +108,18 @@ def test_add_player_to_full_game(test_db):
         "name": "Test Player 3",
         "owner": False,
     }
-    created_player1 = crud.create_player(PlayerCreate(**player1_data), created_game.id)
-    created_player2 = crud.create_player(PlayerCreate(**player2_data), created_game.id)
+    created_player1 = crud.create_player(
+        PlayerCreate(**player1_data), created_game.id
+    )
+    created_player2 = crud.create_player(
+        PlayerCreate(**player2_data), created_game.id
+    )
     try:
         created_player3 = crud.create_player(
             PlayerCreate(**player3_data), created_game.id
         )
     except Exception as e:
-        assert str(e) == "Game is full"
+        assert str(e) == "La partida está llena"
     expected_game = GameOut(
         **{
             "id": 1,
@@ -119,6 +129,7 @@ def test_add_player_to_full_game(test_db):
             "state": 0,
             "play_direction": None,
             "turn_owner": None,
+            "turn": None,
             "players": [
                 {
                     "name": "Test Player 1",
@@ -139,7 +150,9 @@ def test_add_player_to_full_game(test_db):
     assert retrieved_game.id == expected_game.id
     assert retrieved_game.name == expected_game.name
     assert retrieved_game.state == expected_game.state
-    assert [player in retrieved_game.players for player in expected_game.players]
+    assert [
+        player in retrieved_game.players for player in expected_game.players
+    ]
 
 
 @db_session
@@ -168,13 +181,14 @@ def test_get_player_wrong_game(test_db):
 @db_session
 def test_update_player(test_db):
     updated_data = {
-        "id": 1,
         "table_position": 1,
         "role": 2,
         "alive": False,
         "quarantine": True,
     }
-    updated_player = crud.update_player(PlayerUpdate(**updated_data), game_id=1)
+    updated_player = crud.update_player(
+        PlayerUpdate(**updated_data), 1, game_id=1
+    )
 
     assert updated_player.model_dump() == {
         "id": 1,
@@ -191,7 +205,7 @@ def test_update_player(test_db):
 @db_session
 def test_delete_player(test_db):
     response = crud.delete_player(2, game_id=1)
-    assert response == {"message": "Player 2 deleted successfully"}
+    assert response == {"message": "Jugador 2 eliminado con éxito"}
 
     try:
         deleted_player = crud.delete_player(2, game_id=1)

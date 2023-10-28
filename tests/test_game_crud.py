@@ -42,7 +42,7 @@ def test_create_wrong_game(test_db):
     try:
         created_game = crud.create_game(GameCreate(**game_data))
     except Exception as e:
-        assert e.args[0] == "Game already exists"
+        assert e.args[0] == "Ya existe una partida con el mismo nombre"
 
     rollback()
 
@@ -70,7 +70,7 @@ def test_get_all_games(test_db):
     games = crud.get_all_games()
 
     assert len(games) == 2
-    assert games == [GameBase(**game1.to_dict()), GameBase(**game2.to_dict())]
+    assert games == [GameOut(**game1.to_dict()), GameOut(**game2.to_dict())]
 
     rollback()
 
@@ -109,6 +109,7 @@ def test_get_all_games_in_db(test_db):
             "state": game1.state,
             "play_direction": game1.play_direction,
             "turn_owner": game1.turn_owner,
+            "turn": None,
             "players": [],
             "deck": [],
         },
@@ -121,6 +122,7 @@ def test_get_all_games_in_db(test_db):
             "state": game2.state,
             "play_direction": game2.play_direction,
             "turn_owner": game2.turn_owner,
+            "turn": None,
             "players": [],
             "deck": [],
         },

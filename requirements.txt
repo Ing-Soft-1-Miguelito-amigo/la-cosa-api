@@ -8,3 +8,7 @@ pony
 uvicorn
 pydantic-settings
 httpx
+socketio
+python-socketio
+fastapi-socketio
+websockets

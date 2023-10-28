@@ -32,7 +32,7 @@ def test_join_game_success(test_db):
         response = client.post("/game/join", json=player)
         assert response.status_code == 200
         assert response.json() == {
-            "message": "Player joined game successfully",
+            "message": "El jugador se unió con éxito",
             "player_id": playerid,
             "game_id": 1,
         }
@@ -50,7 +50,9 @@ def test_join_player_with_empty_name(test_db):
     # Join player to the game
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Player name cannot be empty"}
+    assert response.json() == {
+        "detail": "El nombre del jugador no puede ser vacío"
+    }
 
     rollback()
 
@@ -63,7 +65,9 @@ def test_join_player_with_existing_name(test_db):
     # Join player to the game
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Player with same name exists"}
+    assert response.json() == {
+        "detail": "Ya existe un jugador con el mismo nombre"
+    }
 
     rollback()
 
@@ -81,7 +85,7 @@ def test_join_full_game(test_db):
     join_data = {"game_id": 1, "player_name": "Test Player 6"}
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Game is full"}
+    assert response.json() == {"detail": "La partida está llena"}
 
     rollback()
 
@@ -98,7 +102,7 @@ def test_join_started_game(test_db):
     join_data = {"game_id": 1, "player_name": "Test Player 5"}
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "Game already started"}
+    assert response.json() == {"detail": "La partida ya ha comenzado"}
 
     rollback()
 
@@ -112,7 +116,7 @@ def test_join_invalid_game(test_db):
     # Join player to the game
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 404
-    assert response.json() == {"detail": "Game not found"}
+    assert response.json() == {"detail": "No se encontró la partida"}
 
     rollback()
 
@@ -140,7 +144,7 @@ def test_join_same_name_diff_games(test_db):
     response = client.post("/game/join", json=join_data)
     assert response.status_code == 200
     assert response.json() == {
-        "message": "Player joined game successfully",
+        "message": "El jugador se unió con éxito",
         "player_id": 8,
         "game_id": id_game_A,
     }
@@ -148,7 +152,7 @@ def test_join_same_name_diff_games(test_db):
     join_data = {"game_id": id_game_B, "player_name": "Test Player SameName"}
     response = client.post("/game/join", json=join_data)
     assert response.json() == {
-        "message": "Player joined game successfully",
+        "message": "El jugador se unió con éxito",
         "player_id": 9,
         "game_id": id_game_B,
     }

@@ -20,14 +20,16 @@ def create_player(player_data: PlayerCreate, game_id: int):
         try:
             game_to_join = Game[game_id]
         except ObjectNotFound:
-            raise Exception("Game not found")
+            raise Exception("No se encontró la partida")
         if game_to_join.state != 0:
-            raise Exception("Game already started")
+            raise Exception("La partida ya ha comenzado")
         elif game_to_join.max_players == len(game_to_join.players):
-            raise Exception("Game is full")
+            raise Exception("La partida está llena")
         # check if a player with the same name exists in the list
-        elif any(player.name == player_data.name for player in game_to_join.players):
-            raise Exception("Player with same name exists")
+        elif any(
+            player.name == player_data.name for player in game_to_join.players
+        ):
+            raise Exception("Ya existe un jugador con el mismo nombre")
 
         player = Player(**player_data.model_dump(), game=game_to_join)
         player.table_position = len(game_to_join.players)
@@ -50,17 +52,17 @@ def get_player(player_id: int, game_id: int):
     return response
 
 
-def update_player(player: PlayerUpdate, game_id: int):
+def update_player(player: PlayerUpdate, player_id: int, game_id: int):
     """
     This function updates a player from the database
     and returns the PlayerBase schema with the updated data
     """
     with db_session:
         game = Game[game_id]
-        player_to_update = Player.get(game=game, id=player.id)
+        player_to_update = Player.get(game=game, id=player_id)
         if player_to_update is None:
-            raise ObjectNotFound(Player, pkval=player.id)
-        player_to_update.set(**player.model_dump())
+            raise ObjectNotFound(Player, pkval=player_id)
+        player_to_update.set(**player.model_dump(exclude_unset=True))
         player_to_update.flush()
         response = PlayerBase.model_validate(player_to_update)
     return response
@@ -77,4 +79,4 @@ def delete_player(player_id: int, game_id: int):
         if player is None:
             raise ObjectNotFound(Player, pkval=player_id)
         player.delete()
-    return {"message": f"Player {player_id} deleted successfully"}
+    return {"message": f"Jugador {player_id} eliminado con éxito"}

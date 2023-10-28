@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from src.theThing.players.schemas import PlayerForGame, PlayerBase
 from src.theThing.cards.schemas import CardBase
+from src.theThing.turn.schemas import TurnOut
 
 
 class GameBase(BaseModel):
@@ -23,7 +24,7 @@ class GameInDB(GameCreate):
     id: int
     state: int = 0
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
+    turn: Optional[TurnOut] = None
     players: List[PlayerBase] = None
     deck: List[CardBase] = None
 
@@ -36,8 +37,17 @@ class GameOut(BaseModel):
     max_players: int
     state: int = 0
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
-    players: List[PlayerForGame] = None
+    turn: Optional[TurnOut] = None
+    players: List[PlayerForGame] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GamePlayerAmount(GameBase):
+    # This is used to return a game with the amount of players
+    # It is used in the list of games
+    id: int
+    amount_of_players: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -46,6 +56,5 @@ class GameUpdate(BaseModel):
     # This is used to update a game
     state: Optional[int] = None
     play_direction: Optional[bool] = None
-    turn_owner: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

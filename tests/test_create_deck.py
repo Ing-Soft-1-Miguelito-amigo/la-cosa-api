@@ -32,7 +32,7 @@ def test_create_deck_4_players_success(test_db):
         response = client.post("/game/join", json=player)
         assert response.status_code == 200
         assert response.json() == {
-            "message": "Player joined game successfully",
+            "message": "El jugador se unió con éxito",
             "player_id": playerid,
             "game_id": 1,
         }
@@ -42,13 +42,13 @@ def test_create_deck_4_players_success(test_db):
     game_data = {"game_id": 1, "player_name": "Test Host"}
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Game 1 started successfully"}
+    assert response.json() == {"message": "Partida 1 iniciada con éxito"}
 
     # Check deck size
     game = get_full_game(1)
-    assert len(game.deck) == 35
-    # Check that the deck contains the card "tth"
-    assert any(card.code == "tth" for card in game.deck)
+    assert len(game.deck) == 31
+    # Check that the deck contains the card "lco"
+    assert any(card.code == "lco" for card in game.deck)
 
 
 @db_session
@@ -78,7 +78,7 @@ def test_create_deck_6_players_success(test_db):
         response = client.post("/game/join", json=player)
         assert response.status_code == 200
         assert response.json() == {
-            "message": "Player joined game successfully",
+            "message": "El jugador se unió con éxito",
             "player_id": playerid,
             "game_id": 2,
         }
@@ -88,10 +88,10 @@ def test_create_deck_6_players_success(test_db):
     game_data = {"game_id": 2, "player_name": "Test Host 2"}
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-    assert response.json() == {"message": "Game 2 started successfully"}
+    assert response.json() == {"message": "Partida 2 iniciada con éxito"}
 
     # Check deck size
     game = get_full_game(2)
-    assert len(game.deck) == 36
-    # Check that the deck contains the card "tth"
-    assert any(card.code == "tth" for card in game.deck)
+    assert len(game.deck) == 46
+    # Check that the deck contains the card "lco"
+    assert any(card.code == "lco" for card in game.deck)

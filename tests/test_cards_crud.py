@@ -111,12 +111,17 @@ def test_player_hand(test_db):
 
     # add a player to the game
     created_player = player_crud.create_player(
-        player_schemas.PlayerCreate(name="Test Player", owner=True), created_game.id
+        player_schemas.PlayerCreate(name="Test Player", owner=True),
+        created_game.id,
     )
 
     # add the cards to the player
-    card_crud.give_card_to_player(created_card1.id, created_player.id, created_game.id)
-    card_crud.give_card_to_player(created_card2.id, created_player.id, created_game.id)
+    card_crud.give_card_to_player(
+        created_card1.id, created_player.id, created_game.id
+    )
+    card_crud.give_card_to_player(
+        created_card2.id, created_player.id, created_game.id
+    )
 
     player_data = player_crud.get_player(created_player.id, created_game.id)
     expected_cards = [
@@ -170,15 +175,16 @@ def test_add_card_wrong_player(test_db):
     created_card1 = card_crud.create_card(card_data, created_game.id)
     # add a player to the game
     created_player = player_crud.create_player(
-        player_schemas.PlayerCreate(name="Test Player", owner=True), created_game.id
+        player_schemas.PlayerCreate(name="Test Player", owner=True),
+        created_game.id,
     )
 
     try:
         card_crud.give_card_to_player(
             created_card1.id, created_player.id + 1, created_game.id
         )
-    except ObjectNotFound as e:
-        assert e.args[0] == f"Player[{created_player.id + 1}]"
+    except Exception as e:
+        assert e.args[0] == f"No se encontró el jugador"
 
     rollback()
 
