@@ -44,7 +44,7 @@ from src.theThing.games.socket_handler import (
     send_discard_event_to_players,
     send_action_event_to_players,
     send_defense_event_to_players,
-    send_new_message_to_players
+    send_new_message_to_players,
 )
 from src.theThing.messages.schemas import MessageCreate, MessageOut
 from src.theThing.messages.crud import create_message, get_chat
@@ -143,7 +143,6 @@ async def join_game(join_info: dict):
             raise HTTPException(status_code=404, detail=str(e))
         else:
             raise HTTPException(status_code=422, detail=str(e))
-        
 
     return {
         "message": "El jugador se unió con éxito",
@@ -671,8 +670,10 @@ async def send_message(game_id: int, message: MessageCreate):
         raise HTTPException(status_code=422, detail=str(e))
 
     await send_new_message_to_players(game_id, message)
-    return {"message": "Mensaje enviado con exito",
-            "data": message.model_dump()}
+    return {
+        "message": "Mensaje enviado con exito",
+        "data": message.model_dump(),
+    }
 
 
 @router.get("/game/{game_id}/chat")

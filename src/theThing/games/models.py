@@ -5,6 +5,7 @@ from src.theThing.cards.models import Card
 from src.theThing.turn.models import Turn
 from src.theThing.messages.models import Message
 
+
 class Game(db.Entity):
 
     """

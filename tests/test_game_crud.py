@@ -136,10 +136,7 @@ def test_update_game(test_db):
     game = Game(name="Test Game", min_players=2, max_players=4)
     game.flush()
 
-    updated_data = {
-        "state": 1,
-        "play_direction": True
-    }
+    updated_data = {"state": 1, "play_direction": True}
 
     updated_game = crud.update_game(game.id, GameUpdate(**updated_data))
 

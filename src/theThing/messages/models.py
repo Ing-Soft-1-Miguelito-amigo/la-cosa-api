@@ -1,4 +1,4 @@
-from pony.orm import PrimaryKey,Optional,Required
+from pony.orm import PrimaryKey, Optional, Required
 from datetime import datetime
 from src.theThing.models.db import db
 

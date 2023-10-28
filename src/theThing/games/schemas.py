@@ -33,7 +33,9 @@ class GameInDB(GameCreate):
     @classmethod
     def model_validate(cls, game):
         ordered_chat = game.chat.order_by(lambda x: x.date)
-        formatted_chat = [MessageOut.model_validate(message) for message in ordered_chat]
+        formatted_chat = [
+            MessageOut.model_validate(message) for message in ordered_chat
+        ]
         return cls(
             id=game.id,
             name=game.name,
@@ -67,7 +69,9 @@ class GameOut(BaseModel):
     def model_validate(cls, game):
         # first order teh chat by date
         ordered_chat = game.chat.order_by(lambda x: x.date)
-        formatted_chat = [MessageOut.model_validate(message) for message in ordered_chat]
+        formatted_chat = [
+            MessageOut.model_validate(message) for message in ordered_chat
+        ]
         return cls(
             id=game.id,
             name=game.name,

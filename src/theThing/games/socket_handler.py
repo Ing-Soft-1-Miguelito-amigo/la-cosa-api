@@ -6,6 +6,7 @@ from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 from src.theThing.messages.schemas import MessageOut
+
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
 socketio_app = socketio.ASGIApp(sio, socketio_path="/")
@@ -25,7 +26,7 @@ async def connect(sid, environ):
     sio.enter_room(sid, "g" + game_id)
     sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
-    # This is necessary for the client connection logic 
+    # This is necessary for the client connection logic
     game_to_send = get_game(game_id)
     player_to_send = get_player(player_id, game_id)
     await send_game_status_to_players(game_id, game_to_send)
@@ -67,9 +68,8 @@ async def send_game_and_player_status_to_players(game_data: GameInDB):
 
 
 async def send_new_message_to_players(game_id: int, message: MessageOut):
-    await sio.emit(
-        "new_message", message.model_dump(), room="g" + str(game_id)
-    )
+    await sio.emit("new_message", message.model_dump(), room="g" + str(game_id))
+
 
 async def send_action_event_to_players(
     game_id: int,
