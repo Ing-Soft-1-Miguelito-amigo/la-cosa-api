@@ -41,7 +41,7 @@ def get_chat(game_id: int) -> list[MessageOut]:
     except ObjectNotFound:
         raise Exception("No se encontró la partida")
 
-    response = [MessageOut.model_validate(message) for message in game.chat]
-
+    messages = select(m for m in Message if m.game == game).order_by(Message.date)[:]
+    response = [MessageOut.model_validate(message) for message in messages]
     return response
 
