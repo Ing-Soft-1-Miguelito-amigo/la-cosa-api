@@ -1,8 +1,9 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from src.theThing.players.schemas import PlayerForGame, PlayerBase
 from src.theThing.cards.schemas import CardBase
 from src.theThing.turn.schemas import TurnOut
+from src.theThing.messages.schemas import MessageOut
 
 
 class GameBase(BaseModel):
@@ -27,6 +28,27 @@ class GameInDB(GameCreate):
     turn: Optional[TurnOut] = None
     players: List[PlayerBase] = None
     deck: List[CardBase] = None
+    chat: List[MessageOut] = []
+
+    @classmethod
+    def model_validate(cls, game):
+        ordered_chat = game.chat.order_by(lambda x: x.date)
+        formatted_chat = [
+            MessageOut.model_validate(message) for message in ordered_chat
+        ]
+        return cls(
+            id=game.id,
+            name=game.name,
+            min_players=game.min_players,
+            max_players=game.max_players,
+            password=game.password,
+            state=game.state,
+            play_direction=game.play_direction,
+            turn=game.turn,
+            players=game.players,
+            deck=game.deck,
+            chat=formatted_chat,
+        )
 
 
 class GameOut(BaseModel):
@@ -39,8 +61,28 @@ class GameOut(BaseModel):
     play_direction: Optional[bool] = None
     turn: Optional[TurnOut] = None
     players: List[PlayerForGame] = []
+    chat: List[MessageOut] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+    @classmethod
+    def model_validate(cls, game):
+        # first order teh chat by date
+        ordered_chat = game.chat.order_by(lambda x: x.date)
+        formatted_chat = [
+            MessageOut.model_validate(message) for message in ordered_chat
+        ]
+        return cls(
+            id=game.id,
+            name=game.name,
+            min_players=game.min_players,
+            max_players=game.max_players,
+            state=game.state,
+            play_direction=game.play_direction,
+            turn=game.turn,
+            players=game.players,
+            chat=formatted_chat,
+        )
 
 
 class GamePlayerAmount(GameBase):

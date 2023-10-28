@@ -28,7 +28,6 @@ def test_create_turn(test_db):
         "max_players": 6,
         "state": 0,
         "play_direction": None,
-        "turn_owner": None,
         "turn": {
             "destination_player": "",
             "owner": 1,
@@ -37,6 +36,7 @@ def test_create_turn(test_db):
             "state": 0,
         },
         "players": [],
+        "chat": [],
     }
 
 

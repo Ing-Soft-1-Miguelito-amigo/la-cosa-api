@@ -5,6 +5,7 @@ from src.theThing.games.schemas import GameOut, GameInDB
 from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
+from src.theThing.messages.schemas import MessageOut
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
@@ -22,10 +23,10 @@ async def connect(sid, environ):
     if not player_id or not game_id:
         return False
     await sio.save_session(sid, {"player_id": player_id, "game_id": game_id})
-    await sio.enter_room(sid, "g" + game_id)
-    await sio.enter_room(sid, "p" + player_id)
+    sio.enter_room(sid, "g" + game_id)
+    sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
-    # This is necessary for the client connection logic 
+    # This is necessary for the client connection logic
     game_to_send = get_game(game_id)
     player_to_send = get_player(player_id, game_id)
     await send_game_status_to_players(game_id, game_to_send)
@@ -66,15 +67,8 @@ async def send_game_and_player_status_to_players(game_data: GameInDB):
     )
 
 
-async def send_discard_event_to_players(game_id: int, player_name: str):
-    await sio.emit(
-        "discard",
-        {
-            "player_name": player_name,
-            "message": player_name + " descartó una carta",
-        },
-        room="g" + str(game_id),
-    )
+async def send_new_message_to_players(game_id: int, message: MessageOut):
+    await sio.emit("new_message", message.model_dump(), room="g" + str(game_id))
 
 
 async def send_action_event_to_players(
@@ -91,6 +85,17 @@ async def send_action_event_to_players(
             + action_card.name
             + " a "
             + defending_player.name
+        },
+        room="g" + str(game_id),
+    )
+
+
+async def send_discard_event_to_players(game_id: int, player_name: str):
+    await sio.emit(
+        "discard",
+        {
+            "player_name": player_name,
+            "message": player_name + " descartó una carta",
         },
         room="g" + str(game_id),
     )

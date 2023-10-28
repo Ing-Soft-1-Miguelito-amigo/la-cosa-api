@@ -4,6 +4,7 @@ from src.theThing.players.models import Player
 from src.theThing.cards.schemas import CardCreate
 from src.theThing.cards.crud import create_card
 from src.theThing.cards.static_cards import dict_of_cards
+from src.theThing.messages.schemas import MessageOut
 
 
 def create_game(game: schemas.GameCreate):
@@ -62,7 +63,7 @@ def get_game(game_id: int):
                 response_card=response_card,
                 state=game.turn.state,
             )
-
+            ordered_chat = game.chat.order_by(lambda x: x.date)
             return_game = schemas.GameOut(
                 id=game.id,
                 name=game.name,
@@ -72,9 +73,13 @@ def get_game(game_id: int):
                 play_direction=game.play_direction,
                 turn=return_turn,
                 players=game.players,
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
 
-            response = schemas.GameOut.model_validate(return_game)
+            response = return_game
         else:
             response = schemas.GameOut.model_validate(game)
     return response
@@ -106,7 +111,7 @@ def get_full_game(game_id: int):
                 response_card=response_card,
                 state=game.turn.state,
             )
-
+            ordered_chat = game.chat.order_by(lambda x: x.date)
             return_game = schemas.GameInDB(
                 id=game.id,
                 name=game.name,
@@ -117,6 +122,10 @@ def get_full_game(game_id: int):
                 turn=return_turn,
                 players=game.players,
                 deck=game.deck,
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
             return return_game
         else:
@@ -124,7 +133,7 @@ def get_full_game(game_id: int):
     return response
 
 
-def get_all_games():
+def get_all_games() -> list[schemas.GameOut]:
     """
     This function returns all the games in the database
     in a list of GameOut schemas
@@ -156,7 +165,7 @@ def get_all_games_in_db():
     return result
 
 
-def update_game(game_id: int, game: schemas.GameUpdate):
+def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
     """
     This functions updates a game with game_id
     with the data in the GameUpdate schema
@@ -184,7 +193,7 @@ def update_game(game_id: int, game: schemas.GameUpdate):
                 response_card=response_card,
                 state=game_to_update.turn.state,
             )
-
+            ordered_chat = game_to_update.chat.order_by(lambda x: x.date)
             return_game = schemas.GameInDB(
                 id=game_to_update.id,
                 name=game_to_update.name,
@@ -195,6 +204,10 @@ def update_game(game_id: int, game: schemas.GameUpdate):
                 turn=return_turn,
                 players=game_to_update.players,
                 deck=game_to_update.deck,
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
             return return_game
         else:

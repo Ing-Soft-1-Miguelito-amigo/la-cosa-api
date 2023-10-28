@@ -27,7 +27,6 @@ def test_get_game_success(test_db):
         "max_players": 6,
         "state": 0,
         "play_direction": None,
-        "turn_owner": None,
         "turn": None,
         "players": [
             {
@@ -37,6 +36,7 @@ def test_get_game_success(test_db):
                 "quarantine": False,
             }
         ],
+        "chat": [],
     }
     rollback()
 

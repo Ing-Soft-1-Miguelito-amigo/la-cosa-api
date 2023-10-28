@@ -25,10 +25,10 @@ def test_get_game_list(test_db):
             "min_players": 4,
             "max_players": 5,
         },
-        "host": "Player1",
+        "host": {"name": "Player1", "owner": True},
     }
     response = client.post("/game/create", json=game_data)
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     # get the game list
     response = client.get("/game/list")
