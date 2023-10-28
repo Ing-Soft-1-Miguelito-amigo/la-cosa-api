@@ -32,7 +32,8 @@ class GameInDB(GameCreate):
 
     @classmethod
     def model_validate(cls, game):
-        formatted_chat = [MessageOut.model_validate(message) for message in game.chat]
+        ordered_chat = game.chat.order_by(lambda x: x.date)
+        formatted_chat = [MessageOut.model_validate(message) for message in ordered_chat]
         return cls(
             id=game.id,
             name=game.name,
@@ -46,6 +47,7 @@ class GameInDB(GameCreate):
             deck=game.deck,
             chat=formatted_chat,
         )
+
 
 class GameOut(BaseModel):
     # This is used to return a game without the password and the attributes saved in DB
@@ -63,7 +65,9 @@ class GameOut(BaseModel):
 
     @classmethod
     def model_validate(cls, game):
-        formatted_chat = [MessageOut.model_validate(message) for message in game.chat]
+        # first order teh chat by date
+        ordered_chat = game.chat.order_by(lambda x: x.date)
+        formatted_chat = [MessageOut.model_validate(message) for message in ordered_chat]
         return cls(
             id=game.id,
             name=game.name,
