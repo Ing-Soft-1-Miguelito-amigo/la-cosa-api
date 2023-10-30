@@ -429,6 +429,10 @@ def assign_hands(game: GameInDB):
         player_cards = set_aside_cards[:4]
         set_aside_cards = set_aside_cards[4:]
         for card in player_cards:
+            if card.kind == 5:
+                update_player(PlayerUpdate(role=3), player.id, game.id)
+            else:
+                update_player(PlayerUpdate(role=1), player.id, game.id)
             give_card_to_player(card.id, player.id, game.id)
 
 
