@@ -71,6 +71,12 @@ async def send_new_message_to_players(game_id: int, message: MessageOut):
     await sio.emit("new_message", message.model_dump(), room="g" + str(game_id))
 
 
+async def send_finished_game_event_to_players(game_id: int, data: dict):
+    winners = data.get("winners")
+    message = data.get("reason")
+    await sio.emit("game_finished", {"winners": winners, "message": message})
+
+
 async def send_action_event_to_players(
     game_id: int,
     attacking_player: PlayerBase,

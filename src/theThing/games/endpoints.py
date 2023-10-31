@@ -1,19 +1,19 @@
 from fastapi import APIRouter, HTTPException
+from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
-from .schemas import GameCreate, GameUpdate, GamePlayerAmount
-from ..players.schemas import PlayerCreate
-from ..players.crud import create_player, get_player, delete_player
-from ..turn.crud import create_turn, update_turn
-from ..cards.schemas import CardBase, CardUpdate
-from ..turn.schemas import TurnCreate
-from ..cards.effect_applications import effect_applications
-from ..cards.crud import (
-    get_card_from_deck,
-    give_card_to_player,
-    get_card,
-    update_card,
-    remove_card_from_player,
+
+from src.theThing.games.socket_handler import (
+    send_player_status_to_player,
+    send_game_status_to_players,
+    send_game_and_player_status_to_players,
+    send_discard_event_to_players,
+    send_action_event_to_players,
+    send_defense_event_to_players,
+    send_new_message_to_players,
+    send_finished_game_event_to_players
 )
+from src.theThing.messages.crud import create_message, get_chat
+from src.theThing.messages.schemas import MessageCreate
 from .crud import (
     create_game,
     get_game,
@@ -22,6 +22,7 @@ from .crud import (
     create_game_deck,
     get_all_games,
 )
+from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import (
     verify_data_create,
     verify_data_start,
@@ -36,18 +37,16 @@ from .utils import (
     verify_data_finish_turn,
     assign_turn_owner,
 )
-from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.games.socket_handler import (
-    send_player_status_to_player,
-    send_game_status_to_players,
-    send_game_and_player_status_to_players,
-    send_discard_event_to_players,
-    send_action_event_to_players,
-    send_defense_event_to_players,
-    send_new_message_to_players,
+from ..cards.crud import (
+    get_card_from_deck,
+    give_card_to_player,
+    remove_card_from_player,
 )
-from src.theThing.messages.schemas import MessageCreate, MessageOut
-from src.theThing.messages.crud import create_message, get_chat
+from ..cards.effect_applications import effect_applications
+from ..players.crud import create_player, get_player, delete_player
+from ..players.schemas import PlayerCreate
+from ..turn.crud import create_turn, update_turn
+from ..turn.schemas import TurnCreate
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -543,7 +542,8 @@ async def get_game_by_id(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     # Check if the game is finished
-    game = verify_finished_game(game)
+    # game = verify_finished_game(game) it breaks when game is not started,
+    # when a game is started this endpoint should not be called?
 
     return game
 
@@ -715,13 +715,19 @@ async def finish_turn(finish_data: dict):
 
     game = get_game(game_id)
 
-    assign_turn_owner(game)
+    return_data = verify_finished_game(game)
 
+    game = return_data["game"]
+
+    assign_turn_owner(game)
     # send new status via socket
     updated_game = get_game(game_id)
 
-    updated_game = verify_finished_game(updated_game)
-
     await send_game_status_to_players(game_id, updated_game)
-
-    return {"message": "Turno finalizado con éxito"}
+    response = {"message": "Turno finalizado con éxito"}
+    if return_data["winners"] is not None:
+        await send_finished_game_event_to_players(game_id, return_data)
+        response = {"message": "La partida ha finalizado con éxito",
+                    "winners": return_data["winners"],
+                    "reason": return_data["reason"]}
+    return response

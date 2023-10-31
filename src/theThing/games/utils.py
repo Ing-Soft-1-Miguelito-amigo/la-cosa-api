@@ -112,18 +112,35 @@ def verify_data_start(game: GameOut, host_name: str):
 
 
 def verify_finished_game(game: GameOut):
-    alive_players = [player for player in game.players if player.alive]
-
-    if len(alive_players) == 1 and game.state == 1:
+    winners = None
+    reason = None
+    turn_owner_name = [player.name for player in game.players if player.table_position == game.turn.owner][0]
+    the_thing = [player for player in game.players if player.role == 3][0]
+    if game.turn.played_card.code == "lla" and game.turn.response_card is None and game.turn.destination_player == the_thing.name:
+        # if a flamethrower was played and killed "La cosa", the game ends and all alive humans win
         game.state = 2
         game_id = game.id
         game_new_state = GameUpdate(state=game.state)
-        game_updated = update_game(game_id, game_new_state)
-        game_updated_id = game_updated.id
-        game_out_updated = get_game(game_updated_id)
-        return game_out_updated
+        game = update_game(game_id, game_new_state)
+        winners = [player for player in game.players if (player.role == 1 and player.alive)]
+        reason = "La cosa fue eliminada por " + turn_owner_name + " ganaron todos los humanos vivos"
 
-    return game
+    amount_infected_players = len([player for player in game.players if (player.role == 2 and player.alive)])
+    if amount_infected_players == len(game.players)-1:
+        # if "La cosa" infected all players, the game ends and "La cosa" wins
+        game.state = 2
+        game_id = game.id
+        game_new_state = GameUpdate(state=game.state)
+        game = update_game(game_id, game_new_state)
+        winners = [player for player in game.players if (player.role == 3 and player.alive)]
+        reason = "La cosa infectó a todos los jugadores y gano la partida"
+
+    return_data = {
+        "game": game,
+        "winners": winners,
+        "reason": reason
+    }
+    return return_data
 
 
 def verify_data_play_card(
