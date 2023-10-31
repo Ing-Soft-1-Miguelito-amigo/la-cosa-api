@@ -35,6 +35,7 @@ from .utils import (
     calculate_winners,
     verify_data_finish_turn,
     assign_turn_owner,
+    calculate_winners_if_victory_declared
 )
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
@@ -495,6 +496,30 @@ async def respond_to_action_card(response_data: dict):
     )
 
     return {"message": "Efecto de jugada aplicado con éxito"}
+
+
+@router.put("/game/declare-victory")
+async def declare_victory(data: dict):
+    """
+
+    """
+    # Check valid inputs
+    if (
+        not data
+        or not data["game_id"]
+        or not data["player_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía."
+        )
+
+    game_id = data["game_id"]
+    player_id = data["player_id"]
+
+    game_result = calculate_winners_if_victory_declared(game_id, player_id)
+
+    return game_result
+
 
 
 @router.get("/game/list")
