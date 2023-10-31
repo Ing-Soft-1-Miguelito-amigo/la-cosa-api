@@ -525,8 +525,9 @@ async def declare_victory(data: dict):
     # Calculate winners
     game_result = calculate_winners_if_victory_declared(game_id, player_id)
     # Update game status to finished
-    game = update_game(game_id, GameUpdate(state=2))
-    await send_game_status_to_players(game_id, GameOut.model_validate_json(game.modeldump()))
+    update_game(game_id, GameUpdate(state=2))
+    updated_game = get_game(game_id)
+    await send_game_status_to_players(game_id, updated_game)
 
     return game_result
 
