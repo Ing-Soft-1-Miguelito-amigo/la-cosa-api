@@ -521,7 +521,6 @@ async def declare_victory(data: dict):
     return game_result
 
 
-
 @router.get("/game/list")
 async def get_list_of_games():
     """

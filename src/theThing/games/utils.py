@@ -544,12 +544,12 @@ def calculate_winners_if_victory_declared(game_id, player_id):
 
     if game.state != 1:
         raise HTTPException(
-            status_code=422, detail="La partida no está en juego."
+            status_code=422, detail="La partida no está en juego"
         )
 
     if player.role != 3:
         raise HTTPException(
-            status_code=422, detail="El jugador no es La Cosa."
+            status_code=422, detail="El jugador no es La Cosa"
         )
 
     win = True
@@ -557,19 +557,22 @@ def calculate_winners_if_victory_declared(game_id, player_id):
     alive_infected = []
 
     for player in game.players:
-        if player.role == 1 and player.alive:
-            win = False
-            alive_humans.append(player.name)
-        elif player.role != 1 and player.alive:
-            alive_infected.append(player.name)
+        if player.alive:
+            if player.role == 1:
+                win = False
+                alive_humans.append(player.name)
+            elif player.role != 1:
+                alive_infected.append(player.name)
 
     if win:
-        return {
-            "message": "Gana La Cosa e infectados.",
+        result = {
+            "message": "Gana La Cosa e infectados",
             "winners": alive_infected
         }
     else:
-        return {
-            "message": "Ganan los humanos.",
+        result = {
+            "message": "Ganan los humanos",
             "winners": alive_humans
         }
+
+    return result
