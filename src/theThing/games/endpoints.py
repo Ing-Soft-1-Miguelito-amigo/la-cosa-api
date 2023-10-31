@@ -10,7 +10,7 @@ from src.theThing.games.socket_handler import (
     send_action_event_to_players,
     send_defense_event_to_players,
     send_new_message_to_players,
-    send_finished_game_event_to_players
+    send_finished_game_event_to_players,
 )
 from src.theThing.messages.crud import create_message, get_chat
 from src.theThing.messages.schemas import MessageCreate
@@ -84,9 +84,7 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(
-        name=game_name, min_players=min_players, max_players=max_players
-    )
+    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -229,14 +227,8 @@ async def steal_card(steal_data: dict):
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
     # Check valid inputs
-    if (
-        not steal_data
-        or not steal_data["game_id"]
-        or not steal_data["player_id"]
-    ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
@@ -294,9 +286,7 @@ async def play_card(play_data: dict):
         or not play_data["card_id"]
         or not play_data["destination_name"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = play_data["game_id"]
     player_id = play_data["player_id"]
@@ -311,9 +301,7 @@ async def play_card(play_data: dict):
     # Update the turn structure
     update_turn(
         game_id,
-        TurnCreate(
-            played_card=card_id, destination_player=destination_name, state=2
-        ),
+        TurnCreate(played_card=card_id, destination_player=destination_name, state=2),
     )
 
     player = get_player(player_id, game_id)
@@ -353,18 +341,14 @@ async def discard_card(discard_data: dict):
         or not discard_data["player_id"]
         or not discard_data["card_id"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = discard_data["game_id"]
     player_id = discard_data["player_id"]
     card_id = discard_data["card_id"]
 
     try:
-        game, player, card = verify_data_discard_card(
-            game_id, player_id, card_id
-        )
+        game, player, card = verify_data_discard_card(game_id, player_id, card_id)
     except Exception as e:
         raise e
 
@@ -416,9 +400,7 @@ async def respond_to_action_card(response_data: dict):
         or not response_data["game_id"]
         or not response_data["player_id"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = response_data["game_id"]
     defending_player_id = response_data["player_id"]
@@ -459,9 +441,7 @@ async def respond_to_action_card(response_data: dict):
                 game_id, defending_player, response_card_id
             )
             # Discard the response card from the defending player hand, and give him a new one from the deck.
-            remove_card_from_player(
-                response_card_id, defending_player_id, game_id
-            )
+            remove_card_from_player(response_card_id, defending_player_id, game_id)
             new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
         except Exception as e:
@@ -484,14 +464,10 @@ async def respond_to_action_card(response_data: dict):
     await send_game_status_to_players(game_id, updated_game)
 
     updated_defending_player = get_player(defending_player_id, game_id)
-    await send_player_status_to_player(
-        defending_player_id, updated_defending_player
-    )
+    await send_player_status_to_player(defending_player_id, updated_defending_player)
 
     updated_attacking_player = get_player(attacking_player.id, game_id)
-    await send_player_status_to_player(
-        attacking_player.id, updated_attacking_player
-    )
+    await send_player_status_to_player(attacking_player.id, updated_attacking_player)
 
     return {"message": "Efecto de jugada aplicado con éxito"}
 
@@ -568,9 +544,7 @@ async def get_game_results(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 2:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha finalizado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha finalizado")
 
     winners = calculate_winners(game_id)
     winners_str = ""
@@ -628,9 +602,7 @@ async def leave_game(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
         if game.state != 0:
-            raise HTTPException(
-                status_code=422, detail="La partida ya ha comenzado"
-            )
+            raise HTTPException(status_code=422, detail="La partida ya ha comenzado")
         player = get_player(player_id, game_id)
         if not player.owner:
             delete_player(player_id, game_id)
@@ -705,9 +677,7 @@ async def finish_turn(finish_data: dict):
     """
     # Check valid inputs
     if not finish_data or not finish_data["game_id"]:
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = finish_data["game_id"]
 
@@ -727,7 +697,9 @@ async def finish_turn(finish_data: dict):
     response = {"message": "Turno finalizado con éxito"}
     if return_data["winners"] is not None:
         await send_finished_game_event_to_players(game_id, return_data)
-        response = {"message": "La partida ha finalizado con éxito",
-                    "winners": return_data["winners"],
-                    "reason": return_data["reason"]}
+        response = {
+            "message": "La partida ha finalizado con éxito",
+            "winners": return_data["winners"],
+            "reason": return_data["reason"],
+        }
     return response

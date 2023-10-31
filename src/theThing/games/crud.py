@@ -73,10 +73,7 @@ def get_game(game_id: int):
                 play_direction=game.play_direction,
                 turn=return_turn,
                 players=game.players,
-                chat=[
-                    MessageOut.model_validate(message)
-                    for message in ordered_chat
-                ],
+                chat=[MessageOut.model_validate(message) for message in ordered_chat],
             )
 
             response = return_game
@@ -122,10 +119,7 @@ def get_full_game(game_id: int):
                 turn=return_turn,
                 players=game.players,
                 deck=game.deck,
-                chat=[
-                    MessageOut.model_validate(message)
-                    for message in ordered_chat
-                ],
+                chat=[MessageOut.model_validate(message) for message in ordered_chat],
             )
             return return_game
         else:
@@ -204,10 +198,7 @@ def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
                 turn=return_turn,
                 players=game_to_update.players,
                 deck=game_to_update.deck,
-                chat=[
-                    MessageOut.model_validate(message)
-                    for message in ordered_chat
-                ],
+                chat=[MessageOut.model_validate(message) for message in ordered_chat],
             )
             return return_game
         else:

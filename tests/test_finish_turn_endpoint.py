@@ -22,9 +22,7 @@ def test_finish_turn_not_started(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # finish the turn
-    response = client.put(
-        "/turn/finish", json={"game_id": game_id, "player_id": 1}
-    )
+    response = client.put("/turn/finish", json={"game_id": game_id, "player_id": 1})
     assert response.status_code == 422
     assert response.json() == {"detail": "La partida aún no ha comenzado"}
 
@@ -45,15 +43,9 @@ def test_finish_turn_not_started(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
-    )
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
 
     # start the game
     response = client.post(
@@ -61,9 +53,7 @@ def test_finish_turn_not_started(test_db):
     )
 
     # finish the turn
-    response = client.put(
-        "/turn/finish", json={"game_id": game_id, "player_id": 1}
-    )
+    response = client.put("/turn/finish", json={"game_id": game_id, "player_id": 1})
     assert response.status_code == 422
     assert response.json() == {"detail": "El turno aún no ha terminado"}
 

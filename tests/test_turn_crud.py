@@ -8,6 +8,7 @@ from src.theThing.turn.schemas import TurnCreate, TurnOut
 from .test_setup import test_db, clear_db
 from src.theThing.cards import crud as card_crud
 
+
 @db_session
 def test_create_turn(test_db):
     game_data = GameCreate(name="Test Game", min_players=4, max_players=6)
@@ -66,7 +67,7 @@ def test_update_turn(test_db):
         "name": "Test Game",
         "min_players": 4,
         "max_players": 6,
-        "state": 0, # its 0 because the game is not started (because we never called the endpoint)
+        "state": 0,  # its 0 because the game is not started (because we never called the endpoint)
         "play_direction": None,
         "turn": {
             "destination_player": "TestPlayer1",

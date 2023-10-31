@@ -23,15 +23,9 @@ def test_get_result_of_inplay_game(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
-    )
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
 
     response = client.post("/game/start", json=game_data)
 
@@ -68,15 +62,9 @@ def test_get_result_of_finished_game(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
-    )
-    client.post(
-        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
-    )
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
 
     client.post("/game/start", json=game_data)
 
