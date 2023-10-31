@@ -533,3 +533,46 @@ def assign_turn_owner(game: GameOut):
                 destination_player="",
             ),
         )
+
+
+def calculate_winners_if_victory_declared(game_id, player_id):
+    try:
+        game = get_full_game(game_id)
+        player = get_player(player_id, game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    if game.state != 1:
+        raise HTTPException(
+            status_code=422, detail="La partida no está en juego"
+        )
+
+    if player.role != 3:
+        raise HTTPException(
+            status_code=422, detail="El jugador no es La Cosa"
+        )
+
+    win = True
+    alive_humans = []
+    alive_infected = []
+
+    for player in game.players:
+        if player.alive:
+            if player.role == 1:
+                win = False
+                alive_humans.append(player.name)
+            elif player.role != 1:
+                alive_infected.append(player.name)
+
+    if win:
+        result = {
+            "message": "Gana La Cosa e infectados",
+            "winners": alive_infected
+        }
+    else:
+        result = {
+            "message": "Ganan los humanos",
+            "winners": alive_humans
+        }
+
+    return result
