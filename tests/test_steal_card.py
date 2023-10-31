@@ -68,11 +68,10 @@ def test_steal_card_empty_deck(test_db):
         update_card(card_to_update, 1)
     commit()
 
-    gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=2)
+    gameupdate = GameUpdate(state=1, play_direction=True)
     update_game(1, gameupdate)
     commit()
-
-    update_turn(1, TurnCreate(state=0))
+    update_turn(1, TurnCreate(owner=2, state=0))
     # Steal a card. It should not generate any problems
     steal_data = {"game_id": 1, "player_id": 2}
     response = client.put("/game/steal", json=steal_data)
@@ -100,10 +99,10 @@ def test_steal_with_no_cards_indeck(test_db):
         }
     commit()
 
-    gameupdate = GameUpdate(state=1, play_direction=True, turn_owner=3)
+    gameupdate = GameUpdate(state=1, play_direction=True)
     update_game(1, gameupdate)
     commit()
-    update_turn(1, TurnCreate(state=0))
+    update_turn(1, TurnCreate(owner=3, state=0))
     # Steal a card
     steal_data = {"game_id": 1, "player_id": 3}
     response = client.put("/game/steal", json=steal_data)
