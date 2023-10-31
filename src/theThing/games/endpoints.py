@@ -524,41 +524,6 @@ async def get_game_by_id(game_id: int):
     return game
 
 
-@router.get("/game/{game_id}/results")
-async def get_game_results(game_id: int):
-    """
-    Get the results of a game by its ID.
-
-    Args:
-        game_id (int): The ID of the game to retrieve.
-
-    Returns:
-        dict: A JSON response containing the game results.
-
-    Raises:
-        HTTPException: If the game does not exist.
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    if game.state != 2:
-        raise HTTPException(status_code=422, detail="La partida aún no ha finalizado")
-
-    winners = calculate_winners(game_id)
-    winners_str = ""
-    for winner in winners:
-        winners_str += winner + ", "
-    winners_str = winners_str[:-2]
-
-    return {
-        "message": "Partida finalizada con éxito",
-        "game_id": game_id,
-        "winners": f"Ganadores: {winners_str}",
-    }
-
-
 @router.get("/game/{game_id}/player/{player_id}")
 async def get_player_by_id(game_id: int, player_id: int):
     """
@@ -619,55 +584,6 @@ async def leave_game(game_id: int, player_id: int):
     game_to_send = get_game(game_id)
     await send_game_status_to_players(game_id, game_to_send)
     return response
-
-
-@router.put("/game/{game_id}/send-message")
-async def send_message(game_id: int, message: MessageCreate):
-    """
-    Send a message to the game chat.
-    :param game_id:
-    :param message:
-    :return: 200 OK if message created successfully
-
-    :raises: 404 if game not found
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    try:
-        message = create_message(message, game_id)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    await send_new_message_to_players(game_id, message)
-    return {
-        "message": "Mensaje enviado con exito",
-        "data": message.model_dump(),
-    }
-
-
-@router.get("/game/{game_id}/chat")
-async def get_chat_messages(game_id: int):
-    """
-    Get the messages from the game chat.
-    :param game_id:
-    :return: list of messages
-
-    :raises: 404 if game not found
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    try:
-        chat = get_chat(game_id)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    return chat
 
 
 @router.put("/turn/finish")
