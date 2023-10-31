@@ -3,75 +3,190 @@ from fastapi.testclient import TestClient
 from src.main import app
 from pony.orm import db_session, rollback
 from tests.test_setup import test_db, clear_db
-
+from src.theThing.games import crud as game_crud
+from src.theThing.games import schemas as game_schemas
+from src.theThing.games.utils import assign_hands
+from src.theThing.players import crud as player_crud
+from src.theThing.players import schemas as player_schemas
+from src.theThing.cards import crud as card_crud
+from src.theThing.cards.schemas import CardCreate
+from src.theThing.turn import crud as turn_crud
+from src.theThing.turn import schemas as turn_schemas
 
 client = TestClient(app)
 
 
-@db_session
-def test_finish_turn_not_started(test_db):
+@pytest.fixture(scope="module", autouse=True)
+def setup_module():
+    # create a game
+    game_data = game_schemas.GameCreate(
+        name="Test Game finish", min_players=4, max_players=5
+    )
+    created_game = game_crud.create_game(game_data)
+    # create the owner player
+    player_data = player_schemas.PlayerCreate(name="Player1", owner=True)
+    created_player = player_crud.create_player(player_data, created_game.id)
+
+    # create 4 players
+    player_data = player_schemas.PlayerCreate(name="Player2", owner=False)
+    created_player2 = player_crud.create_player(player_data, created_game.id)
+    player_data = player_schemas.PlayerCreate(name="Player3", owner=False)
+    created_player3 = player_crud.create_player(player_data, created_game.id)
+    player_data = player_schemas.PlayerCreate(name="Player4", owner=False)
+    created_player4 = player_crud.create_player(player_data, created_game.id)
+    player_data = player_schemas.PlayerCreate(name="Player5", owner=False)
+    created_player5 = player_crud.create_player(player_data, created_game.id)
+
+    players_in_game = [
+        created_player,
+        created_player2,
+        created_player3,
+        created_player4,
+        created_player5,
+    ]
+    # create 3 cards for each player
+    card_data = CardCreate(
+        code="def",
+        name="Default",
+        kind=0,
+        description="This is a default card",
+        number_in_card=1,
+        playable=True,
+    )
+    for i in range(4):
+        created_card = card_crud.create_card(card_data, created_game.id)
+        created_card2 = card_crud.create_card(card_data, created_game.id)
+        created_card3 = card_crud.create_card(card_data, created_game.id)
+
+        # add the card to the player hand
+        card_crud.give_card_to_player(
+            created_card.id, players_in_game[i].id, created_game.id
+        )
+        card_crud.give_card_to_player(
+            created_card2.id, players_in_game[i].id, created_game.id
+        )
+        card_crud.give_card_to_player(
+            created_card3.id, players_in_game[i].id, created_game.id
+        )
+
+    card_data2 = CardCreate(
+        code="lla",
+        name="Lanzallamas",
+        kind=0,
+        description="Lanzallamas",
+        number_in_card=1,
+        playable=True,
+    )
+    for i in range(4):
+        created_card = card_crud.create_card(card_data2, created_game.id)
+
+        card_crud.give_card_to_player(
+            created_card.id, players_in_game[i].id, created_game.id
+        )
+
+    # give an extra card to the owner
+    extra_card_data = CardCreate(
+        code="ext",
+        name="Extra",
+        kind=0,
+        description="Extra",
+        number_in_card=1,
+        playable=False,
+    )
+
+    extra_card = card_crud.create_card(extra_card_data, created_game.id)
+    card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
+
+    player_crud.update_player(
+        player_schemas.PlayerUpdate(role=3), created_player.id, created_game.id
+    )
+    # set all other players to role =1
+    for i in range(1, 5):
+        player_crud.update_player(
+            player_schemas.PlayerUpdate(role=1), players_in_game[i].id, created_game.id
+        )
+    # finish setup
+    yield
+
+
+def test_finish_turn_game_not_started(test_db):
     # Test case 1: Game exists, but it is not started
-    game_data = {
-        "game": {"name": "Prueba", "min_players": 4, "max_players": 6},
-        "host": {"name": "Test Host"},
-    }
-    response = client.post("/game/create", json=game_data)
-
-    game_id = response.json().get("game_id")
-    player_name = "Test Host"
-    game_data = {"game_id": game_id, "player_name": player_name}
-
     # finish the turn
-    response = client.put("/turn/finish", json={"game_id": game_id, "player_id": 1})
+    response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 422
     assert response.json() == {"detail": "La partida aún no ha comenzado"}
 
-    rollback()
 
-
-@db_session
 def test_finish_turn_not_started(test_db):
     # Test case 2: Game exists, data is valid, and the game starts successfully
-    game_data = {
-        "game": {"name": "Prueba", "min_players": 4, "max_players": 6},
-        "host": {"name": "Test Host"},
-    }
-    response = client.post("/game/create", json=game_data)
-
-    game_id = response.json().get("game_id")
-    player_name = "Test Host"
-    game_data = {"game_id": game_id, "player_name": player_name}
-
-    # join a few players
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
-
-    # start the game
-    response = client.post(
-        "/game/start", json={"game_id": game_id, "player_name": player_name}
+    game_crud.update_game(
+        1,
+        game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
     )
-
+    turn_crud.create_turn(1, 1)
+    turn_crud.update_turn(1, turn_schemas.TurnCreate(state=1))
     # finish the turn
-    response = client.put("/turn/finish", json={"game_id": game_id, "player_id": 1})
+    response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 422
     assert response.json() == {"detail": "El turno aún no ha terminado"}
 
-    rollback()
+
+def test_finish_turn_success(test_db):
+    discard_data = {
+        "game_id": 1,
+        "player_id": 1,
+        "card_id": 1,
+    }
+    response = client.put("/game/discard", json=discard_data)
+    assert response.status_code == 200
+    # finish the turn
+    response = client.put("/turn/finish", json={"game_id": 1})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Turno finalizado con éxito"}
 
 
-@db_session
-def test_finish_turn_next_player(test_db):
-    # Test case 3: Game exists, data is valid, and the game starts successfully
-    # steal a card
-    response = client.put("/game/steal", json={"game_id": 1, "player_id": 1})
-
-    # discard a card
-    response = client.put(
-        "/game/discard", json={"game_id": 1, "player_id": 1, "card_id": 1}
+def test_finish_turn_1_end_case(test_db):
+    # test case 3: The thing is eliminated, all humans win
+    card_data2 = CardCreate(
+        code="lla",
+        name="Lanzallamas",
+        kind=0,
+        description="Lanzallamas",
+        number_in_card=1,
+        playable=True,
     )
 
-    # finish the turn
-    response = client.put("/turn/finish", json={"game_id": 1, "player_id": 1})
+    card = card_crud.create_card(card_data2, 1)
+    turn_crud.update_turn(
+        1,
+        turn_schemas.TurnCreate(
+            state=5,
+            played_card=card.id,
+            owner=2,
+            destination_player="Player1",
+            response_card=None,
+        ),
+    )
 
-    assert response.json() == {"message": "Turno finalizado con éxito"}
+    actual_winners = ["Player2", "Player3", "Player4", "Player5"]
+    response = client.put("/turn/finish", json={"game_id": 1})
+    assert response.status_code == 200
+    assert response.json()["message"] == "Partida finalizada con éxito"
+    # check that each winner is inside the actual winners
+    for winner in response.json()["winners"]:
+        assert winner in actual_winners
+
+
+def test_finish_turn_2_end_case(test_db):
+    game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
+    for i in range(2, 6):
+        player_crud.update_player(player_schemas.PlayerUpdate(role=2, alive=True), i, 1)
+
+    game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
+
+    turn_crud.update_turn(1, turn_schemas.TurnCreate(state=5))
+
+    response = client.put("/turn/finish", json={"game_id": 1})
+    assert response.status_code == 200
+    assert response.json()["message"] == "Partida finalizada con éxito"
+    assert response.json()["winners"] == ["Player1"]

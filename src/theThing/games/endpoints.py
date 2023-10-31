@@ -614,8 +614,7 @@ async def finish_turn(finish_data: dict):
     if return_data["winners"] is not None:
         await send_finished_game_event_to_players(game_id, return_data)
         response = {
-            "message": "La partida ha finalizado con éxito",
+            "message": "Partida finalizada con éxito",
             "winners": return_data["winners"],
-            "reason": return_data["reason"],
         }
     return response

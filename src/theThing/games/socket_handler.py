@@ -66,9 +66,9 @@ async def send_new_message_to_players(game_id: int, message: MessageOut):
 
 
 async def send_finished_game_event_to_players(game_id: int, data: dict):
-    winners = [player.name for player in data.get("winners")]
+    winners = data.get("winners")
     message = data.get("reason")
-    await sio.emit("game_finished", {"winners": winners, "message": message})
+    await sio.emit("game_finished", {"winners": winners, "message": message}, room="g" + str(game_id))
 
 
 async def send_action_event_to_players(

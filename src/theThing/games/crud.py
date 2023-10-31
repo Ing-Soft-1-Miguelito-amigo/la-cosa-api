@@ -7,7 +7,7 @@ from src.theThing.cards.static_cards import dict_of_cards
 from src.theThing.messages.schemas import MessageOut
 
 
-def create_game(game: schemas.GameCreate):
+def create_game(game: schemas.GameCreate) -> schemas.GameOut:
     """
     It creates a game in the database from the
     GameCreate schema and returns the GameOut schema

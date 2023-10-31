@@ -133,7 +133,9 @@ def verify_finished_game(game: GameOut):
             game_new_state = GameUpdate(state=game.state)
             game = update_game(game_id, game_new_state)
             winners = [
-                player for player in game.players if (player.role == 1 and player.alive)
+                player.name
+                for player in game.players
+                if (player.role == 1 and player.alive)
             ]
             reason = (
                 "La cosa fue eliminada por "
@@ -151,7 +153,9 @@ def verify_finished_game(game: GameOut):
         game_new_state = GameUpdate(state=game.state)
         game = update_game(game_id, game_new_state)
         winners = [
-            player for player in game.players if (player.role == 3 and player.alive)
+            player.name
+            for player in game.players
+            if (player.role == 3 and player.alive)
         ]
         reason = "La cosa infectó a todos los jugadores y gano la partida"
 
@@ -162,13 +166,12 @@ def verify_finished_game(game: GameOut):
         game_id = game.id
         game_new_state = GameUpdate(state=game.state)
         game = update_game(game_id, game_new_state)
-        winners = alive_players
+        winners = [player.name for player in alive_players]
         if alive_players[0].role == 3:
             reason = "La cosa fue el último jugador vivo y ganó la partida"
         else:
             reason = (
-                alive_players[0].name
-                + " fue el último jugador vivo y ganó la partida"
+                alive_players[0].name + " fue el último jugador vivo y ganó la partida"
             )
     return_data = {"game": game, "winners": winners, "reason": reason}
     return return_data
