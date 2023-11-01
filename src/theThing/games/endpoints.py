@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
-
 from src.theThing.games.socket_handler import (
     send_player_status_to_player,
     send_game_status_to_players,
@@ -36,6 +35,7 @@ from .utils import (
     calculate_winners,
     verify_data_finish_turn,
     assign_turn_owner,
+    calculate_winners_if_victory_declared
 )
 from ..cards.crud import (
     get_card_from_deck,
@@ -382,7 +382,7 @@ async def respond_to_action_card(response_data: dict):
     Respond to an action card. It has to be requested just after a call to
     /game/play endpoint.
     Parameters:
-        play_data (dict): A dict containing game_id, player_id(who is
+        response_data (dict): A dict containing game_id, player_id(who is
         the destination_player in play card) and response_card_id.
 
     Returns:
@@ -470,6 +470,40 @@ async def respond_to_action_card(response_data: dict):
     await send_player_status_to_player(attacking_player.id, updated_attacking_player)
 
     return {"message": "Efecto de jugada aplicado con éxito"}
+
+
+@router.put("/game/declare-victory")
+async def declare_victory(data: dict):
+    """
+    Get the results of a game when La Cosa declares its victory.
+
+    Parameters:
+        data (dict): A dict containing game_id, player_id (player that is calling the endpoint).
+
+    Returns:
+        dict: A JSON response containing the game results (message indicating winners and list of winners).
+    """
+    # Check valid inputs
+    if (
+        not data
+        or not data["game_id"]
+        or not data["player_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía."
+        )
+
+    game_id = data["game_id"]
+    player_id = data["player_id"]
+
+    # Calculate winners
+    game_result = calculate_winners_if_victory_declared(game_id, player_id)
+    # Update game status to finished
+    update_game(game_id, GameUpdate(state=2))
+    updated_game = get_game(game_id)
+    await send_game_status_to_players(game_id, updated_game)
+
+    return game_result
 
 
 @router.get("/game/list")
