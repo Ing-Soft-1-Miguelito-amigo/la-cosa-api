@@ -1,19 +1,18 @@
 from fastapi import APIRouter, HTTPException
+from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
-from .schemas import GameCreate, GameUpdate, GamePlayerAmount, GameOut
-from ..players.schemas import PlayerCreate
-from ..players.crud import create_player, get_player, delete_player
-from ..turn.crud import create_turn, update_turn
-from ..cards.schemas import CardBase, CardUpdate
-from ..turn.schemas import TurnCreate
-from ..cards.effect_applications import effect_applications
-from ..cards.crud import (
-    get_card_from_deck,
-    give_card_to_player,
-    get_card,
-    update_card,
-    remove_card_from_player,
+from src.theThing.games.socket_handler import (
+    send_player_status_to_player,
+    send_game_status_to_players,
+    send_game_and_player_status_to_players,
+    send_discard_event_to_players,
+    send_action_event_to_players,
+    send_defense_event_to_players,
+    send_new_message_to_players,
+    send_finished_game_event_to_players,
 )
+from src.theThing.messages.crud import create_message, get_chat
+from src.theThing.messages.schemas import MessageCreate
 from .crud import (
     create_game,
     get_game,
@@ -22,6 +21,7 @@ from .crud import (
     create_game_deck,
     get_all_games,
 )
+from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import (
     verify_data_create,
     verify_data_start,
@@ -37,18 +37,16 @@ from .utils import (
     assign_turn_owner,
     calculate_winners_if_victory_declared
 )
-from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.games.socket_handler import (
-    send_player_status_to_player,
-    send_game_status_to_players,
-    send_game_and_player_status_to_players,
-    send_discard_event_to_players,
-    send_action_event_to_players,
-    send_defense_event_to_players,
-    send_new_message_to_players,
+from ..cards.crud import (
+    get_card_from_deck,
+    give_card_to_player,
+    remove_card_from_player,
 )
-from src.theThing.messages.schemas import MessageCreate, MessageOut
-from src.theThing.messages.crud import create_message, get_chat
+from ..cards.effect_applications import effect_applications
+from ..players.crud import create_player, get_player, delete_player
+from ..players.schemas import PlayerCreate
+from ..turn.crud import create_turn, update_turn
+from ..turn.schemas import TurnCreate
 
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
@@ -86,9 +84,7 @@ async def create_new_game(game_data: GameWithHost):
     # Check that name and host are not empty
     verify_data_create(game_name, min_players, max_players, host_name)
 
-    game = GameCreate(
-        name=game_name, min_players=min_players, max_players=max_players
-    )
+    game = GameCreate(name=game_name, min_players=min_players, max_players=max_players)
     host = PlayerCreate(name=host_name, owner=True)
 
     # Perform logic to save the game in the database
@@ -231,14 +227,8 @@ async def steal_card(steal_data: dict):
             - 422 (Unprocessable Entity): If the card cannot be stolen.
     """
     # Check valid inputs
-    if (
-        not steal_data
-        or not steal_data["game_id"]
-        or not steal_data["player_id"]
-    ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+    if not steal_data or not steal_data["game_id"] or not steal_data["player_id"]:
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = steal_data["game_id"]
     player_id = steal_data["player_id"]
@@ -296,9 +286,7 @@ async def play_card(play_data: dict):
         or not play_data["card_id"]
         or not play_data["destination_name"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = play_data["game_id"]
     player_id = play_data["player_id"]
@@ -313,9 +301,7 @@ async def play_card(play_data: dict):
     # Update the turn structure
     update_turn(
         game_id,
-        TurnCreate(
-            played_card=card_id, destination_player=destination_name, state=2
-        ),
+        TurnCreate(played_card=card_id, destination_player=destination_name, state=2),
     )
 
     player = get_player(player_id, game_id)
@@ -355,18 +341,14 @@ async def discard_card(discard_data: dict):
         or not discard_data["player_id"]
         or not discard_data["card_id"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = discard_data["game_id"]
     player_id = discard_data["player_id"]
     card_id = discard_data["card_id"]
 
     try:
-        game, player, card = verify_data_discard_card(
-            game_id, player_id, card_id
-        )
+        game, player, card = verify_data_discard_card(game_id, player_id, card_id)
     except Exception as e:
         raise e
 
@@ -418,9 +400,7 @@ async def respond_to_action_card(response_data: dict):
         or not response_data["game_id"]
         or not response_data["player_id"]
     ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = response_data["game_id"]
     defending_player_id = response_data["player_id"]
@@ -461,9 +441,7 @@ async def respond_to_action_card(response_data: dict):
                 game_id, defending_player, response_card_id
             )
             # Discard the response card from the defending player hand, and give him a new one from the deck.
-            remove_card_from_player(
-                response_card_id, defending_player_id, game_id
-            )
+            remove_card_from_player(response_card_id, defending_player_id, game_id)
             new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
         except Exception as e:
@@ -486,14 +464,10 @@ async def respond_to_action_card(response_data: dict):
     await send_game_status_to_players(game_id, updated_game)
 
     updated_defending_player = get_player(defending_player_id, game_id)
-    await send_player_status_to_player(
-        defending_player_id, updated_defending_player
-    )
+    await send_player_status_to_player(defending_player_id, updated_defending_player)
 
     updated_attacking_player = get_player(attacking_player.id, game_id)
-    await send_player_status_to_player(
-        attacking_player.id, updated_attacking_player
-    )
+    await send_player_status_to_player(attacking_player.id, updated_attacking_player)
 
     return {"message": "Efecto de jugada aplicado con éxito"}
 
@@ -578,46 +552,10 @@ async def get_game_by_id(game_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
     # Check if the game is finished
-    game = verify_finished_game(game)
+    # game = verify_finished_game(game) it breaks when game is not started,
+    # when a game is started this endpoint should not be called?
 
     return game
-
-
-@router.get("/game/{game_id}/results")
-async def get_game_results(game_id: int):
-    """
-    Get the results of a game by its ID.
-
-    Args:
-        game_id (int): The ID of the game to retrieve.
-
-    Returns:
-        dict: A JSON response containing the game results.
-
-    Raises:
-        HTTPException: If the game does not exist.
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    if game.state != 2:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha finalizado"
-        )
-
-    winners = calculate_winners(game_id)
-    winners_str = ""
-    for winner in winners:
-        winners_str += winner + ", "
-    winners_str = winners_str[:-2]
-
-    return {
-        "message": "Partida finalizada con éxito",
-        "game_id": game_id,
-        "winners": f"Ganadores: {winners_str}",
-    }
 
 
 @router.get("/game/{game_id}/player/{player_id}")
@@ -663,9 +601,7 @@ async def leave_game(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
         if game.state != 0:
-            raise HTTPException(
-                status_code=422, detail="La partida ya ha comenzado"
-            )
+            raise HTTPException(status_code=422, detail="La partida ya ha comenzado")
         player = get_player(player_id, game_id)
         if not player.owner:
             delete_player(player_id, game_id)
@@ -684,55 +620,6 @@ async def leave_game(game_id: int, player_id: int):
     return response
 
 
-@router.put("/game/{game_id}/send-message")
-async def send_message(game_id: int, message: MessageCreate):
-    """
-    Send a message to the game chat.
-    :param game_id:
-    :param message:
-    :return: 200 OK if message created successfully
-
-    :raises: 404 if game not found
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    try:
-        message = create_message(message, game_id)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    await send_new_message_to_players(game_id, message)
-    return {
-        "message": "Mensaje enviado con exito",
-        "data": message.model_dump(),
-    }
-
-
-@router.get("/game/{game_id}/chat")
-async def get_chat_messages(game_id: int):
-    """
-    Get the messages from the game chat.
-    :param game_id:
-    :return: list of messages
-
-    :raises: 404 if game not found
-    """
-    try:
-        game = get_game(game_id)
-    except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    try:
-        chat = get_chat(game_id)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    return chat
-
-
 @router.put("/turn/finish")
 async def finish_turn(finish_data: dict):
     """
@@ -740,9 +627,7 @@ async def finish_turn(finish_data: dict):
     """
     # Check valid inputs
     if not finish_data or not finish_data["game_id"]:
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía"
-        )
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía")
 
     game_id = finish_data["game_id"]
 
@@ -750,13 +635,20 @@ async def finish_turn(finish_data: dict):
 
     game = get_game(game_id)
 
-    assign_turn_owner(game)
+    return_data = verify_finished_game(game)
 
+    game = return_data["game"]
+
+    assign_turn_owner(game)
     # send new status via socket
     updated_game = get_game(game_id)
 
-    updated_game = verify_finished_game(updated_game)
-
     await send_game_status_to_players(game_id, updated_game)
-
-    return {"message": "Turno finalizado con éxito"}
+    response = {"message": "Turno finalizado con éxito"}
+    if return_data["winners"] is not None:
+        await send_finished_game_event_to_players(game_id, return_data)
+        response = {
+            "message": "Partida finalizada con éxito",
+            "winners": return_data["winners"],
+        }
+    return response
