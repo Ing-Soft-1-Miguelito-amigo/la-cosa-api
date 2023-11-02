@@ -55,12 +55,17 @@ def get_game(game_id: int):
                 response_card = models.Card[game.turn.response_card]
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
+            if game.turn.destination_player_exchange is not None:
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
                 played_card=played_card,
                 destination_player=destination_player,
                 response_card=response_card,
+                destination_player_exchange=destination_player_exchange,
                 state=game.turn.state,
             )
             ordered_chat = game.chat.order_by(lambda x: x.date)

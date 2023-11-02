@@ -22,20 +22,7 @@ from .crud import (
     create_game_deck,
     get_all_games,
 )
-from .utils import (
-    verify_data_create,
-    verify_data_start,
-    verify_finished_game,
-    verify_data_play_card,
-    verify_data_steal_card,
-    verify_data_discard_card,
-    verify_data_response_basic,
-    verify_data_response_card,
-    assign_hands,
-    calculate_winners,
-    verify_data_finish_turn,
-    assign_turn_owner,
-)
+from .utils import *
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from src.theThing.games.socket_handler import (
     send_player_status_to_player,
@@ -379,7 +366,7 @@ async def discard_card(discard_data: dict):
     try:
         update_turn(
             game_id,
-            TurnCreate(state=5),  # Has to be 3 in the future
+            TurnCreate(state=3),  # Has to be 3 in the future
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -469,7 +456,7 @@ async def respond_to_action_card(response_data: dict):
             raise e
         # Update turn and add the response_card
         update_turn(
-            game_id, TurnCreate(response_card=response_card_id, state=5)
+            game_id, TurnCreate(response_card=response_card_id, state=3)
         )  # Has to be 3 in the future
         # Send event description to all players
         await send_defense_event_to_players(
@@ -495,6 +482,51 @@ async def respond_to_action_card(response_data: dict):
     )
 
     return {"message": "Efecto de jugada aplicado con éxito"}
+
+
+@router.put("/game/exchange", status_code=200)
+async def exchange_cards(exchange_data: dict):
+    """
+    Exchanging offer to another player.
+    Parameters:
+        exchange_data (dict): A dict containing game_id, player_id(who plays the card), card_id.
+    Returns:
+        A JSON response indicating the success of the exchange offer.
+    Raises:
+        HTTPException:
+
+    """
+    # Check valid inputs
+    if (
+        not exchange_data
+        or not exchange_data["game_id"]
+        or not exchange_data["player_id"]
+        or not exchange_data["card_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
+
+    game_id = exchange_data["game_id"]
+    player_id = exchange_data["player_id"]
+    card_id = exchange_data["card_id"]
+
+    try:
+        game, player, card = verify_data_exchange(game_id, player_id, card_id)
+    except Exception as e:
+        raise e
+
+    player.card_to_exchange = card
+    update_player(PlayerUpdate.model_validate(player), player_id, game_id)
+    update_turn(game_id, TurnCreate(state=4))
+
+    # Send via socket the updated player and game status
+    updated_game = get_game(game_id)
+    updated_player = get_player(player_id, game_id)
+    await send_game_status_to_players(game_id, updated_game)
+    await send_player_status_to_player(player_id, updated_player)
+
+    return {"message": "Ofrecimiento de intercambio realizado con éxito"}
 
 
 @router.get("/game/list")

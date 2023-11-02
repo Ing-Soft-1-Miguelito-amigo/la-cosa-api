@@ -260,7 +260,7 @@ def verify_data_steal_card(game_id: int, player_id: int):
         raise HTTPException(status_code=422, detail="No es tu turno")
 
 
-def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
+def verify_data_generic(game_id: int, player_id: int, card_id: int):
     # Verify that the game exists and it is started
     try:
         game = get_full_game(game_id)
@@ -270,12 +270,8 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
         raise HTTPException(
             status_code=422, detail="La partida aún no ha comenzado"
         )
-    if game.turn.state != 1:
-        raise HTTPException(
-            status_code=422, detail="No es posible descartar en este momento"
-        )
 
-    # Verify that the player exists, and it is the turn owner, is alive and has already stealed a card.
+    # Verify that the player exists, and it is the turn owner and is alive.
     try:
         player = get_player(player_id, game_id)
     except ExceptionObjectNotFound as e:
@@ -285,11 +281,6 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     if game.turn.owner != player.table_position or not player.alive:
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
-        )
-    if len(player.hand) <= 4:
-        raise HTTPException(
-            status_code=422,
-            detail="No es posible descartar sin robar una carta primero",
         )
 
     # Verify that the card exists and it is in the player hand
@@ -311,6 +302,62 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     if card.playable is False:
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
+        )
+
+    return game, player, card
+
+
+def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
+    try:
+        game, player, card = verify_data_generic(game_id, player_id, card_id)
+    except HTTPException as e:
+        raise e
+
+    if game.turn.state != 1:
+        raise HTTPException(
+            status_code=422, detail="No es posible descartar en este momento"
+        )
+
+    if len(player.hand) <= 4:
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible descartar sin robar una carta primero",
+        )
+
+    infected_cards = [card for card in player.hand if card.code == "inf"]
+    if (
+        len(infected_cards) == 1
+        and infected_cards[0].id == card.id
+        and player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible descartar la última carta de infección",
+        )
+
+    return game, player, card
+
+
+def verify_data_exchange(game_id: int, player_id: int, card_id: int):
+    try:
+        game, player, card = verify_data_generic(game_id, player_id, card_id)
+    except HTTPException as e:
+        raise e
+
+    if game.turn.state != 3:
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar en este momento"
+        )
+
+    infected_cards = [card for card in player.hand if card.code == "inf"]
+    if (
+        len(infected_cards) == 1
+        and card.id == infected_cards[0].id
+        and player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible intercambiar la última carta de infección",
         )
 
     return game, player, card

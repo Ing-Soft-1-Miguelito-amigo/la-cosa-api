@@ -1,9 +1,11 @@
 from pony.orm import ObjectNotFound
 from pony.orm import db_session
+from src.theThing.cards.schemas import CardBase
 
 from src.theThing.games.models import Game
 from src.theThing.players.schemas import PlayerCreate, PlayerUpdate, PlayerBase
 from .models import Player
+from ..cards.models import Card
 
 
 def create_player(player_data: PlayerCreate, game_id: int):
@@ -48,7 +50,15 @@ def get_player(player_id: int, game_id: int):
         player = Player.get(game=Game[game_id], id=player_id)
         if player is None:
             raise ObjectNotFound(Player, pkval=player_id)
-        response = PlayerBase.model_validate(player)
+
+        if player.card_to_exchange is not None:
+            card_to_exchange = CardBase.model_validate(
+                Card[player.card_to_exchange]
+            )
+        else:
+            card_to_exchange = None
+        response = PlayerBase.model_validate(player, card_to_exchange)
+
     return response
 
 
@@ -62,9 +72,26 @@ def update_player(player: PlayerUpdate, player_id: int, game_id: int):
         player_to_update = Player.get(game=game, id=player_id)
         if player_to_update is None:
             raise ObjectNotFound(Player, pkval=player_id)
-        player_to_update.set(**player.model_dump(exclude_unset=True))
+
+        if player.card_to_exchange is not None:
+            player_to_update.set(
+                **player.model_dump(
+                    exclude_unset=True, exclude=["card_to_exchange"]
+                )
+            )
+            player_to_update.card_to_exchange = player.card_to_exchange.id
+        else:
+            player_to_update.set(**player.model_dump(exclude_unset=True))
+
         player_to_update.flush()
-        response = PlayerBase.model_validate(player_to_update)
+        if player_to_update.card_to_exchange is not None:
+            card_to_exchange = CardBase.model_validate(
+                Card[player_to_update.card_to_exchange]
+            )
+        else:
+            card_to_exchange = None
+        response = PlayerBase.model_validate(player_to_update, card_to_exchange)
+
     return response
 
 
