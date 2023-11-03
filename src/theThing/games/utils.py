@@ -359,7 +359,11 @@ def verify_data_exchange(game_id: int, player_id: int, card_id: int):
             status_code=422,
             detail="No es posible intercambiar la última carta de infección",
         )
-
+    # If the card is "lco" raises an exception
+    if card.code == "lco":
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar esta carta"
+        )
     return game, player, card
 
 
@@ -414,6 +418,97 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         )
 
     return game, attacking_player, defending_player, action_card
+
+
+def verify_data_exchange_basic(game_id: int, defending_player_id: int):
+    # It also returns the game, the attacking player, the defending player and the action card
+    # Game checks
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail="No se encontró la partida")
+    if game.state != 1:
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
+    if game.turn.state != 4:
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible defenderse de un intercambio en este momento",
+        )
+
+    # Check if the exchanging offerer exists and its alive
+    for player in game.players:
+        if player.table_position == game.turn.owner:
+            exchanging_offerer = player
+            break
+
+    if exchanging_offerer is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró el jugador que ofertó el intercambio",
+        )
+    if not exchanging_offerer.alive:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador que ofreció el intercambio está muerto",
+        )
+    # Check the defending player exists and its alive
+    try:
+        defending_player = get_player(defending_player_id, game_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró el jugador destino del intercambio",
+        )
+
+    if defending_player.name != game.turn.destination_player_exchange:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador destino del intercambio no es el correcto",
+        )
+
+    return game, exchanging_offerer, defending_player
+
+
+def exchange_cards_effect(
+    game_id: int,
+    exchanging_offerer: PlayerBase,
+    defending_player: PlayerBase,
+    exchange_card_id: int,
+):
+    # swap cards in the player's hand from the defending player and the offerer
+    # Get the card to exchange from the defending player
+    try:
+        exchange_card = get_card(exchange_card_id, game_id)
+        offered_card = get_card(exchanging_offerer.card_to_exchange.id, game_id)
+    except Exception as e:
+        raise e
+    if (
+        exchange_card not in defending_player.hand
+        or offered_card not in exchanging_offerer.hand
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Las cartas de los intercambios no están en la mano de los jugadores",
+        )
+    # Swap the cards
+    defending_player = remove_card_from_player(
+        exchange_card.id, defending_player.id, game_id
+    )
+    exchanging_offerer = remove_card_from_player(
+        offered_card.id, exchanging_offerer.id, game_id
+    )
+
+    # TODO: If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+
+    # Clean the field card_to_exchange from the offerer player
+    exchanging_offerer = update_player(
+        PlayerUpdate(card_to_exchange=None), exchanging_offerer.id, game_id
+    )
+    # Give the cards to the players
+    give_card_to_player(exchange_card.id, exchanging_offerer.id, game_id)
+    give_card_to_player(offered_card.id, defending_player.id, game_id)
 
 
 def verify_data_response_card(
@@ -544,7 +639,6 @@ def assign_turn_owner(game: GameOut):
                     destination_player="",
                 ),
             )
-            return
 
     # Assign new turn owner, must be an alive player
     # if play direction is clockwise, turn owner is the next player. If not, the previous player
@@ -552,10 +646,19 @@ def assign_turn_owner(game: GameOut):
         player.table_position for player in game.players if player.alive
     ]
     alive_players.sort()
+    game = get_game(game.id)
     if game.play_direction:
         new_turn_owner = alive_players[
             (alive_players.index(game.turn.owner) + 1) % len(alive_players)
         ]
+        new_exchange_player = alive_players[
+            (alive_players.index(game.turn.owner) + 2) % len(alive_players)
+        ]
+        # Get the name of the next exchange player
+        for player in game.players:
+            if player.table_position == new_exchange_player:
+                ex_player = player.name
+                break
         update_turn(
             game.id,
             TurnCreate(
@@ -564,12 +667,21 @@ def assign_turn_owner(game: GameOut):
                 played_card=None,
                 response_card=None,
                 destination_player="",
+                destination_player_exchange=ex_player,
             ),
         )
     else:
         new_turn_owner = alive_players[
             (alive_players.index(game.turn.owner) - 1) % len(alive_players)
         ]
+        new_exchange_player = alive_players[
+            (alive_players.index(game.turn.owner) - 2) % len(alive_players)
+        ]
+        # Get the name of the next exchange player
+        for player in game.players:
+            if player.table_position == new_exchange_player:
+                ex_player = player.name
+                break
         update_turn(
             game.id,
             TurnCreate(
@@ -578,5 +690,6 @@ def assign_turn_owner(game: GameOut):
                 played_card=None,
                 response_card=None,
                 destination_player="",
+                destination_player_exchange=ex_player,
             ),
         )

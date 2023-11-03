@@ -24,15 +24,7 @@ from .crud import (
 )
 from .utils import *
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
-from src.theThing.games.socket_handler import (
-    send_player_status_to_player,
-    send_game_status_to_players,
-    send_game_and_player_status_to_players,
-    send_discard_event_to_players,
-    send_action_event_to_players,
-    send_defense_event_to_players,
-    send_new_message_to_players,
-)
+from src.theThing.games.socket_handler import *
 from src.theThing.messages.schemas import MessageCreate, MessageOut
 from src.theThing.messages.crud import create_message, get_chat
 
@@ -175,13 +167,19 @@ async def start_game(game_start_info: dict):
     # Update game status to started and assign turn owner and play direction
     new_game_status = GameUpdate(state=1, play_direction=True)
     try:
-        update_game(game_id, new_game_status)
+        game = update_game(game_id, new_game_status)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    # Get name of the player with table position 2
+    for player in game.players:
+        if player.table_position == 2:
+            exchange_player = player.name
+            break
+
     # Create turn structure
     try:
-        create_turn(game_id, 1)
+        create_turn(game_id, 1, exchange_player)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -434,7 +432,7 @@ async def respond_to_action_card(response_data: dict):
                 game, attacking_player, defending_player, action_card
             )
         # Update turn status
-        update_turn(game_id, TurnCreate(state=5))  # Has to be 3 in the future
+        update_turn(game_id, TurnCreate(state=3))  # Has to be 3 in the future
         # Send event description to all players
         await send_action_event_to_players(
             game_id, attacking_player, defending_player, action_card
@@ -527,6 +525,73 @@ async def exchange_cards(exchange_data: dict):
     await send_player_status_to_player(player_id, updated_player)
 
     return {"message": "Ofrecimiento de intercambio realizado con éxito"}
+
+
+@router.put("/game/response-exchange", status_code=200)
+async def response_exchange(response_ex_data: dict):
+    """
+    Response to an exchange offer.
+
+    Parameters:
+        response_ex_data (dict): A dict containing game_id, defending_player_id, exchange_card_id (to exchange),
+        defense_card_id.
+
+    Returns:
+        A JSON response indicating the success of the exchange effect.
+    """
+    # Check valid inputs
+    if (
+        not response_ex_data
+        or not response_ex_data["game_id"]
+        or not response_ex_data["defending_player_id"]
+    ):
+        raise HTTPException(
+            status_code=422, detail="La entrada no puede ser vacía"
+        )
+
+    game_id = response_ex_data["game_id"]
+    defending_player_id = response_ex_data["defending_player_id"]
+    exchange_card_id = response_ex_data["exchange_card_id"]
+    defense_card_id = response_ex_data["defense_card_id"]
+    # Verify data and recover game, exchanging offerer and defending player
+    try:
+        (
+            game,
+            exchanging_offerer,
+            defending_player,
+        ) = verify_data_exchange_basic(game_id, defending_player_id)
+    except Exception as e:
+        raise e
+
+    if exchange_card_id and (not defense_card_id):
+        # Exchange cards
+        try:
+            exchange_cards_effect(
+                game_id, exchanging_offerer, defending_player, exchange_card_id
+            )
+        except Exception as e:
+            raise e
+        # Send via socket the event description
+        await send_exchange_event_to_players(
+            game_id, exchanging_offerer.name, defending_player.name
+        )
+    elif defense_card_id and (not exchange_card_id):
+        # TODO: Create dict of functions to implement defense effect
+        pass
+
+    # Update turn status
+    update_turn(game_id, TurnCreate(state=5))
+
+    # Send via socket the updated player and game status
+    updated_game = get_game(game_id)
+    updated_offerer = get_player(exchanging_offerer.id, game_id)
+    updated_defending = get_player(defending_player.id, game_id)
+
+    await send_player_status_to_player(exchanging_offerer.id, updated_offerer)
+    await send_player_status_to_player(defending_player.id, updated_defending)
+    await send_game_status_to_players(game_id, updated_game)
+
+    return {"message": "Intercambio finalizado con éxito"}
 
 
 @router.get("/game/list")

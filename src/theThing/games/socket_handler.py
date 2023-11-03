@@ -123,6 +123,20 @@ async def send_defense_event_to_players(
     )
 
 
+async def send_exchange_event_to_players(
+    game_id: int, exchanging_offerer: str, defending_player: str
+):
+    await sio.emit(
+        "exchange",
+        data={
+            "message": exchanging_offerer
+            + " intercambió cartas con "
+            + defending_player
+        },
+        room="g" + str(game_id),
+    )
+
+
 async def send_analysis_to_player(
     player_id: int, hand: [CardBase], attacked_player_name: str
 ):

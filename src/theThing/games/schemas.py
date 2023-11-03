@@ -66,7 +66,7 @@ class GameOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def model_validate(cls, game):
+    def model_validate(cls, game, card_to_exchange=None):
         # first order teh chat by date
         ordered_chat = game.chat.order_by(lambda x: x.date)
         formatted_chat = [

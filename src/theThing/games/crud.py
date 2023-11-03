@@ -1,7 +1,10 @@
+from httpx import get
 from . import schemas, models
 from pony.orm import db_session
 from src.theThing.players.models import Player
-from src.theThing.cards.schemas import CardCreate
+from src.theThing.players.crud import get_player
+from src.theThing.cards.schemas import CardCreate, CardBase
+from src.theThing.cards.models import Card
 from src.theThing.cards.crud import create_card
 from src.theThing.cards.static_cards import dict_of_cards
 from src.theThing.messages.schemas import MessageOut
@@ -108,15 +111,26 @@ def get_full_game(game_id: int):
                 response_card = models.Card[game.turn.response_card]
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
+            if game.turn.destination_player_exchange is not None:
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
                 played_card=played_card,
                 destination_player=destination_player,
                 response_card=response_card,
+                destination_player_exchange=destination_player_exchange,
                 state=game.turn.state,
             )
             ordered_chat = game.chat.order_by(lambda x: x.date)
+
+            # Convert game.players to a list o PlayerBase schemas
+            list_playerbase = []
+            for player in game.players:
+                list_playerbase.append(get_player(player.id, game_id))
+
             return_game = schemas.GameInDB(
                 id=game.id,
                 name=game.name,
@@ -125,7 +139,7 @@ def get_full_game(game_id: int):
                 state=game.state,
                 play_direction=game.play_direction,
                 turn=return_turn,
-                players=game.players,
+                players=list_playerbase,
                 deck=game.deck,
                 chat=[
                     MessageOut.model_validate(message)
