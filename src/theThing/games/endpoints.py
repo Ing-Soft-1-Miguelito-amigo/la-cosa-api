@@ -319,6 +319,10 @@ async def play_card(play_data: dict):
             state=3,
             destination_exchange_player=destination_name,
         )
+        # Send event description to all players
+        await send_action_event_to_players(
+            game_id, turn_player, destination_player, card
+        )
     else:
         new_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2
