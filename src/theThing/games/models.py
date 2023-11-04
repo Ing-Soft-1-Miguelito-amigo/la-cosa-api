@@ -1,4 +1,4 @@
-from pony.orm import Required, Set, Optional, PrimaryKey
+from pony.orm import Required, Set, Optional, PrimaryKey, Json
 from src.theThing.models.db import db
 from src.theThing.players.models import Player
 from src.theThing.cards.models import Card
@@ -25,3 +25,8 @@ class Game(db.Entity):
     players = Set(Player, reverse="game")
     deck = Set(Card, reverse="game")
     chat = Set(Message)
+    logs = Optional(Json)
+
+    # on create, create a list to save in logs
+    def before_insert(self):
+        self.logs = []

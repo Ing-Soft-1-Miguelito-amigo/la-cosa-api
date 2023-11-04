@@ -39,7 +39,6 @@ def test_create_player(test_db):
                 "quarantine": False,
             }
         ],
-        "chat": [],
     }
     rollback()
 
@@ -83,7 +82,6 @@ def test_create_wrong_player(test_db):
                 "quarantine": False,
             }
         ],
-        "chat": [],
     }
     rollback()
 
@@ -135,7 +133,6 @@ def test_add_player_to_full_game(test_db):
                     "quarantine": False,
                 },
             ],
-            "chat": [],
         }
     )
     retrieved_game = game_crud.get_game(created_game.id)

@@ -8,40 +8,12 @@ from src.theThing.games.socket_handler import (
     send_discard_event_to_players,
     send_action_event_to_players,
     send_defense_event_to_players,
-    send_new_message_to_players,
     send_finished_game_event_to_players,
 )
-from src.theThing.messages.crud import create_message, get_chat
-from src.theThing.messages.schemas import MessageCreate
-from .crud import (
-    create_game,
-    get_game,
-    update_game,
-    get_full_game,
-    create_game_deck,
-    get_all_games,
-)
+from .crud import create_game, create_game_deck, get_all_games, save_log, get_logs
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
-from .utils import (
-    verify_data_create,
-    verify_data_start,
-    verify_finished_game,
-    verify_data_play_card,
-    verify_data_steal_card,
-    verify_data_discard_card,
-    verify_data_response_basic,
-    verify_data_response_card,
-    assign_hands,
-    calculate_winners,
-    verify_data_finish_turn,
-    assign_turn_owner,
-    calculate_winners_if_victory_declared
-)
-from ..cards.crud import (
-    get_card_from_deck,
-    give_card_to_player,
-    remove_card_from_player,
-)
+from .utils import *
+from ..cards.crud import *
 from ..cards.effect_applications import effect_applications
 from ..players.crud import create_player, get_player, delete_player
 from ..players.schemas import PlayerCreate
@@ -371,7 +343,13 @@ async def discard_card(discard_data: dict):
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
-    await send_discard_event_to_players(game_id, updated_player.name)
+    message = f"{updated_player.name} descartó una carta"
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+
+    await send_discard_event_to_players(game_id, updated_player.name, message)
 
     return {"message": "Carta descartada con éxito"}
 
@@ -430,9 +408,14 @@ async def respond_to_action_card(response_data: dict):
         # Update turn status
         update_turn(game_id, TurnCreate(state=5))  # Has to be 3 in the future
         # Send event description to all players
-        await send_action_event_to_players(
-            game_id, attacking_player, defending_player, action_card
+        message = (
+            f"{attacking_player.name} jugó {action_card.name} a {defending_player.name}"
         )
+        try:
+            save_log(game_id, message)
+        except Exception as e:
+            raise e
+        await send_action_event_to_players(game_id, message)
     else:
         try:
             response_card_id = int(response_card_id)
@@ -451,13 +434,12 @@ async def respond_to_action_card(response_data: dict):
             game_id, TurnCreate(response_card=response_card_id, state=5)
         )  # Has to be 3 in the future
         # Send event description to all players
-        await send_defense_event_to_players(
-            game_id,
-            attacking_player,
-            defending_player,
-            action_card,
-            response_card,
-        )
+        message = f"{defending_player.name} se defendio con {response_card.name} a {attacking_player.name}"
+        try:
+            save_log(game_id, message)
+        except Exception as e:
+            raise e
+        await send_defense_event_to_players(game_id, message)
 
     # Send the updated states via sockets
     updated_game = get_game(game_id)
@@ -484,14 +466,8 @@ async def declare_victory(data: dict):
         dict: A JSON response containing the game results (message indicating winners and list of winners).
     """
     # Check valid inputs
-    if (
-        not data
-        or not data["game_id"]
-        or not data["player_id"]
-    ):
-        raise HTTPException(
-            status_code=422, detail="La entrada no puede ser vacía."
-        )
+    if not data or not data["game_id"] or not data["player_id"]:
+        raise HTTPException(status_code=422, detail="La entrada no puede ser vacía.")
 
     game_id = data["game_id"]
     player_id = data["player_id"]
@@ -556,6 +532,28 @@ async def get_game_by_id(game_id: int):
     # when a game is started this endpoint should not be called?
 
     return game
+
+
+@router.get("/game/{game_id}/get-logs")
+async def get_game_logs(game_id: int):
+    """
+    Get the logs of a game by its ID.
+
+    Args:
+        game_id (int): The ID of the game to retrieve.
+
+    Returns:
+        dict: A JSON response containing the game information.
+
+    Raises:
+        HTTPException: If the game does not exist.
+    """
+    try:
+        logs = get_logs(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return logs
 
 
 @router.get("/game/{game_id}/player/{player_id}")

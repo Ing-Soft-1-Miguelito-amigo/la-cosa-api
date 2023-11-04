@@ -37,7 +37,6 @@ def test_create_turn(test_db):
             "state": 0,
         },
         "players": [],
-        "chat": [],
     }
 
 
@@ -77,7 +76,6 @@ def test_update_turn(test_db):
             "state": 1,
         },
         "players": [],
-        "chat": [],
     }
 
     rollback()
