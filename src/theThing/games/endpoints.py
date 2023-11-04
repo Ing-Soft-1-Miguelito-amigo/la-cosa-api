@@ -282,6 +282,14 @@ async def play_card(play_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
+    message = (
+        f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+    )
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+    await send_action_event_to_players(game_id, message)
     return {"message": "Carta jugada con éxito"}
 
 
@@ -408,9 +416,7 @@ async def respond_to_action_card(response_data: dict):
         # Update turn status
         update_turn(game_id, TurnCreate(state=5))  # Has to be 3 in the future
         # Send event description to all players
-        message = (
-            f"{attacking_player.name} jugó {action_card.name} a {defending_player.name}"
-        )
+        message = f"{attacking_player.name} jugó con exito {action_card.name} a {defending_player.name}"
         try:
             save_log(game_id, message)
         except Exception as e:

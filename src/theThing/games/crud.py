@@ -240,7 +240,7 @@ def save_log(game_id: int, log: str):
     with db_session:
         game = models.Game[game_id]
         log_dict = {
-            "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "date": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "log": log,
         }
         game.logs.append(log_dict)
