@@ -464,18 +464,6 @@ def assign_hands(game: GameInDB):
             give_card_to_player(card.id, player.id, game.id)
 
 
-def calculate_winners(game_id: int):
-    """
-    Calculate the winners of the game.
-    PRE: the game exists and it is finished.
-    """
-    game = get_full_game(game_id)
-    players = game.players
-    winners = [player.name for player in players if player.alive]
-
-    return winners
-
-
 def verify_data_finish_turn(game_id: int):
     """
     Verify the integrity of finish turn data.
@@ -560,14 +548,10 @@ def calculate_winners_if_victory_declared(game_id, player_id):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida no está en juego"
-        )
+        raise HTTPException(status_code=422, detail="La partida no está en juego")
 
     if player.role != 3:
-        raise HTTPException(
-            status_code=422, detail="El jugador no es La Cosa"
-        )
+        raise HTTPException(status_code=422, detail="El jugador no es La Cosa")
 
     win = True
     alive_humans = []
@@ -582,14 +566,8 @@ def calculate_winners_if_victory_declared(game_id, player_id):
                 alive_infected.append(player.name)
 
     if win:
-        result = {
-            "message": "Gana La Cosa e infectados",
-            "winners": alive_infected
-        }
+        result = {"message": "Gana La Cosa e infectados", "winners": alive_infected}
     else:
-        result = {
-            "message": "Ganan los humanos",
-            "winners": alive_humans
-        }
+        result = {"message": "Ganan los humanos", "winners": alive_humans}
 
     return result

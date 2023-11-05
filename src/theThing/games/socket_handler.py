@@ -68,34 +68,29 @@ async def send_new_message_to_players(game_id: int, message: MessageOut):
 async def send_finished_game_event_to_players(game_id: int, data: dict):
     winners = data.get("winners")
     message = data.get("reason")
-    await sio.emit("game_finished", {"winners": winners, "message": message}, room="g" + str(game_id))
+    await sio.emit(
+        "game_finished",
+        {"winners": winners, "message": message},
+        room="g" + str(game_id),
+    )
 
 
-async def send_action_event_to_players(
-    game_id: int,
-    attacking_player: PlayerBase,
-    defending_player: PlayerBase,
-    action_card: CardBase,
-):
+async def send_action_event_to_players(game_id: int, message: str):
     await sio.emit(
         "action",
         data={
-            "message": attacking_player.name
-            + " le jugó la carta "
-            + action_card.name
-            + " a "
-            + defending_player.name
+            "message": message,
         },
         room="g" + str(game_id),
     )
 
 
-async def send_discard_event_to_players(game_id: int, player_name: str):
+async def send_discard_event_to_players(game_id: int, player_name: str, message: str):
     await sio.emit(
         "discard",
         {
             "player_name": player_name,
-            "message": player_name + " descartó una carta",
+            "message": message,
         },
         room="g" + str(game_id),
     )
@@ -103,22 +98,11 @@ async def send_discard_event_to_players(game_id: int, player_name: str):
 
 async def send_defense_event_to_players(
     game_id: int,
-    attacking_player: PlayerBase,
-    defending_player: PlayerBase,
-    action_card: CardBase,
-    defense_card: CardBase,
+    message: str,
 ):
     await sio.emit(
         "defense",
-        data={
-            "message": defending_player.name
-            + " se defendió del ataque de "
-            + action_card.name
-            + " jugado por "
-            + attacking_player.name
-            + " con la carta "
-            + defense_card.name
-        },
+        data={"message": message},
         room="g" + str(game_id),
     )
 

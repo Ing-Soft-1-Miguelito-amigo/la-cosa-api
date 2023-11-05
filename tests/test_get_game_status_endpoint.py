@@ -36,7 +36,6 @@ def test_get_game_success(test_db):
                 "quarantine": False,
             }
         ],
-        "chat": [],
     }
     rollback()
 

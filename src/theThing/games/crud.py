@@ -5,6 +5,7 @@ from src.theThing.cards.schemas import CardCreate
 from src.theThing.cards.crud import create_card
 from src.theThing.cards.static_cards import dict_of_cards
 from src.theThing.messages.schemas import MessageOut
+from datetime import datetime
 
 
 def create_game(game: schemas.GameCreate) -> schemas.GameOut:
@@ -230,3 +231,26 @@ def create_game_deck(game_id: int, players_amount: int):
                 playable=True,
             )
             create_card(new_card, game_id)
+
+
+def save_log(game_id: int, log: str):
+    """
+    This function saves a log in the game
+    """
+    with db_session:
+        game = models.Game[game_id]
+        log_dict = {
+            "date": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "log": log,
+        }
+        game.logs.append(log_dict)
+        game.flush()
+
+
+def get_logs(game_id: int):
+    """
+    This function returns the logs of a game
+    """
+    with db_session:
+        game = models.Game[game_id]
+        return game.logs
