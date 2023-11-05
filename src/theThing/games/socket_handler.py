@@ -39,9 +39,7 @@ async def disconnect(sid):
 
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
-    await sio.emit(
-        "player_status", player_data.model_dump(), room="p" + str(player_id)
-    )
+    await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
 
 
 async def send_game_status_to_players(game_id: int, game_data: GameOut):
@@ -51,16 +49,12 @@ async def send_game_status_to_players(game_id: int, game_data: GameOut):
     :param game_data:
     :return:
     """
-    await sio.emit(
-        "game_status", game_data.model_dump(), room="g" + str(game_id)
-    )
+    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
 
 
 async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
-        await sio.emit(
-            "player_status", player.model_dump(), room="p" + str(player.id)
-        )
+        await sio.emit("player_status", player.model_dump(), room="p" + str(player.id))
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
@@ -69,6 +63,12 @@ async def send_game_and_player_status_to_players(game_data: GameInDB):
 
 async def send_new_message_to_players(game_id: int, message: MessageOut):
     await sio.emit("new_message", message.model_dump(), room="g" + str(game_id))
+
+
+async def send_finished_game_event_to_players(game_id: int, data: dict):
+    winners = data.get("winners")
+    message = data.get("reason")
+    await sio.emit("game_finished", {"winners": winners, "message": message}, room="g" + str(game_id))
 
 
 async def send_action_event_to_players(
