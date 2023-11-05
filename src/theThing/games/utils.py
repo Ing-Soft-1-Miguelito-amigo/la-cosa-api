@@ -625,71 +625,66 @@ def assign_turn_owner(game: GameOut):
         # If played_card is None, then it was discarded, and we need to skip this section
         played_card_code = played_card.code
         response_card = game.turn.response_card
-        if (
-            played_card_code == "cdl" or played_card_code == "mvc"
-        ) and response_card is None:
+        if (played_card_code == "cdl" or played_card_code == "mvc") and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
-            # owner is in the same position of the last turn played.
+            # owner is the position of the destination player
+            for player in game.players:
+                if player.name == game.turn.destination_player:
+                    new_owner = player.table_position
+                    break
             update_turn(
                 game.id,
                 TurnCreate(
+                    owner=new_owner,
                     state=0,
                     played_card=None,
                     response_card=None,
                     destination_player="",
                 ),
             )
+            return
 
     # Assign new turn owner, must be an alive player
-    # if play direction is clockwise, turn owner is the next player. If not, the previous player
+    # if play direction is clockwise, turn owner is the next player.
+    # If not, the previous player
+    game = get_game(game.id)
+    new_turn_owner = get_player_in_next_n_places(game, game.turn.owner, 1)
+    new_exchange_player = get_player_in_next_n_places(game, game.turn.owner, 2)
+    update_turn(
+            game.id,
+            TurnCreate(
+                owner=new_turn_owner.table_position,
+                state=0,
+                played_card=None,
+                response_card=None,
+                destination_player="",
+                destination_player_exchange=new_exchange_player.name,
+            ),
+        )
+
+
+def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
+    """
+    Get the player that is n places after the player in the table.
+    According to the play direction
+
+    Parameters:
+    - game (GameOut): The game data.
+    - player (PlayerBase): The player to start counting from.
+    - n (int): The number of places to count.
+
+    Returns:
+    - PlayerBase: The player that is n places after the player in the table.
+    """
     alive_players = [
         player.table_position for player in game.players if player.alive
     ]
     alive_players.sort()
-    game = get_game(game.id)
+    index_player = alive_players.index(owner)
     if game.play_direction:
-        new_turn_owner = alive_players[
-            (alive_players.index(game.turn.owner) + 1) % len(alive_players)
-        ]
-        new_exchange_player = alive_players[
-            (alive_players.index(game.turn.owner) + 2) % len(alive_players)
-        ]
-        # Get the name of the next exchange player
-        for player in game.players:
-            if player.table_position == new_exchange_player:
-                ex_player = player.name
-                break
-        update_turn(
-            game.id,
-            TurnCreate(
-                owner=new_turn_owner,
-                state=0,
-                played_card=None,
-                response_card=None,
-                destination_player="",
-                destination_player_exchange=ex_player,
-            ),
-        )
+        next_player = alive_players[(index_player + n) % len(alive_players)]
     else:
-        new_turn_owner = alive_players[
-            (alive_players.index(game.turn.owner) - 1) % len(alive_players)
-        ]
-        new_exchange_player = alive_players[
-            (alive_players.index(game.turn.owner) - 2) % len(alive_players)
-        ]
-        # Get the name of the next exchange player
-        for player in game.players:
-            if player.table_position == new_exchange_player:
-                ex_player = player.name
-                break
-        update_turn(
-            game.id,
-            TurnCreate(
-                owner=new_turn_owner,
-                state=0,
-                played_card=None,
-                response_card=None,
-                destination_player="",
-                destination_player_exchange=ex_player,
-            ),
-        )
+        next_player = alive_players[(index_player - n) % len(alive_players)]
+    for p in game.players:
+        if p.table_position == next_player:
+            return p
