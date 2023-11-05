@@ -178,8 +178,9 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
     )
 
 
-async def send_ate_to_player(game_id: int, player: PlayerBase,
-                             dest_player: PlayerBase, hand: [CardBase]):
+async def send_ate_to_player(
+    game_id: int, player: PlayerBase, dest_player: PlayerBase, hand: [CardBase]
+):
     data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
     await sio.emit(
         "ate",
@@ -187,4 +188,5 @@ async def send_ate_to_player(game_id: int, player: PlayerBase,
             "message": f"Esta es la carta que {player.name} quiso intercambiar",
             "cards": data_to_send,
         },
-        room="p" + str(dest_player.id))
+        room="p" + str(dest_player.id),
+    )

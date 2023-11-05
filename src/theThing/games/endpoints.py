@@ -588,11 +588,9 @@ async def response_exchange(response_ex_data: dict):
             )
             new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
+            # the turn update is performed inside the defense function
         except Exception as e:
             raise e
-
-    # Update turn status
-
 
     # Send via socket the updated player and game status
     updated_game = get_game(game_id)
