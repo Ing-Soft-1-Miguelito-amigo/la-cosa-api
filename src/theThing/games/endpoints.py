@@ -6,7 +6,7 @@ from ..players.crud import create_player, get_player, delete_player
 from ..turn.crud import create_turn, update_turn
 from ..cards.schemas import CardBase, CardUpdate
 from ..turn.schemas import TurnCreate
-from ..cards.effect_applications import effect_applications
+from ..cards.effect_applications import effect_applications, exchange_defense
 from ..cards.crud import (
     get_card_from_deck,
     give_card_to_player,
@@ -575,12 +575,24 @@ async def response_exchange(response_ex_data: dict):
         await send_exchange_event_to_players(
             game_id, exchanging_offerer.name, defending_player.name
         )
+        update_turn(game_id, TurnCreate(state=5))
     elif defense_card_id and (not exchange_card_id):
         # TODO: Create dict of functions to implement defense effect
-        pass
+        try:
+            defense_card = get_card(defense_card_id, game_id)
+            await exchange_defense[defense_card.code](
+                game, exchanging_offerer, defending_player, defense_card
+            )
+            remove_card_from_player(
+                defense_card_id, defending_player_id, game_id
+            )
+            new_card = get_card_from_deck(game_id)
+            give_card_to_player(new_card.id, defending_player_id, game_id)
+        except Exception as e:
+            raise e
 
     # Update turn status
-    update_turn(game_id, TurnCreate(state=5))
+
 
     # Send via socket the updated player and game status
     updated_game = get_game(game_id)

@@ -4,6 +4,7 @@ from src.theThing.games.schemas import GameInDB, GameUpdate, GameOut
 from src.theThing.cards.crud import (
     remove_card_from_player,
     update_card,
+    get_card
 )
 from src.theThing.cards.schemas import CardBase, CardUpdate
 from src.theThing.players.crud import get_player, update_player
@@ -226,5 +227,84 @@ effect_applications = {
     "ana": apply_ana,
     "sos": apply_sos,
     "whk": apply_whk,
+    "default": just_discard,
+}
+
+
+async def apply_ate(game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    card_to_send = player.card_to_exchange
+    update_player(
+        PlayerUpdate(card_to_exchange=None),
+        player.id,
+        game.id)
+
+    update_turn(game.id, TurnCreate(state=5))
+    await sh.send_ate_to_player(game.id, player,destination_player, card_to_send)
+    # TODO: SEND DEFENSE EVENT TO CLIENT
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
+async def apply_ngs(game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    update_player(
+        PlayerUpdate(card_to_exchange=None),
+        player.id,
+        game.id)
+
+    update_turn(game.id, TurnCreate(state=5))
+    # TODO: SEND DEFENSE EVENT TO CLIENT
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
+async def apply_fal(game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    update_player(
+        PlayerUpdate(card_to_exchange=None),
+        player.id,
+        game.id)
+
+    game = get_game(game.id)
+    new_dest = get_player_in_next_n_places(game, destination_player.table_position, 1)
+    update_turn(game.id, TurnCreate(state=4,
+                                    destination_player_exchange=new_dest.name))
+    # TODO: SEND DEFENSE EVENT TO CLIENT
+
+exchange_defense = {
+    "ate": apply_ate,
+    "ngs": apply_ngs,
+    "fal": apply_fal,
     "default": just_discard,
 }

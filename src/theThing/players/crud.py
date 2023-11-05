@@ -82,6 +82,7 @@ def update_player(player: PlayerUpdate, player_id: int, game_id: int):
             player_to_update.card_to_exchange = player.card_to_exchange.id
         else:
             player_to_update.set(**player.model_dump(exclude_unset=True))
+            player_to_update.card_to_exchange = None
 
         player_to_update.flush()
         if player_to_update.card_to_exchange is not None:
