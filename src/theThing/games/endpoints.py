@@ -1,15 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
-from src.theThing.games.socket_handler import (
-    send_player_status_to_player,
-    send_game_status_to_players,
-    send_game_and_player_status_to_players,
-    send_discard_event_to_players,
-    send_action_event_to_players,
-    send_defense_event_to_players,
-    send_finished_game_event_to_players,
-)
+from src.theThing.games.socket_handler import *
 from .crud import create_game, create_game_deck, get_all_games, save_log, get_logs
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import *
@@ -229,6 +221,10 @@ async def steal_card(steal_data: dict):
 
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
+
+    if updated_player.quarantine > 0:
+        message = f"f{updated_player.name} está en cuarentena y jugó la carta {card.name}"
+        await send_quarantine_event_to_players(game_id, message)
 
     return {"message": "Carta robada con éxito"}
 

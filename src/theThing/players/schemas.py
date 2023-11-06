@@ -17,7 +17,7 @@ class PlayerBase(PlayerCreate):
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    quarantine: Optional[int] = None
     owner: Optional[bool] = None
     hand: List[CardBase] = None
 
@@ -27,7 +27,7 @@ class PlayerForGame(BaseModel):
     name: str
     table_position: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    quarantine: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +37,6 @@ class PlayerUpdate(BaseModel):
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    quarantine: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

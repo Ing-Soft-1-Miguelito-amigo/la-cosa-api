@@ -107,6 +107,16 @@ async def send_defense_event_to_players(
     )
 
 
+async def send_quarantine_event_to_players(
+        game_id: int, message: str
+):
+    await sio.emit(
+        "cuarentena",
+        data={"message": message},
+        room="g" + str(game_id)
+    )
+
+
 async def send_analysis_to_player(
     player_id: int, hand: [CardBase], attacked_player_name: str
 ):
