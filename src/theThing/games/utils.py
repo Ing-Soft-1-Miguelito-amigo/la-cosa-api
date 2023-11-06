@@ -571,3 +571,20 @@ def calculate_winners_if_victory_declared(game_id, player_id):
         result = {"message": "Ganan los humanos", "winners": alive_humans}
 
     return result
+
+
+def update_quarantine_status(game):
+    """
+
+    """
+    turn_owner_position = game.turn.owner
+
+    for player in game.players:
+        if player.table_position == turn_owner_position:
+            player_to_update = player
+
+    if player_to_update.quarantine > 0:
+        player = get_player(player_to_update.id, game.id)
+        new_quarantine = player.quarantine - 1
+
+    update_player(PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id)

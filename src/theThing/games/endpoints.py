@@ -653,7 +653,12 @@ async def finish_turn(finish_data: dict):
 
     game = return_data["game"]
 
+    # update quarantine status
+    update_quarantine_status(game)
+
+    # assign new turn owner
     assign_turn_owner(game)
+
     # send new status via socket
     updated_game = get_game(game_id)
 
