@@ -23,6 +23,4 @@ class MessageOut(MessageCreate):
     @classmethod
     def model_validate(cls, message: any) -> any:
         formatted_date = message.date.strftime("%Y-%m-%d %H:%M:%S")
-        return cls(
-            content=message.content, sender=message.sender, date=formatted_date
-        )
+        return cls(content=message.content, sender=message.sender, date=formatted_date)

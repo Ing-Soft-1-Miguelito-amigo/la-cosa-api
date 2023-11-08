@@ -111,7 +111,6 @@ def test_get_all_games_in_db(test_db):
             "turn": None,
             "players": [],
             "deck": [],
-            "chat": [],
         },
         {
             "id": game2.id,
@@ -124,7 +123,6 @@ def test_get_all_games_in_db(test_db):
             "turn": None,
             "players": [],
             "deck": [],
-            "chat": [],
         },
     ]
 

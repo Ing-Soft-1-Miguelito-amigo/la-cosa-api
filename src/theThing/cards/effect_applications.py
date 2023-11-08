@@ -38,9 +38,7 @@ async def apply_flamethrower(
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
     updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,
@@ -95,9 +93,7 @@ async def apply_cdl(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -131,9 +127,7 @@ async def apply_mvc(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -216,9 +210,7 @@ async def just_discard(
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
 
 effect_applications = {
