@@ -12,7 +12,9 @@ from src.main import app
 @db_session
 def test_create_message(test_db):
     # first create a game
-    game_data = game_schemas.GameCreate(name="Test Game", min_players=4, max_players=6)
+    game_data = game_schemas.GameCreate(
+        name="Test Game", min_players=4, max_players=6
+    )
     created_game = game_crud.create_game(game_data)
 
     # then create a message

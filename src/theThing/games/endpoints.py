@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
+from pydantic import BaseModel
 from src.theThing.games.socket_handler import (
     send_player_status_to_player,
     send_game_status_to_players,
@@ -7,11 +8,17 @@ from src.theThing.games.socket_handler import (
     send_discard_event_to_players,
     send_action_event_to_players,
     send_defense_event_to_players,
-    send_new_message_to_players,
+    send_finished_game_event_to_players, send_exchange_event_to_players,
 )
-from src.theThing.messages.schemas import MessageCreate, MessageOut
-from src.theThing.messages.crud import create_message, get_chat
-
+from .crud import create_game, create_game_deck, get_all_games, save_log, get_logs
+from .schemas import GameCreate, GameUpdate, GamePlayerAmount
+from .utils import *
+from ..cards.crud import *
+from ..cards.effect_applications import effect_applications, exchange_defense
+from ..players.crud import create_player, get_player, delete_player
+from ..players.schemas import PlayerCreate
+from ..turn.crud import create_turn, update_turn
+from ..turn.schemas import TurnCreate
 # Create an APIRouter instance for grouping related endpoints
 router = APIRouter()
 

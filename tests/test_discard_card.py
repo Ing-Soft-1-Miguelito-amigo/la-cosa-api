@@ -115,7 +115,9 @@ def test_discard_2_times(test_db):
     discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "No es posible descartar en este momento"}
+    assert response.json() == {
+        "detail": "No es posible descartar en este momento"
+    }
 
 
 def test_discard_not_existent_card(test_db):

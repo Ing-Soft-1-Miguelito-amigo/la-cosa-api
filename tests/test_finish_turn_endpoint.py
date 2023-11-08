@@ -95,7 +95,9 @@ def setup_module():
     )
 
     extra_card = card_crud.create_card(extra_card_data, created_game.id)
-    card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
+    card_crud.give_card_to_player(
+        extra_card.id, created_player.id, created_game.id
+    )
 
     player_crud.update_player(
         player_schemas.PlayerUpdate(role=3), created_player.id, created_game.id
@@ -103,7 +105,9 @@ def setup_module():
     # set all other players to role =1
     for i in range(1, 5):
         player_crud.update_player(
-            player_schemas.PlayerUpdate(role=1), players_in_game[i].id, created_game.id
+            player_schemas.PlayerUpdate(role=1),
+            players_in_game[i].id,
+            created_game.id,
         )
     # finish setup
     yield
@@ -180,7 +184,9 @@ def test_finish_turn_1_end_case(test_db):
 def test_finish_turn_2_end_case(test_db):
     game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
     for i in range(2, 6):
-        player_crud.update_player(player_schemas.PlayerUpdate(role=2, alive=True), i, 1)
+        player_crud.update_player(
+            player_schemas.PlayerUpdate(role=2, alive=True), i, 1
+        )
 
     game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
 
