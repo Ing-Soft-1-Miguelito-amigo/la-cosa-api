@@ -153,7 +153,7 @@ def get_all_games() -> list[schemas.GameOut]:
     in a list of GameOut schemas
     """
     with db_session:
-        games = models.Game.select(state= 0)
+        games = models.Game.select(state=0)
         result = [schemas.GameOut.model_validate(game) for game in games]
     return result
 

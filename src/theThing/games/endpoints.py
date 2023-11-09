@@ -235,6 +235,12 @@ async def steal_card(steal_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
+    message = f"{updated_player.name} robó una carta"
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+    await send_action_event_to_players(game_id, message)
     return {"message": "Carta robada con éxito"}
 
 
@@ -381,7 +387,7 @@ async def discard_card(discard_data: dict):
     return {"message": "Carta descartada con éxito"}
 
 
-@router.put("/game/response", status_code=200)
+@router.put("/game/response-play", status_code=200)
 async def respond_to_action_card(response_data: dict):
     """
     Respond to an action card. It has to be requested just after a call to
@@ -521,6 +527,14 @@ async def exchange_cards(exchange_data: dict):
     await send_game_status_to_players(game_id, updated_game)
     await send_player_status_to_player(player_id, updated_player)
 
+    message = (
+        f"{updated_player.name} le ofreció un intercambio a {updated_game.turn.destination_player_exchange}, esperando su respuesta"
+    )
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+    await send_action_event_to_players(game_id, message)
     return {"message": "Ofrecimiento de intercambio realizado con éxito"}
 
 
@@ -586,6 +600,9 @@ async def response_exchange(response_ex_data: dict):
             new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
             # the turn update is performed inside the defense function
+            message = f"{defending_player.name} se defendió con {defense_card.name} del intercambio con {exchanging_offerer.name}"
+            save_log(game_id, message)
+            await send_defense_event_to_players(game_id, message)
         except Exception as e:
             raise e
     else:
@@ -800,4 +817,11 @@ async def finish_turn(finish_data: dict):
             "message": "Partida finalizada con éxito",
             "winners": return_data["winners"],
         }
+
+    message = f"Turno finalizado con éxito"
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+    await send_defense_event_to_players(game_id, message)
     return response

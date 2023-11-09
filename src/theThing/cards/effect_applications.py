@@ -284,7 +284,7 @@ async def apply_fal(
         CardUpdate(id=card.id, state=card.state), game.id
     )
 
-    update_player(PlayerUpdate(card_to_exchange=None), player.id, game.id)
+    update_player(PlayerUpdate(card_to_exchange=None), destination_player.id, game.id)
 
     game = get_game(game.id)
     new_dest = get_player_in_next_n_places(
