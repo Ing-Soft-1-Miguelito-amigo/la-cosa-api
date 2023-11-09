@@ -33,7 +33,7 @@ IMPORTANT: The parameters must be passed in the following order and types:
 
 
 # Functions implementation
-async def apply_flamethrower(
+async def apply_lla(
     game: GameInDB,
     player: PlayerBase,
     destination_player: PlayerBase,
@@ -257,7 +257,7 @@ async def just_discard(
 
 
 effect_applications = {
-    "lla": apply_flamethrower,
+    "lla": apply_lla,
     "vte": apply_vte,
     "cdl": apply_cdl,
     "mvc": apply_mvc,
