@@ -127,10 +127,13 @@ async def apply_cdl(
         destination_player.id,
         game.id,
     )
+
+    new_exchange_destination = get_player_in_next_n_places(game, updated_player.table_position, 1)
     new_turn = TurnCreate(
         owner=updated_player.table_position,
         played_card=card.id,
         destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
@@ -163,11 +166,12 @@ async def apply_mvc(
         destination_player.id,
         game.id,
     )
-
+    new_exchange_destination = get_player_in_next_n_places(game, updated_player.table_position, 1)
     new_turn = TurnCreate(
         owner=updated_player.table_position,
         played_card=card.id,
         destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
