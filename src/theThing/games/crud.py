@@ -147,14 +147,14 @@ def get_full_game(game_id: int):
     return response
 
 
-def get_all_games() -> list[schemas.GameOut]:
+def get_all_games() -> list[schemas.GamePlayerAmount]:
     """
     This function returns all the games in the database
     in a list of GameOut schemas
     """
     with db_session:
         games = models.Game.select()
-        result = [schemas.GameOut.model_validate(game) for game in games]
+        result = [schemas.GameOut.model_validate(game.to_dict(exclude="turn")) for game in games]
     return result
 
 
@@ -167,16 +167,6 @@ def delete_game(game_id: int):
         game = models.Game[game_id]
         game.delete()
     return {"message": f"Partida {game_id} eliminada con éxito"}
-
-
-def get_all_games_in_db():
-    """
-    This function gets all games in the database with all their data
-    """
-    with db_session:
-        games = models.Game.select()
-        result = [schemas.GameInDB.model_validate(game) for game in games]
-    return result
 
 
 def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
