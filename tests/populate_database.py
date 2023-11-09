@@ -12,7 +12,9 @@ def load_data_for_test():
     with db_session:
         for name, min_players, max_players, password in games:
             if not password:
-                Game(name=name, min_players=min_players, max_players=max_players)
+                Game(
+                    name=name, min_players=min_players, max_players=max_players
+                )
             else:
                 Game(
                     name=name,

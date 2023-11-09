@@ -4,13 +4,12 @@ from .crud import get_full_game, update_game, get_game
 from .schemas import GameOut, GameInDB, GameUpdate
 from ..cards.crud import (
     get_card,
-    remove_card_from_player,
-    update_card,
     give_card_to_player,
+    remove_card_from_player
 )
 from ..turn.crud import update_turn
 from ..turn.schemas import TurnCreate
-from ..cards.schemas import CardBase, CardUpdate
+import random
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
 
@@ -144,7 +143,11 @@ def verify_finished_game(game: GameOut):
             )
 
     amount_infected_players = len(
-        [player for player in game.players if (player.role == 2 and player.alive)]
+        [
+            player
+            for player in game.players
+            if (player.role == 2 and player.alive)
+        ]
     )
     if amount_infected_players == len(game.players) - 1:
         # if "La cosa" infected all players, the game ends and "La cosa" wins
@@ -171,7 +174,8 @@ def verify_finished_game(game: GameOut):
             reason = "La cosa fue el último jugador vivo y ganó la partida"
         else:
             reason = (
-                alive_players[0].name + " fue el último jugador vivo y ganó la partida"
+                alive_players[0].name
+                + " fue el último jugador vivo y ganó la partida"
             )
     return_data = {"game": game, "winners": winners, "reason": reason}
     return return_data
@@ -184,9 +188,13 @@ def verify_data_play_card(
     try:
         game = get_full_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
 
     # Verify that the player exists, and it is the turn owner and it is alive
     try:
@@ -218,7 +226,9 @@ def verify_data_play_card(
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
     if card.kind not in [0, 2]:
-        raise HTTPException(status_code=422, detail="No puedes jugar esta carta")
+        raise HTTPException(
+            status_code=422, detail="No puedes jugar esta carta"
+        )
     if card.playable is False:
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
@@ -244,17 +254,23 @@ def verify_data_play_card(
             detail="No se puede aplicar el efecto a sí mismo",
         )
     if not destination_player.alive:
-        raise HTTPException(status_code=422, detail="El jugador objetivo no está vivo")
+        raise HTTPException(
+            status_code=422, detail="El jugador objetivo no está vivo"
+        )
     alive_players = [p.table_position for p in game.players if p.alive]
     alive_players.sort()
     index_player = alive_players.index(player.table_position)
-    index_destination_player = alive_players.index(destination_player.table_position)
-    if card.code not in ["mvc", "whk", "vte"]:
+    index_destination_player = alive_players.index(
+        destination_player.table_position
+    )
+    if card.code not in ["mvc", "whk", "vte", "sed"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
             alive_players
-        ) or index_destination_player == (index_player - 1) % len(alive_players):
+        ) or index_destination_player == (index_player - 1) % len(
+            alive_players
+        ):
             pass
         else:
             raise HTTPException(
@@ -269,9 +285,13 @@ def verify_data_steal_card(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
     if game.turn.state != 0:
         raise HTTPException(
             status_code=422,
@@ -286,27 +306,27 @@ def verify_data_steal_card(game_id: int, player_id: int):
                 status_code=422, detail="La mano del jugador está llena"
             )
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=422, detail=str("No se encontró el jugador"))
+        raise HTTPException(
+            status_code=422, detail=str("No se encontró el jugador")
+        )
 
     # Verify that it actually is the player turn
     if game.turn.owner != player.table_position:
         raise HTTPException(status_code=422, detail="No es tu turno")
 
 
-def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
+def verify_data_generic(game_id: int, player_id: int, card_id: int):
     # Verify that the game exists and it is started
     try:
         game = get_full_game(game_id)
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
-    if game.turn.state != 1:
         raise HTTPException(
-            status_code=422, detail="No es posible descartar en este momento"
+            status_code=422, detail="La partida aún no ha comenzado"
         )
 
-    # Verify that the player exists, and it is the turn owner, is alive and has already stealed a card.
+    # Verify that the player exists, and it is the turn owner and is alive.
     try:
         player = get_player(player_id, game_id)
     except ExceptionObjectNotFound as e:
@@ -316,11 +336,6 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     if game.turn.owner != player.table_position or not player.alive:
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
-        )
-    if len(player.hand) <= 4:
-        raise HTTPException(
-            status_code=422,
-            detail="No es posible descartar sin robar una carta primero",
         )
 
     # Verify that the card exists and it is in the player hand
@@ -347,6 +362,37 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     return game, player, card
 
 
+def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
+    try:
+        game, player, card = verify_data_generic(game_id, player_id, card_id)
+    except HTTPException as e:
+        raise e
+
+    if game.turn.state != 1:
+        raise HTTPException(
+            status_code=422, detail="No es posible descartar en este momento"
+        )
+
+    if len(player.hand) <= 4:
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible descartar sin robar una carta primero",
+        )
+
+    infected_cards = [card for card in player.hand if card.code == "inf"]
+    if (
+        len(infected_cards) == 1
+        and infected_cards[0].id == card.id
+        and player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible descartar la última carta de infección",
+        )
+
+    return game, player, card
+
+
 def verify_data_response_basic(game_id: int, defending_player_id: int):
     # It also returns the game, the attacking player, the defending player and the action card
     # Game checks
@@ -355,7 +401,9 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
     if game.turn.state != 2:
         raise HTTPException(
             status_code=422, detail="No es posible defenderse en este momento"
@@ -371,12 +419,16 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
             status_code=404, detail="No se encontró el jugador atacante"
         )
     if not attacking_player.alive:
-        raise HTTPException(status_code=422, detail="El jugador atacante está muerto")
+        raise HTTPException(
+            status_code=422, detail="El jugador atacante está muerto"
+        )
     # Check the defending player exists and its alive
     try:
         defending_player = get_player(defending_player_id, game_id)
     except Exception as e:
-        raise HTTPException(status_code=404, detail="No se encontró el jugador destino")
+        raise HTTPException(
+            status_code=404, detail="No se encontró el jugador destino"
+        )
 
     # Check the action card state
     try:
@@ -392,6 +444,178 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         )
 
     return game, attacking_player, defending_player, action_card
+
+
+def verify_data_exchange(game_id: int, player_id: int, card_id: int):
+    try:
+        game, player, card = verify_data_generic(game_id, player_id, card_id)
+    except HTTPException as e:
+        raise e
+
+    if game.turn.state != 3:
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar en este momento"
+        )
+    # Get the destination_player
+    for p in game.players:
+        if p.name == game.turn.destination_player_exchange:
+            destination_player = p
+            break
+    # If the card is inf, check that the player is "La Cosa" or is an infected player offering the card to "La Cosa"
+    if card.code == "inf":
+        if player.role == 1:
+            raise HTTPException(
+                status_code=422,
+                detail="No es posible intercambiar esta carta",
+            )
+        else:
+            if player.role == 2 and destination_player.role != 3:
+                raise HTTPException(
+                    status_code=422,
+                    detail="No es posible intercambiar esta carta con este jugador",
+                )
+
+    # If the card is "lco" raises an exception
+    if card.code == "lco":
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar esta carta"
+        )
+
+    infected_cards = [card for card in player.hand if card.code == "inf"]
+    if (
+        len(infected_cards) == 1
+        and card.id == infected_cards[0].id
+        and player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible intercambiar la última carta de infección",
+        )
+    return game, player, card
+
+
+def verify_data_exchange_basic(game_id: int, defending_player_id: int):
+    # It also returns the game, the attacking player, the defending player and the action card
+    # Game checks
+    try:
+        game = get_full_game(game_id)
+    except ExceptionObjectNotFound as e:
+        raise HTTPException(status_code=404, detail="No se encontró la partida")
+    if game.state != 1:
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
+    if game.turn.state != 4:
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible defenderse de un intercambio en este momento",
+        )
+
+    # Check if the exchanging offerer exists and its alive
+    for player in game.players:
+        if player.table_position == game.turn.owner:
+            exchanging_offerer = player
+            break
+
+    if exchanging_offerer is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró el jugador que ofertó el intercambio",
+        )
+    if not exchanging_offerer.alive:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador que ofreció el intercambio está muerto",
+        )
+    # Check the defending player exists and its alive
+    try:
+        defending_player = get_player(defending_player_id, game_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró el jugador destino del intercambio",
+        )
+
+    if defending_player.name != game.turn.destination_player_exchange:
+        raise HTTPException(
+            status_code=422,
+            detail="El jugador destino del intercambio no es el correcto",
+        )
+
+    return game, exchanging_offerer, defending_player
+
+
+def exchange_cards_effect(
+    game_id: int,
+    exchanging_offerer: PlayerBase,
+    defending_player: PlayerBase,
+    exchange_card_id: int,
+):
+    # swap cards in the player's hand from the defending player and the offerer
+    # Get the card to exchange from the defending player
+    try:
+        exchange_card = get_card(exchange_card_id, game_id)
+        offered_card = get_card(exchanging_offerer.card_to_exchange.id, game_id)
+    except Exception as e:
+        raise e
+    if (
+        exchange_card not in defending_player.hand
+        or offered_card not in exchanging_offerer.hand
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Las cartas de los intercambios no están en la mano de los jugadores",
+        )
+    # If the card is inf, check that the player is "La Cosa" or is an infected player offering the card to "La Cosa"
+    if exchange_card.code == "inf":
+        if defending_player.role == 1:
+            raise HTTPException(
+                status_code=422,
+                detail="No es posible intercambiar esta carta",
+            )
+        else:
+            if defending_player.role == 2 and exchanging_offerer.role != 3:
+                raise HTTPException(
+                    status_code=422,
+                    detail="No es posible intercambiar esta carta con este jugador",
+                )
+
+    infected_cards = [
+        card for card in defending_player.hand if card.code == "inf"
+    ]
+    if (
+        len(infected_cards) == 1
+        and exchange_card.id == infected_cards[0].id
+        and defending_player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible intercambiar la última carta de infección",
+        )
+    # If the card is "lco" raises an exception
+    if exchange_card.code == "lco":
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar esta carta"
+        )
+
+    # Swap the cards
+    defending_player = remove_card_from_player(
+        exchange_card.id, defending_player.id, game_id
+    )
+    exchanging_offerer = remove_card_from_player(
+        offered_card.id, exchanging_offerer.id, game_id
+    )
+    # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+    if offered_card.code == "inf" and exchanging_offerer.role == 3:
+        update_player(PlayerUpdate(role=2), defending_player.id, game_id)
+
+    # Clean the field card_to_exchange from the offerer player
+    exchanging_offerer = update_player(
+        PlayerUpdate(card_to_exchange=None), exchanging_offerer.id, game_id
+    )
+    # Give the cards to the players
+    give_card_to_player(exchange_card.id, exchanging_offerer.id, game_id)
+    give_card_to_player(offered_card.id, defending_player.id, game_id)
 
 
 def verify_data_response_card(
@@ -448,6 +672,7 @@ def assign_hands(game: GameInDB):
     set_aside_amount = 4 * amount_of_players - 1
     set_aside_cards = remaining_cards[:set_aside_amount]
     set_aside_cards.append(the_thing_card)
+    random.shuffle(set_aside_cards)
 
     # assign the cards to the players
     for player in game.players:
@@ -473,13 +698,19 @@ def verify_data_finish_turn(game_id: int):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
+        raise HTTPException(
+            status_code=404, detail=str("No se encontró la partida")
+        )
 
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
+        raise HTTPException(
+            status_code=422, detail="La partida aún no ha comenzado"
+        )
 
     if game.turn.state != 5:
-        raise HTTPException(status_code=422, detail="El turno aún no ha terminado")
+        raise HTTPException(
+            status_code=422, detail="El turno aún no ha terminado"
+        )
 
     return game
 
@@ -494,10 +725,15 @@ def assign_turn_owner(game: GameOut):
             played_card_code == "cdl" or played_card_code == "mvc"
         ) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
-            # owner is in the same position of the last turn played.
+            # owner is the position of the destination player
+            for player in game.players:
+                if player.name == game.turn.destination_player:
+                    new_owner = player.table_position
+                    break
             update_turn(
                 game.id,
                 TurnCreate(
+                    owner=new_owner,
                     state=0,
                     played_card=None,
                     response_card=None,
@@ -507,37 +743,49 @@ def assign_turn_owner(game: GameOut):
             return
 
     # Assign new turn owner, must be an alive player
-    # if play direction is clockwise, turn owner is the next player. If not, the previous player
-    alive_players = [player.table_position for player in game.players if player.alive]
+    # if play direction is clockwise, turn owner is the next player.
+    # If not, the previous player
+    game = get_game(game.id)
+    new_turn_owner = get_player_in_next_n_places(game, game.turn.owner, 1)
+    new_exchange_player = get_player_in_next_n_places(game, game.turn.owner, 2)
+    update_turn(
+        game.id,
+        TurnCreate(
+            owner=new_turn_owner.table_position,
+            state=0,
+            played_card=None,
+            response_card=None,
+            destination_player="",
+            destination_player_exchange=new_exchange_player.name,
+        ),
+    )
+
+
+def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
+    """
+    Get the player that is n places after the player in the table.
+    According to the play direction
+
+    Parameters:
+    - game (GameOut): The game data.
+    - player (PlayerBase): The player to start counting from.
+    - n (int): The number of places to count.
+
+    Returns:
+    - PlayerBase: The player that is n places after the player in the table.
+    """
+    alive_players = [
+        player.table_position for player in game.players if player.alive
+    ]
     alive_players.sort()
+    index_player = alive_players.index(owner)
     if game.play_direction:
-        new_turn_owner = alive_players[
-            (alive_players.index(game.turn.owner) + 1) % len(alive_players)
-        ]
-        update_turn(
-            game.id,
-            TurnCreate(
-                owner=new_turn_owner,
-                state=0,
-                played_card=None,
-                response_card=None,
-                destination_player="",
-            ),
-        )
+        next_player = alive_players[(index_player + n) % len(alive_players)]
     else:
-        new_turn_owner = alive_players[
-            (alive_players.index(game.turn.owner) - 1) % len(alive_players)
-        ]
-        update_turn(
-            game.id,
-            TurnCreate(
-                owner=new_turn_owner,
-                state=0,
-                played_card=None,
-                response_card=None,
-                destination_player="",
-            ),
-        )
+        next_player = alive_players[(index_player - n) % len(alive_players)]
+    for p in game.players:
+        if p.table_position == next_player:
+            return p
 
 
 def calculate_winners_if_victory_declared(game_id, player_id):
@@ -548,7 +796,9 @@ def calculate_winners_if_victory_declared(game_id, player_id):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 1:
-        raise HTTPException(status_code=422, detail="La partida no está en juego")
+        raise HTTPException(
+            status_code=422, detail="La partida no está en juego"
+        )
 
     if player.role != 3:
         raise HTTPException(status_code=422, detail="El jugador no es La Cosa")
@@ -566,8 +816,27 @@ def calculate_winners_if_victory_declared(game_id, player_id):
                 alive_infected.append(player.name)
 
     if win:
-        result = {"message": "Gana La Cosa e infectados", "winners": alive_infected}
+        result = {
+            "message": "Gana La Cosa e infectados",
+            "winners": alive_infected,
+        }
     else:
         result = {"message": "Ganan los humanos", "winners": alive_humans}
 
     return result
+
+
+def update_quarantine_status(game):
+    """
+
+    """
+    turn_owner_position = game.turn.owner
+
+    for player in game.players:
+        if player.table_position == turn_owner_position:
+            player_to_update = player
+
+    if player_to_update.quarantine > 0:
+        player = get_player(player_to_update.id, game.id)
+        new_quarantine = player.quarantine - 1
+        update_player(PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id)

@@ -13,6 +13,7 @@ class Turn(db.Entity):
     played_card = Optional(int)
     destination_player = Optional(str)
     response_card = Optional(int)
+    destination_player_exchange = Optional(str)
     state = Optional(int)
     # 0 = stealing card, 1 = deciding (play/discard), 2 = waiting response,
     # 3 = exchanging cards, 4 = finished exchange, 5 = waiting to finish

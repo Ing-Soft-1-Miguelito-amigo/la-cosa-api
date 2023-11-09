@@ -10,7 +10,9 @@ client = TestClient(app)
 
 
 def test_logs_crud(test_db):
-    game = create_game(GameCreate(name="Test Game", min_players=4, max_players=6))
+    game = create_game(
+        GameCreate(name="Test Game", min_players=4, max_players=6)
+    )
     save_log(game_id=game.id, log="Test log")
     save_log(game_id=game.id, log="Test log 2")
     logs = get_logs(game_id=game.id)
@@ -47,12 +49,18 @@ def test_get_logs_endpoint(test_db):
     ).json()["player_id"]
 
     # start the game
-    client.post("/game/start", json={"game_id": game_id, "player_name": "Test Host"})
-    client.put("/game/steal", json={"player_id": player1_id, "game_id": game_id})
+    client.post(
+        "/game/start", json={"game_id": game_id, "player_name": "Test Host"}
+    )
+    client.put(
+        "/game/steal", json={"player_id": player1_id, "game_id": game_id}
+    )
 
     player1_status = get_player(player1_id, game_id)
     # get a card that is not kind 5
-    card = next(card for card in player1_status.hand if card.kind not in [3, 4, 5])
+    card = next(
+        card for card in player1_status.hand if card.kind not in [3, 4, 5]
+    )
     print(card)
     # player 1 plays a card to player 2
     response = client.put(

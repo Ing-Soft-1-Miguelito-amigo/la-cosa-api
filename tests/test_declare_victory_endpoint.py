@@ -59,8 +59,7 @@ def test_declare_victory_not_ingame(test_db):
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 1,
-              "player_id": 1},
+        json={"game_id": 1, "player_id": 1},
     )
 
     assert response.status_code == 422
@@ -78,8 +77,7 @@ def test_declare_victory_not_lacosa():
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 1,
-              "player_id": 2},
+        json={"game_id": 1, "player_id": 2},
     )
 
     assert response.status_code == 422
@@ -92,8 +90,7 @@ def test_declare_victory_no_game():
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 2,
-              "player_id": 1},
+        json={"game_id": 2, "player_id": 1},
     )
 
     assert response.status_code == 404
@@ -106,8 +103,7 @@ def test_declare_victory_no_player():
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 1,
-              "player_id": 6},
+        json={"game_id": 1, "player_id": 6},
     )
 
     assert response.status_code == 404
@@ -120,8 +116,7 @@ def test_declare_victory_humans_win():
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 1,
-              "player_id": 1},
+        json={"game_id": 1, "player_id": 1},
     )
 
     assert response.status_code == 200
@@ -139,12 +134,8 @@ def test_declare_victory_infected_win():
     )
 
     # make players infected
-    player_crud.update_player(
-        player_schemas.PlayerUpdate(role=2), 2, 1
-    )
-    player_crud.update_player(
-        player_schemas.PlayerUpdate(role=2), 3, 1
-    )
+    player_crud.update_player(player_schemas.PlayerUpdate(role=2), 2, 1)
+    player_crud.update_player(player_schemas.PlayerUpdate(role=2), 3, 1)
     player_crud.update_player(
         player_schemas.PlayerUpdate(role=1, alive=False), 4, 1
     )
@@ -152,8 +143,7 @@ def test_declare_victory_infected_win():
     # then declare victory
     response = test_app.put(
         "/game/declare-victory",
-        json={"game_id": 1,
-              "player_id": 1},
+        json={"game_id": 1, "player_id": 1},
     )
 
     assert response.status_code == 200

@@ -9,7 +9,8 @@ class TurnCreate(BaseModel):
     played_card: Optional[int] = None  # card_id
     destination_player: Optional[str] = None
     response_card: Optional[int] = None  # card_id
-    state: int
+    destination_player_exchange: Optional[str] = None
+    state: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -303,43 +303,6 @@ dict_of_cards = {
         "number_in_card": 9,
         "amount_in_deck": 1,
     },
-    # Resolute cards
-    "det4": {
-        "code": "det",
-        "name": "Determinación",
-        "kind": 0,
-        "description": "Roba 3 cartas 'Aléjate!', elige 1 para quedártela y descarta las demás. A continuación, "
-        "juega o descarta 1 carta.",
-        "number_in_card": 4,
-        "amount_in_deck": 2,
-    },
-    "det6": {
-        "code": "det",
-        "name": "Determinación",
-        "kind": 0,
-        "description": "Roba 3 cartas 'Aléjate!', elige 1 para quedártela y descarta las demás. A continuación, "
-        "juega o descarta 1 carta.",
-        "number_in_card": 6,
-        "amount_in_deck": 1,
-    },
-    "det9": {
-        "code": "det",
-        "name": "Determinación",
-        "kind": 0,
-        "description": "Roba 3 cartas 'Aléjate!', elige 1 para quedártela y descarta las demás. A continuación, "
-        "juega o descarta 1 carta.",
-        "number_in_card": 9,
-        "amount_in_deck": 1,
-    },
-    "det10": {
-        "code": "det",
-        "name": "Determinación",
-        "kind": 0,
-        "description": "Roba 3 cartas 'Aléjate!', elige 1 para quedártela y descarta las demás. A continuación, "
-        "juega o descarta 1 carta.",
-        "number_in_card": 10,
-        "amount_in_deck": 1,
-    },
     # Seduction cards
     "sed4": {
         "code": "sed",

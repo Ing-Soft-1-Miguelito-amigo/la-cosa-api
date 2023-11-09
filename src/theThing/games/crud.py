@@ -1,7 +1,10 @@
+from httpx import get
 from . import schemas, models
 from pony.orm import db_session
 from src.theThing.players.models import Player
-from src.theThing.cards.schemas import CardCreate
+from src.theThing.players.crud import get_player
+from src.theThing.cards.schemas import CardCreate, CardBase
+from src.theThing.cards.models import Card
 from src.theThing.cards.crud import create_card
 from src.theThing.cards.static_cards import dict_of_cards
 from src.theThing.messages.schemas import MessageOut
@@ -56,12 +59,17 @@ def get_game(game_id: int):
                 response_card = models.Card[game.turn.response_card]
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
+            if game.turn.destination_player_exchange is not None:
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
                 played_card=played_card,
                 destination_player=destination_player,
                 response_card=response_card,
+                destination_player_exchange=destination_player_exchange,
                 state=game.turn.state,
             )
             ordered_chat = game.chat.order_by(lambda x: x.date)
@@ -74,7 +82,10 @@ def get_game(game_id: int):
                 play_direction=game.play_direction,
                 turn=return_turn,
                 players=game.players,
-                chat=[MessageOut.model_validate(message) for message in ordered_chat],
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
 
             response = return_game
@@ -101,15 +112,26 @@ def get_full_game(game_id: int):
                 response_card = models.Card[game.turn.response_card]
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
+            if game.turn.destination_player_exchange is not None:
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
                 played_card=played_card,
                 destination_player=destination_player,
                 response_card=response_card,
+                destination_player_exchange=destination_player_exchange,
                 state=game.turn.state,
             )
             ordered_chat = game.chat.order_by(lambda x: x.date)
+
+            # Convert game.players to a list o PlayerBase schemas
+            list_playerbase = []
+            for player in game.players:
+                list_playerbase.append(get_player(player.id, game_id))
+
             return_game = schemas.GameInDB(
                 id=game.id,
                 name=game.name,
@@ -118,9 +140,12 @@ def get_full_game(game_id: int):
                 state=game.state,
                 play_direction=game.play_direction,
                 turn=return_turn,
-                players=game.players,
+                players=list_playerbase,
                 deck=game.deck,
-                chat=[MessageOut.model_validate(message) for message in ordered_chat],
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
             return return_game
         else:
@@ -134,7 +159,7 @@ def get_all_games() -> list[schemas.GameOut]:
     in a list of GameOut schemas
     """
     with db_session:
-        games = models.Game.select()
+        games = models.Game.select(state=0)
         result = [schemas.GameOut.model_validate(game) for game in games]
     return result
 
@@ -148,16 +173,6 @@ def delete_game(game_id: int):
         game = models.Game[game_id]
         game.delete()
     return {"message": f"Partida {game_id} eliminada con éxito"}
-
-
-def get_all_games_in_db():
-    """
-    This function gets all games in the database with all their data
-    """
-    with db_session:
-        games = models.Game.select()
-        result = [schemas.GameInDB.model_validate(game) for game in games]
-    return result
 
 
 def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
@@ -199,7 +214,10 @@ def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
                 turn=return_turn,
                 players=game_to_update.players,
                 deck=game_to_update.deck,
-                chat=[MessageOut.model_validate(message) for message in ordered_chat],
+                chat=[
+                    MessageOut.model_validate(message)
+                    for message in ordered_chat
+                ],
             )
             return return_game
         else:
