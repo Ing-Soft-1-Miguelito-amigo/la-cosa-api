@@ -263,7 +263,7 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    if card.code not in ["mvc", "whk", "vte"]:
+    if card.code not in ["mvc", "whk", "vte", "sed"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
