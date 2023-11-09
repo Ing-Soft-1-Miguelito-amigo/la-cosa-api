@@ -301,10 +301,6 @@ def verify_data_generic(game_id: int, player_id: int, card_id: int):
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
         raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
-    if game.turn.state != 1:
-        raise HTTPException(
-            status_code=422, detail="No es posible descartar en este momento"
-        )
 
     # Verify that the player exists, and it is the turn owner and is alive.
     try:
@@ -714,9 +710,15 @@ def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
     ]
     alive_players.sort()
     index_player = alive_players.index(owner)
+    print(f"alive_players: {alive_players}")
+    print(f"owner: {owner}")
+    print(f"index: {index_player}")
+    print(f"n: {n}")
+    print(f"len: {len(alive_players)}")
     if game.play_direction:
         next_player = alive_players[(index_player + n) % len(alive_players)]
     else:
+        print(f"new index: {(index_player - n) % len(alive_players)}")
         next_player = alive_players[(index_player - n) % len(alive_players)]
     for p in game.players:
         if p.table_position == next_player:
