@@ -224,6 +224,18 @@ async def apply_whk(
     return updated_game
 
 
+async def apply_cua(
+game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+
+    update_player(PlayerUpdate(quarantine=2), player.id, game.id)
+
+
 async def just_discard(
     game: GameInDB,
     player: PlayerBase,
@@ -248,6 +260,7 @@ effect_applications = {
     "ana": apply_ana,
     "sos": apply_sos,
     "whk": apply_whk,
+    "cua": apply_cua,
     "default": just_discard,
 }
 
