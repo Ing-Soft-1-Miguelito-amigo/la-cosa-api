@@ -12,7 +12,14 @@ from src.theThing.players.schemas import PlayerBase, PlayerUpdate
 from src.theThing.games import socket_handler as sh
 from src.theThing.turn.schemas import TurnCreate, TurnOut
 from src.theThing.turn.crud import create_turn, update_turn
-from src.theThing.games.utils import get_player_in_next_n_places
+from src.theThing.games.utils import (
+    get_player_in_next_n_places,
+    verify_finished_game,
+)
+from src.theThing.games.socket_handler import (
+    send_finished_game_event_to_players,
+    send_game_status_to_players,
+)
 
 """ 
 This file contains the functions to apply the effect of the cards. 
@@ -53,6 +60,18 @@ async def apply_flamethrower(
     )
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(
+        game, destination_player.table_position, 1
+    )
+    new_turn = TurnCreate(
+        destination_player_exchange=new_exchange_destination.name
+    )
+    update_turn(game.id, new_turn)
+    updated_game = get_full_game(game.id)
+    response = verify_finished_game(updated_game)
+    if response["winners"] is not None:
+        await send_game_status_to_players(response["game"].id, response["game"])
+        await send_finished_game_event_to_players(game.id, response)
     return updated_game
 
 
