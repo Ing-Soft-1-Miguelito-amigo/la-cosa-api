@@ -1,23 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
-from src.theThing.games.socket_handler import (
-    send_player_status_to_player,
-    send_game_status_to_players,
-    send_game_and_player_status_to_players,
-    send_discard_event_to_players,
-    send_action_event_to_players,
-    send_defense_event_to_players,
-    send_finished_game_event_to_players,
-    send_exchange_event_to_players,
-)
-from .crud import (
-    create_game,
-    create_game_deck,
-    get_all_games,
-    save_log,
-    get_logs,
-)
+from src.theThing.games.socket_handler import *
+from .crud import create_game, create_game_deck, get_all_games, save_log, get_logs
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import *
 from ..cards.crud import *
@@ -251,12 +236,19 @@ async def steal_card(steal_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
+    # log message
     message = f"{updated_player.name} robó una carta"
     try:
         save_log(game_id, message)
     except Exception as e:
         raise e
     await send_action_event_to_players(game_id, message)
+    
+    # Verify if the player is in quarantine
+    if updated_player.quarantine > 0:
+        message = f"f{updated_player.name} está en cuarentena y robó la carta {card.name}"
+        await send_quarantine_event_to_players(game_id, card, message)
+
     return {"message": "Carta robada con éxito"}
 
 
@@ -297,6 +289,7 @@ async def play_card(play_data: dict):
     game, turn_player, card, destination_player = verify_data_play_card(
         game_id, player_id, card_id, destination_name
     )
+
     # set the card to played
     remove_card_from_player(card_id, player_id, game_id)
 
@@ -396,7 +389,14 @@ async def discard_card(discard_data: dict):
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
-    message = f"{updated_player.name} descartó una carta"
+
+    # Verify if the player is in quarantine
+    if updated_player.quarantine > 0:
+        message = f"{updated_player.name} está en cuarentena y descartó la carta {card.name}"
+        await send_quarantine_event_to_players(game_id, card, message)
+    else:
+        message = f"{updated_player.name} descartó una carta"
+
     try:
         save_log(game_id, message)
     except Exception as e:
@@ -837,7 +837,12 @@ async def finish_turn(finish_data: dict):
 
     game = return_data["game"]
 
+    # update quarantine status
+    update_quarantine_status(game)
+
+    # assign new turn owner
     assign_turn_owner(game)
+
     # send new status via socket
     updated_game = get_game(game_id)
 
