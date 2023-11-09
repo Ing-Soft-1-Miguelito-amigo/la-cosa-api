@@ -134,7 +134,7 @@ async def send_quarantine_event_to_players(
 ):
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
-        "cuarentena",
+        "quarantine",
         data={"message": message,
               "card": card_to_send},
         room="g" + str(game_id)
@@ -164,7 +164,7 @@ async def send_suspicion_to_player(
         "sospecha",
         data={
             "log": "Esta es una carta de" + attacked_player_name,
-            "card": data_to_send,
+            "card": [data_to_send],
         },
         room="p" + str(player_id),
     )

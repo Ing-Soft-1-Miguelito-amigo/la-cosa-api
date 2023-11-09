@@ -5,6 +5,7 @@ from .schemas import GameOut, GameInDB, GameUpdate
 from ..cards.crud import (
     get_card,
     give_card_to_player,
+    remove_card_from_player
 )
 from ..turn.crud import update_turn
 from ..turn.schemas import TurnCreate

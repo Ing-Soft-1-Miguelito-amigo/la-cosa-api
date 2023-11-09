@@ -246,7 +246,7 @@ async def steal_card(steal_data: dict):
     
     # Verify if the player is in quarantine
     if updated_player.quarantine > 0:
-        message = f"f{updated_player.name} está en cuarentena y robó la carta {card.name}"
+        message = f"{updated_player.name} está en cuarentena y robó la carta {card.name}"
         await send_quarantine_event_to_players(game_id, card, message)
 
     return {"message": "Carta robada con éxito"}
@@ -295,22 +295,23 @@ async def play_card(play_data: dict):
 
     # Update the turn structure
     if card.code == "sed":
-        new_turn = TurnCreate(
+        updated_turn = TurnCreate(
             played_card=card_id,
             destination_player=destination_name,
             state=3,
-            destination_exchange_player=destination_name,
+            destination_player_exchange=destination_name,
         )
         # Send event description to all players
+        message = f"{turn_player.name} jugó {card.name} a {destination_player.name}"
         await send_action_event_to_players(
-            game_id, turn_player, destination_player, card
+            game_id, message
         )
     else:
-        new_turn = TurnCreate(
+        updated_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2
         )
 
-    update_turn(game_id, new_turn)
+    update_turn(game_id, updated_turn)
 
     player = get_player(player_id, game_id)
     await send_player_status_to_player(player_id, player)
@@ -641,6 +642,10 @@ async def response_exchange(response_ex_data: dict):
     updated_offerer = get_player(exchanging_offerer.id, game_id)
     updated_defending = get_player(defending_player.id, game_id)
 
+    # Verify if the player is in quarantine
+    if updated_offerer.quarantine > 0:
+        message = f"{updated_defending.name} está en cuarentena y quiso intercambiar la carta {updated_offerer.card_to_exchange.name}"
+        await send_quarantine_event_to_players(game_id, updated_offerer.card_to_exchange, message)
     await send_player_status_to_player(exchanging_offerer.id, updated_offerer)
     await send_player_status_to_player(defending_player.id, updated_defending)
     await send_game_status_to_players(game_id, updated_game)
