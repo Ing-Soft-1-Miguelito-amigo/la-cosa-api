@@ -373,35 +373,6 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
     return game, player, card
 
 
-def verify_data_exchange(game_id: int, player_id: int, card_id: int):
-    try:
-        game, player, card = verify_data_generic(game_id, player_id, card_id)
-    except HTTPException as e:
-        raise e
-
-    if game.turn.state != 3:
-        raise HTTPException(
-            status_code=422, detail="No es posible intercambiar en este momento"
-        )
-
-    infected_cards = [card for card in player.hand if card.code == "inf"]
-    if (
-        len(infected_cards) == 1
-        and card.id == infected_cards[0].id
-        and player.role == 2
-    ):
-        raise HTTPException(
-            status_code=422,
-            detail="No es posible intercambiar la última carta de infección",
-        )
-    # If the card is "lco" raises an exception
-    if card.code == "lco":
-        raise HTTPException(
-            status_code=422, detail="No es posible intercambiar esta carta"
-        )
-    return game, player, card
-
-
 def verify_data_response_basic(game_id: int, defending_player_id: int):
     # It also returns the game, the attacking player, the defending player and the action card
     # Game checks
@@ -447,6 +418,54 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         )
 
     return game, attacking_player, defending_player, action_card
+
+
+def verify_data_exchange(game_id: int, player_id: int, card_id: int):
+    try:
+        game, player, card = verify_data_generic(game_id, player_id, card_id)
+    except HTTPException as e:
+        raise e
+
+    if game.turn.state != 3:
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar en este momento"
+        )
+    # Get the destination_player
+    for p in game.players:
+        if p.name == game.turn.destination_player_exchange:
+            destination_player = p
+            break
+    # If the card is inf, check that the player is "La Cosa" or is an infected player offering the card to "La Cosa"
+    if card.code == "inf":
+        if player.role == 1:
+            raise HTTPException(
+                status_code=422,
+                detail="No es posible intercambiar esta carta",
+            )
+        else: 
+            if player.role == 2 and destination_player.role != 3:
+                raise HTTPException(
+                    status_code=422,
+                    detail="No es posible intercambiar esta carta con este jugador",
+                )
+
+    # If the card is "lco" raises an exception
+    if card.code == "lco":
+        raise HTTPException(
+            status_code=422, detail="No es posible intercambiar esta carta"
+        )
+
+    infected_cards = [card for card in player.hand if card.code == "inf"]
+    if (
+        len(infected_cards) == 1
+        and card.id == infected_cards[0].id
+        and player.role == 2
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="No es posible intercambiar la última carta de infección",
+        )
+    return game, player, card
 
 
 def verify_data_exchange_basic(game_id: int, defending_player_id: int):
@@ -528,8 +547,9 @@ def exchange_cards_effect(
     exchanging_offerer = remove_card_from_player(
         offered_card.id, exchanging_offerer.id, game_id
     )
-
-    # TODO: If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+    # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+    if offered_card.code == "inf" and exchanging_offerer.role == 3:
+        update_player(PlayerUpdate(role=2), defending_player.id, game_id)
 
     # Clean the field card_to_exchange from the offerer player
     exchanging_offerer = update_player(

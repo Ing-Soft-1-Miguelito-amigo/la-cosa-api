@@ -588,7 +588,11 @@ async def response_exchange(response_ex_data: dict):
             # the turn update is performed inside the defense function
         except Exception as e:
             raise e
-
+    else:
+        raise HTTPException(
+            status_code=422,
+            detail="Los parámetros de cartas deben ser excluyentes entre sí",
+        )
     # Send via socket the updated player and game status
     updated_game = get_game(game_id)
     updated_offerer = get_player(exchanging_offerer.id, game_id)
