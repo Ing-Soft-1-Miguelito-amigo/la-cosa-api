@@ -39,7 +39,9 @@ async def disconnect(sid):
 
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
-    await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
+    await sio.emit(
+        "player_status", player_data.model_dump(), room="p" + str(player_id)
+    )
 
 
 async def send_game_status_to_players(game_id: int, game_data: GameOut):
@@ -49,12 +51,16 @@ async def send_game_status_to_players(game_id: int, game_data: GameOut):
     :param game_data:
     :return:
     """
-    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
+    await sio.emit(
+        "game_status", game_data.model_dump(), room="g" + str(game_id)
+    )
 
 
 async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
-        await sio.emit("player_status", player.model_dump(), room="p" + str(player.id))
+        await sio.emit(
+            "player_status", player.model_dump(), room="p" + str(player.id)
+        )
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
@@ -70,7 +76,7 @@ async def send_finished_game_event_to_players(game_id: int, data: dict):
     message = data.get("reason")
     await sio.emit(
         "game_finished",
-        {"winners": winners, "message": message},
+        {"winners": winners, "log": message},
         room="g" + str(game_id),
     )
 
@@ -79,18 +85,20 @@ async def send_action_event_to_players(game_id: int, message: str):
     await sio.emit(
         "action",
         data={
-            "message": message,
+            "log": message,
         },
         room="g" + str(game_id),
     )
 
 
-async def send_discard_event_to_players(game_id: int, player_name: str, message: str):
+async def send_discard_event_to_players(
+    game_id: int, player_name: str, message: str
+):
     await sio.emit(
         "discard",
         {
             "player_name": player_name,
-            "message": message,
+            "log": message,
         },
         room="g" + str(game_id),
     )
@@ -102,7 +110,7 @@ async def send_defense_event_to_players(
 ):
     await sio.emit(
         "defense",
-        data={"message": message},
+        data={"log": message},
         room="g" + str(game_id),
     )
 
@@ -113,7 +121,7 @@ async def send_exchange_event_to_players(
     await sio.emit(
         "exchange",
         data={
-            "message": exchanging_offerer
+            "log": exchanging_offerer
             + " intercambió cartas con "
             + defending_player
         },
@@ -129,7 +137,7 @@ async def send_analysis_to_player(
     await sio.emit(
         "analisis",
         data={
-            "message": "Estas son las cartas de" + attacked_player_name,
+            "log": "Estas son las cartas de" + attacked_player_name,
             "cards": data_to_send,
         },
         room="p" + str(player_id),
@@ -143,7 +151,7 @@ async def send_suspicion_to_player(
     await sio.emit(
         "sospecha",
         data={
-            "message": "Esta es una carta de" + attacked_player_name,
+            "log": "Esta es una carta de" + attacked_player_name,
             "card": data_to_send,
         },
         room="p" + str(player_id),
@@ -155,7 +163,7 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
     await sio.emit(
         "whisky",
         data={
-            "message": player + "jugó whisky y estas son sus cartas!",
+            "log": player + "jugó whisky y estas son sus cartas!",
             "cards": data_to_send,
         },
         room="g" + str(game_id),
@@ -169,7 +177,7 @@ async def send_ate_to_player(
     await sio.emit(
         "ate",
         data={
-            "message": f"Esta es la carta que {player.name} quiso intercambiar",
+            "log": f"Esta es la carta que {player.name} quiso intercambiar",
             "cards": data_to_send,
         },
         room="p" + str(dest_player.id),

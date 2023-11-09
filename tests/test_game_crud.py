@@ -89,7 +89,6 @@ def test_delete_game(test_db):
     rollback()
 
 
-
 @db_session
 def test_update_game(test_db):
     game = Game(name="Test Game", min_players=2, max_players=4)
