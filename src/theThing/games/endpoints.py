@@ -574,7 +574,7 @@ async def response_exchange(response_ex_data: dict):
         )
         update_turn(game_id, TurnCreate(state=5))
     elif defense_card_id and (not exchange_card_id):
-        # TODO: Create dict of functions to implement defense effect
+        # Implement defense effect
         try:
             defense_card = get_card(defense_card_id, game_id)
             await exchange_defense[defense_card.code](
