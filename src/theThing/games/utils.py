@@ -4,13 +4,11 @@ from .crud import get_full_game, update_game, get_game
 from .schemas import GameOut, GameInDB, GameUpdate
 from ..cards.crud import (
     get_card,
-    remove_card_from_player,
-    update_card,
     give_card_to_player,
 )
 from ..turn.crud import update_turn
 from ..turn.schemas import TurnCreate
-from ..cards.schemas import CardBase, CardUpdate
+import random
 from ..players.crud import get_player, update_player
 from ..players.schemas import PlayerBase, PlayerUpdate
 
@@ -448,6 +446,7 @@ def assign_hands(game: GameInDB):
     set_aside_amount = 4 * amount_of_players - 1
     set_aside_cards = remaining_cards[:set_aside_amount]
     set_aside_cards.append(the_thing_card)
+    random.shuffle(set_aside_cards)
 
     # assign the cards to the players
     for player in game.players:
@@ -586,5 +585,4 @@ def update_quarantine_status(game):
     if player_to_update.quarantine > 0:
         player = get_player(player_to_update.id, game.id)
         new_quarantine = player.quarantine - 1
-
-    update_player(PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id)
+        update_player(PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id)

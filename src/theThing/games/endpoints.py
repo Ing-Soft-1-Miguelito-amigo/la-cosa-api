@@ -223,8 +223,8 @@ async def steal_card(steal_data: dict):
     await send_game_status_to_players(game_id, updated_game)
 
     if updated_player.quarantine > 0:
-        message = f"f{updated_player.name} está en cuarentena y jugó la carta {card.name}"
-        await send_quarantine_event_to_players(game_id, message)
+        message = f"f{updated_player.name} está en cuarentena y robó la carta {card.name}"
+        await send_quarantine_event_to_players(game_id, card, message)
 
     return {"message": "Carta robada con éxito"}
 
@@ -264,6 +264,7 @@ async def play_card(play_data: dict):
     game, turn_player, card, destination_player = verify_data_play_card(
         game_id, player_id, card_id, destination_name
     )
+
     # set the card to played
     remove_card_from_player(card_id, player_id, game_id)
 
@@ -361,7 +362,14 @@ async def discard_card(discard_data: dict):
     await send_player_status_to_player(player_id, updated_player)
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
-    message = f"{updated_player.name} descartó una carta"
+
+    # Verify if the player is in quarantine
+    if updated_player.quarantine > 0:
+        message = f"{updated_player.name} está en cuarentena y descartó la carta {card.name}"
+        await send_quarantine_event_to_players(game_id, card, message)
+    else:
+        message = f"{updated_player.name} descartó una carta"
+
     try:
         save_log(game_id, message)
     except Exception as e:

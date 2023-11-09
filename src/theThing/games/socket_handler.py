@@ -108,11 +108,13 @@ async def send_defense_event_to_players(
 
 
 async def send_quarantine_event_to_players(
-        game_id: int, message: str
+        game_id: int, card: CardBase, message: str
 ):
+    card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "cuarentena",
-        data={"message": message},
+        data={"message": message,
+              "card": card_to_send},
         room="g" + str(game_id)
     )
 
