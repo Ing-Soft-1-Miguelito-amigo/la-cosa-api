@@ -601,6 +601,11 @@ async def response_exchange(response_ex_data: dict):
 
     if exchange_card_id and (not defense_card_id):
         # Exchange cards
+        # Verify if the player is in quarantine
+        if exchanging_offerer.quarantine > 0:
+            message = f"{exchanging_offerer.name} está en cuarentena y quiso intercambiar la carta {exchanging_offerer.card_to_exchange.name}"
+            await send_quarantine_event_to_players(game_id, exchanging_offerer.card_to_exchange, message)
+
         try:
             exchange_cards_effect(
                 game_id, exchanging_offerer, defending_player, exchange_card_id
@@ -640,10 +645,6 @@ async def response_exchange(response_ex_data: dict):
     updated_offerer = get_player(exchanging_offerer.id, game_id)
     updated_defending = get_player(defending_player.id, game_id)
 
-    # Verify if the player is in quarantine
-    if updated_offerer.quarantine > 0:
-        message = f"{updated_defending.name} está en cuarentena y quiso intercambiar la carta {updated_offerer.card_to_exchange.name}"
-        await send_quarantine_event_to_players(game_id, updated_offerer.card_to_exchange, message)
     await send_player_status_to_player(exchanging_offerer.id, updated_offerer)
     await send_player_status_to_player(defending_player.id, updated_defending)
     await send_game_status_to_players(game_id, updated_game)
