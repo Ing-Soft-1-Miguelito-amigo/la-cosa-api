@@ -221,23 +221,29 @@ async def steal_card(steal_data: dict):
     try:
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
+        # if the card is a Panic card, update turn accordingly
+        if card.kind != 4:
+            turn_state = 1
+        else:
+            turn_state = 6
+        update_turn(game_id, TurnCreate(state=turn_state))
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # Change turn state
-    try:
-        update_turn(game_id, TurnCreate(state=1))
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
+    # Update player and game status
     updated_player = get_player(player_id, game_id)
     await send_player_status_to_player(player_id, updated_player)
 
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
-    # log message
-    message = f"{updated_player.name} robó una carta"
+    # Log message
+    if card.kind == 4:
+        message = f"{updated_player.name} robó una carta de ¡Pánico!. Esperando a que la juegue..."
+        await send_panic_event_to_players(game_id, card, message)
+    else:
+        message = f"{updated_player.name} robó una carta"
+
     try:
         save_log(game_id, message)
     except Exception as e:
@@ -245,9 +251,13 @@ async def steal_card(steal_data: dict):
     await send_action_event_to_players(game_id, message)
     
     # Verify if the player is in quarantine
-    if updated_player.quarantine > 0:
+    if updated_player.quarantine > 0 and card.kind != 4:
         message = f"{updated_player.name} está en cuarentena y robó la carta {card.name}"
         await send_quarantine_event_to_players(game_id, card, message)
+        try:
+            save_log(game_id, message)
+        except Exception as e:
+            raise e
 
     return {"message": "Carta robada con éxito"}
 
@@ -294,7 +304,7 @@ async def play_card(play_data: dict):
     remove_card_from_player(card_id, player_id, game_id)
 
     # Update the turn structure
-    if card.code == "sed":
+    if card.code in ["sed", "npa"]:
         updated_turn = TurnCreate(
             played_card=card_id,
             destination_player=destination_name,
@@ -379,7 +389,7 @@ async def discard_card(discard_data: dict):
     try:
         update_turn(
             game_id,
-            TurnCreate(state=3),  # Has to be 3 in the future
+            TurnCreate(state=3),
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
