@@ -222,10 +222,10 @@ async def steal_card(steal_data: dict):
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
         # if the card is a Panic card, update turn accordingly
-        if card.kind != 4:
-            turn_state = 1
-        else:
+        if card.code in ["cac", "rev", "olv", "vyv"]:
             turn_state = 6
+        else:
+            turn_state = 1
         update_turn(game_id, TurnCreate(state=turn_state))
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -239,7 +239,7 @@ async def steal_card(steal_data: dict):
 
     # Log message
     if card.kind == 4:
-        message = f"{updated_player.name} robó una carta de ¡Pánico!. Esperando a que la juegue..."
+        message = f"{updated_player.name} robó la carta de ¡Pánico! {card.name}. Esperando a que la juegue..."
         await send_panic_event_to_players(game_id, card, message)
     else:
         message = f"{updated_player.name} robó una carta"
@@ -332,7 +332,12 @@ async def play_card(play_data: dict):
         save_log(game_id, message)
     except Exception as e:
         raise e
-    await send_action_event_to_players(game_id, message)
+
+    if card.kind == 4:
+        message = f"{player.name} jugó {card.name}"
+        await send_panic_event_to_players(game_id, card, message)
+    else:
+        await send_action_event_to_players(game_id, message)
     return {"message": "Carta jugada con éxito"}
 
 

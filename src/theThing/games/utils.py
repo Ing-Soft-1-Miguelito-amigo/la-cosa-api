@@ -208,7 +208,7 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No es el turno del jugador especificado"
         )
-    if game.turn.state != 1 or game.turn.state != 6:
+    if game.turn.state != 1:
         raise HTTPException(
             status_code=422,
             detail="El jugador todavia no puede jugar en este turno",

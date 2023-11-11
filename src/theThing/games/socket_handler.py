@@ -6,7 +6,7 @@ from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 from src.theThing.messages.schemas import MessageOut
-from src.theThing.cards.effect_applications import apply_cac
+from src.theThing.cards.panic_effect_applications import apply_cac
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app

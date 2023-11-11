@@ -261,6 +261,39 @@ async def just_discard(
     )
 
 
+async def apply_ups(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    player_hand = player.hand
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_ups_to_players(game.id, player.name, player_hand)
+
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
+async def apply_qen(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    player_hand = player.hand
+    card.state = 0
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_qen_to_player(
+        player.id, player_hand, destination_player
+    )
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
 effect_applications = {
     "lla": apply_lla,
     "vte": apply_vte,
@@ -270,6 +303,8 @@ effect_applications = {
     "sos": apply_sos,
     "whk": apply_whk,
     "cua": apply_cua,
+    "ups": apply_ups,
+    "qen": apply_qen,
     "default": just_discard,
 }
 
@@ -352,67 +387,4 @@ exchange_defense = {
     "ngs": apply_ngs,
     "fal": apply_fal,
     "default": just_discard,
-}
-
-
-async def apply_ups(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
-):
-    card.state = 0
-    player_hand = player.hand
-
-    update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    await sh.send_ups_to_players(game.id, player.name, player_hand)
-
-    updated_game = get_full_game(game.id)
-    return updated_game
-
-
-async def apply_cac(
-    data: dict,
-):
-    game = get_game(data["game_id"])
-    card = get_card(data["card_id"], game.id)
-    player = get_player(data["player_id"], game.id)
-
-    update_card(CardUpdate(id=data["panic_card_id"], state=0), game.id)
-
-    # Get a new card from the deck
-    new_card = get_card_from_deck(game.id)
-    while new_card.kind == 4:
-        update_card(CardUpdate(id=new_card.id, state=0), game.id)
-        new_card = get_card_from_deck(game.id)
-    give_card_to_player(new_card.id, player.id, game.id)
-
-    # Return the card to the deck
-    update_card(CardUpdate(id=card.id, state=2), game.id)
-
-    updated_game = get_full_game(game.id)
-    updated_player = get_player(player.id, game.id)
-    return updated_player, updated_game
-
-
-async def apply_qen(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
-):
-    player_hand = player.hand
-    card.state = 0
-
-    update_card(CardUpdate(id=card.id, state=card.state), game.id)
-    await sh.send_qen_to_player(
-        player.id, player_hand, destination_player
-    )
-    updated_game = get_full_game(game.id)
-    return updated_game
-
-
-panic_effect_applications = {
-    "ups": apply_ups,
-    "cac": apply_cac,
 }
