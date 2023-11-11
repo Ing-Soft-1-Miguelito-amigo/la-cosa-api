@@ -592,7 +592,7 @@ dict_of_cards = {
         "name": "Cita a ciegas",
         "kind": 4,
         "description": "Intercambia una carta de tu mano con la primera del mazo, descartando cualquier carta de "
-                       "'¡Pánico!' robada. Tu turno termina",
+        "'¡Pánico!' robada. Tu turno termina",
         "number_in_card": 4,
         "amount_in_deck": 1,
     },
@@ -601,7 +601,7 @@ dict_of_cards = {
         "name": "Cita a ciegas",
         "kind": 4,
         "description": "Intercambia una carta de tu mano con la primera del mazo, descartando cualquier carta de "
-                       "'¡Pánico!' robada. Tu turno termina",
+        "'¡Pánico!' robada. Tu turno termina",
         "number_in_card": 9,
         "amount_in_deck": 1,
     },
@@ -637,8 +637,8 @@ dict_of_cards = {
         "name": "¿Es aquí la fiesta?",
         "kind": 4,
         "description": "Descarta todas las cartas 'Cuarentena' y 'Puerta atrancada' que haya en juego. A "
-                       "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
-                       "en el sentido de las agujas del reloj.",
+        "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
+        "en el sentido de las agujas del reloj.",
         "number_in_card": 5,
         "amount_in_deck": 1,
     },
@@ -647,8 +647,8 @@ dict_of_cards = {
         "name": "¿Es aquí la fiesta?",
         "kind": 4,
         "description": "Descarta todas las cartas 'Cuarentena' y 'Puerta atrancada' que haya en juego. A "
-                       "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
-                       "en el sentido de las agujas del reloj.",
+        "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
+        "en el sentido de las agujas del reloj.",
         "number_in_card": 9,
         "amount_in_deck": 1,
     },
@@ -702,7 +702,7 @@ dict_of_cards = {
         "name": "Olvidadizo",
         "kind": 4,
         "description": "Descarta 3 cartas de tu mano y roba 3 nuevas cartas '¡Aléjate!', descartando cualquier carta "
-                       "de '¡Pánico!' robada.",
+        "de '¡Pánico!' robada.",
         "number_in_card": 4,
         "amount_in_deck": 1,
     },
@@ -712,8 +712,8 @@ dict_of_cards = {
         "name": "Uno, dos...",
         "kind": 4,
         "description": "Cámbiate de sitio con el tercer jugador que tengas a tu izquierda o a tu derecha (a tu "
-                       "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
-                       "estáis en Cuarentena, el cambio no tiene lugar.",
+        "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
+        "estáis en Cuarentena, el cambio no tiene lugar.",
         "number_in_card": 5,
         "amount_in_deck": 1,
     },
@@ -722,8 +722,8 @@ dict_of_cards = {
         "name": "Uno, dos...",
         "kind": 4,
         "description": "Cámbiate de sitio con el tercer jugador que tengas a tu izquierda o a tu derecha (a tu "
-                       "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
-                       "estáis en Cuarentena, el cambio no tiene lugar.",
+        "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
+        "estáis en Cuarentena, el cambio no tiene lugar.",
         "number_in_card": 9,
         "amount_in_deck": 1,
     },

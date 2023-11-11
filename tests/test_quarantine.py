@@ -31,7 +31,9 @@ def setup_module():
 
     # make player 1 La Cosa
     player_crud.update_player(
-        player_schemas.PlayerUpdate(role=1, quarantine=2), created_player.id, created_game.id
+        player_schemas.PlayerUpdate(role=1, quarantine=2),
+        created_player.id,
+        created_game.id,
     )
 
     # make other players human
