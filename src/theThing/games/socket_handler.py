@@ -164,7 +164,7 @@ async def send_suspicion_to_player(
         "sospecha",
         data={
             "log": "Esta es una carta de" + attacked_player_name,
-            "card": [data_to_send],
+            "cards": [data_to_send],
         },
         room="p" + str(player_id),
     )
