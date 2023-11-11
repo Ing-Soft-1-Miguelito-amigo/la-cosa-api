@@ -415,7 +415,8 @@ async def apply_eaf(
             await sh.send_player_status_to_player(player_q.id, updated_player)
 
     # Remove all locked doors
-
+    game.obstacles = []
+    updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
 
     # Swap the players by pairs clockwise, starting by the current turn owner
     game_to_update = get_full_game(game.id)
