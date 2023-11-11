@@ -61,7 +61,7 @@ async def apply_lla(
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
     new_exchange_destination = get_player_in_next_n_places(
-        game, destination_player.table_position, 1
+        updated_game, player.table_position, 1
     )
     new_turn = TurnCreate(
         destination_player_exchange=new_exchange_destination.name
