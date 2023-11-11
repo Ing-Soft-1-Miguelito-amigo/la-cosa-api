@@ -36,10 +36,10 @@ IMPORTANT: The parameters must be passed in the following order and types:
 
 # Functions implementation
 async def apply_lla(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     # check that the player has 4 cards in hand
     card.state = 0
@@ -78,10 +78,10 @@ async def apply_lla(
 
 
 async def apply_vte(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     # Remove the card played from the player
     remove_card_from_player(card.id, player.id, game.id)
@@ -104,10 +104,10 @@ async def apply_vte(
 
 
 async def apply_cdl(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -144,10 +144,10 @@ async def apply_cdl(
 
 
 async def apply_mvc(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     # swap table position between the players
@@ -184,10 +184,10 @@ async def apply_mvc(
 
 
 async def apply_ana(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     destination_hand = destination_player.hand
@@ -201,10 +201,10 @@ async def apply_ana(
 
 
 async def apply_sos(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     destination_card = random.choice(destination_player.hand)
@@ -218,10 +218,10 @@ async def apply_sos(
 
 
 async def apply_whk(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     player_hand = player.hand
@@ -234,38 +234,26 @@ async def apply_whk(
 
 
 async def apply_cua(
-game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
-    update_player(PlayerUpdate(quarantine=2), player.id, game.id)
+    update_player(PlayerUpdate(quarantine=2), destination_player.id, game.id)
 
+    updated_game = get_full_game(game.id)
 
-async def just_discard(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
-):
-    # other cards
-    card.state = 0
-    player = remove_card_from_player(card.id, player.id, game.id)
-
-    # push the changes to the database
-    updated_card = update_card(
-        CardUpdate(id=card.id, state=card.state), game.id
-    )
+    return updated_game
 
 
 async def apply_ups(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
     player_hand = player.hand
@@ -278,10 +266,10 @@ async def apply_ups(
 
 
 async def apply_qen(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     player_hand = player.hand
     card.state = 0
@@ -292,6 +280,50 @@ async def apply_qen(
     )
     updated_game = get_full_game(game.id)
     return updated_game
+
+
+async def apply_cpo(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    card.state = 0
+
+    # Remove quarantine from all players
+    for player in game.players:
+        if player.quarantine > 0:
+            player.quarantine = 0
+            updated_player = update_player(
+                PlayerUpdate(quarantine=player.quarantine),
+                player.id,
+                game.id,
+            )
+            await sh.send_player_status_to_player(player.id, updated_player)
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_cpo_to_players(
+        game.id
+    )
+
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
+async def just_discard(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    # other cards
+    card.state = 0
+    player = remove_card_from_player(card.id, player.id, game.id)
+
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
 
 effect_applications = {
@@ -305,15 +337,16 @@ effect_applications = {
     "cua": apply_cua,
     "ups": apply_ups,
     "qen": apply_qen,
+    "cpo": apply_cpo,
     "default": just_discard,
 }
 
 
 async def apply_ate(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
 
@@ -335,10 +368,10 @@ async def apply_ate(
 
 
 async def apply_ngs(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
 
@@ -356,10 +389,10 @@ async def apply_ngs(
 
 
 async def apply_fal(
-    game: GameInDB,
-    player: PlayerBase,
-    destination_player: PlayerBase,
-    card: CardBase,
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
 ):
     card.state = 0
 

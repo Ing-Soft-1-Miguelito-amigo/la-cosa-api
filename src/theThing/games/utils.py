@@ -225,7 +225,7 @@ def verify_data_play_card(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
-    if card.kind not in [0, 2]:
+    if card.kind not in [0, 2, 4]:
         raise HTTPException(
             status_code=422, detail="No puedes jugar esta carta"
         )
@@ -248,7 +248,7 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id and card.code not in ["whk", "vte"]:
+    if destination_player.id == player.id and card.code not in ["whk", "vte", "cpo"]:
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
@@ -263,7 +263,7 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    if card.code not in ["mvc", "whk", "vte", "sed"]:
+    if card.code not in ["mvc", "whk", "vte", "sed", "cpo"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(

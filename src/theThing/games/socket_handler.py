@@ -6,7 +6,7 @@ from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 from src.theThing.messages.schemas import MessageOut
-from src.theThing.cards.panic_effect_applications import apply_cac
+from src.theThing.cards.special_effect_applications import apply_cac
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
@@ -136,7 +136,7 @@ async def send_quarantine_event_to_players(
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "quarantine",
-        data={"message": message,
+        data={"log": message,
               "card": card_to_send},
         room="g" + str(game_id)
     )
@@ -148,7 +148,7 @@ async def send_panic_event_to_players(
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "panic",
-        data={"message": message,
+        data={"log": message,
               "card": card_to_send},
         room="g" + str(game_id)
     )
@@ -230,6 +230,17 @@ async def send_qen_to_player(game_id: int, hand: [CardBase], dest_player: Player
             "cards": data_to_send,
         },
         room="p" + str(dest_player.id),
+    )
+
+
+async def send_cpo_to_players(game_id: int):
+    await sio.emit(
+        "cpo",
+        data={
+            "log": "¡Las viejas cuerdas que usaste son fáciles de romper! Todas las cartas "
+                   "Todas las cartas 'Cuarentena' que haya en juego son descartadas",
+        },
+        room="g" + str(game_id),
     )
 
 

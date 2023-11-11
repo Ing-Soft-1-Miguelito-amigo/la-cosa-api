@@ -200,9 +200,9 @@ async def steal_card(steal_data: dict):
     """
     # Check valid inputs
     if (
-        not steal_data
-        or not steal_data["game_id"]
-        or not steal_data["player_id"]
+            not steal_data
+            or not steal_data["game_id"]
+            or not steal_data["player_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -249,7 +249,7 @@ async def steal_card(steal_data: dict):
     except Exception as e:
         raise e
     await send_action_event_to_players(game_id, message)
-    
+
     # Verify if the player is in quarantine
     if updated_player.quarantine > 0 and card.kind != 4:
         message = f"{updated_player.name} está en cuarentena y robó la carta {card.name}"
@@ -281,11 +281,11 @@ async def play_card(play_data: dict):
     """
     # Check valid inputs
     if (
-        not play_data
-        or not play_data["game_id"]
-        or not play_data["player_id"]
-        or not play_data["card_id"]
-        or not play_data["destination_name"]
+            not play_data
+            or not play_data["game_id"]
+            or not play_data["player_id"]
+            or not play_data["card_id"]
+            or not play_data["destination_name"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -364,10 +364,10 @@ async def discard_card(discard_data: dict):
     """
     # Check valid inputs
     if (
-        not discard_data
-        or not discard_data["game_id"]
-        or not discard_data["player_id"]
-        or not discard_data["card_id"]
+            not discard_data
+            or not discard_data["game_id"]
+            or not discard_data["player_id"]
+            or not discard_data["card_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -441,9 +441,9 @@ async def respond_to_action_card(response_data: dict):
     """
     # Check valid inputs
     if (
-        not response_data
-        or not response_data["game_id"]
-        or not response_data["player_id"]
+            not response_data
+            or not response_data["game_id"]
+            or not response_data["player_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -541,10 +541,10 @@ async def exchange_cards(exchange_data: dict):
     """
     # Check valid inputs
     if (
-        not exchange_data
-        or not exchange_data["game_id"]
-        or not exchange_data["player_id"]
-        or not exchange_data["card_id"]
+            not exchange_data
+            or not exchange_data["game_id"]
+            or not exchange_data["player_id"]
+            or not exchange_data["card_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
@@ -592,9 +592,9 @@ async def response_exchange(response_ex_data: dict):
     """
     # Check valid inputs
     if (
-        not response_ex_data
-        or not response_ex_data["game_id"]
-        or not response_ex_data["defending_player_id"]
+            not response_ex_data
+            or not response_ex_data["game_id"]
+            or not response_ex_data["defending_player_id"]
     ):
         raise HTTPException(
             status_code=422, detail="La entrada no puede ser vacía"
