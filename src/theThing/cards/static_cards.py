@@ -653,6 +653,7 @@ dict_of_cards = {
         "amount_in_deck": 1,
     },
     # Round and round cards
+    """
     "vyv4": {
         "code": "vyv",
         "name": "Vuelta y vuelta",
@@ -677,6 +678,7 @@ dict_of_cards = {
         "number_in_card": 9,
         "amount_in_deck": 1,
     },
+    """
     # Can't we be friends? cards
     "npa7": {
         "code": "npa",
@@ -743,6 +745,7 @@ dict_of_cards = {
         "amount_in_deck": 1,
     },
     # Revelations cards
+    """
     "rev8": {
         "code": "rev",
         "name": "Revelaciones",
@@ -753,6 +756,7 @@ dict_of_cards = {
         "number_in_card": 8,
         "amount_in_deck": 1,
     },
+    """
     # Get out of here! cards
     "sda5": {
         "code": "sda",
