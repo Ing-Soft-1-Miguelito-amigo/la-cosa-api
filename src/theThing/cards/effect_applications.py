@@ -400,8 +400,38 @@ async def apply_trc(
 
     game.obstacles = []
     updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
-    
+
     return updated_game
+
+
+async def apply_eaf(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    card.state = 0
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+
+    # Remove quarantine from all players
+    for player in game.players:
+        if player.quarantine > 0:
+            player.quarantine = 0
+            updated_player = update_player(
+                PlayerUpdate(quarantine=player.quarantine),
+                player.id,
+                game.id,
+            )
+            await sh.send_player_status_to_player(player.id, updated_player)
+
+    # Remove all locked doors
+    game.obstacles = []
+    update_game(game.id, GameUpdate(obstacles=game.obstacles))
+
+    # Swap the players by pairs clockwise, starting by the current turn owner
+    first_position = player.table_position
+
+
 
 
 async def just_discard(
