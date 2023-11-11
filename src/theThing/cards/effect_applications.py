@@ -390,6 +390,20 @@ async def apply_sda(
     return updated_game
 
 
+async def apply_trc(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    card.state = 0
+
+    game.obstacles = []
+    updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
+    
+    return updated_game
+
+
 async def just_discard(
         game: GameInDB,
         player: PlayerBase,
@@ -419,6 +433,8 @@ effect_applications = {
     "qen": apply_qen,
     "cpo": apply_cpo,
     "und": apply_und,
+    "sda": apply_sda,
+    "trc": apply_trc,
     "default": just_discard,
 }
 

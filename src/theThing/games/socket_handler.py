@@ -6,7 +6,7 @@ from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 from src.theThing.messages.schemas import MessageOut
-from src.theThing.cards.special_effect_applications import apply_cac
+from src.theThing.cards.special_effect_applications import apply_cac, apply_olv
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
@@ -252,6 +252,19 @@ async def receive_cac_event(sid, data):
     panic_card_id = data.get("panic_card_id")
 
     player, game = await apply_cac(data)
+
+    await send_game_status_to_players(game.id, game)
+    await send_player_status_to_player(player.id, player)
+
+
+@sio.on("olv")
+async def receive_olv_event(sid, data):
+    game_id = data.get("game_id")
+    player_id = data.get("player_id")
+    card_id = data.get("card_id")
+    panic_card_id = data.get("panic_card_id")
+
+    player, game = await apply_olv(data)
 
     await send_game_status_to_players(game.id, game)
     await send_player_status_to_player(player.id, player)

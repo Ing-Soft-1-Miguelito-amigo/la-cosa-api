@@ -33,3 +33,34 @@ async def apply_cac(
     updated_game = get_game(game.id)
     updated_player = get_player(player.id, game.id)
     return updated_player, updated_game
+
+
+async def apply_olv(
+    data: dict,
+):
+    game = get_game(data["game_id"])
+    cards = [get_card(card_id, game.id) for card_id in data["card_ids"]]
+    player = get_player(data["player_id"], game.id)
+    panic_card = get_card(data["panic_card_id"], game.id)
+
+    # Remove the panic card from the player
+    update_card(CardUpdate(id=data["panic_card_id"], state=0), game.id)
+    remove_card_from_player(panic_card.id, player.id, game.id)
+
+    # Discard the cards
+    for card in cards:
+        remove_card_from_player(card.id, player.id, game.id)
+
+    for _ in range(3):
+        new_card = get_card_from_deck(game.id)
+        while new_card.kind == 4:
+            update_card(CardUpdate(id=new_card.id, state=0), game.id)
+            new_card = get_card_from_deck(game.id)
+        give_card_to_player(new_card.id, player.id, game.id)
+
+    # Update the turn state
+    update_turn(game.id, TurnCreate(state=3))
+
+    updated_game = get_game(game.id)
+    updated_player = get_player(player.id, game.id)
+    return updated_player, updated_game

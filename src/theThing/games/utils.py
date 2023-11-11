@@ -122,9 +122,9 @@ def verify_finished_game(game: GameOut):
     the_thing = [player for player in game.players if player.role == 3][0]
     if game.turn.played_card is not None:
         if (
-            game.turn.played_card.code == "lla"
-            and game.turn.response_card is None
-            and game.turn.destination_player == the_thing.name
+                game.turn.played_card.code == "lla"
+                and game.turn.response_card is None
+                and game.turn.destination_player == the_thing.name
         ):
             # if a flamethrower was played and killed "La cosa", the game ends and all alive humans win
             game.state = 2
@@ -137,9 +137,9 @@ def verify_finished_game(game: GameOut):
                 if (player.role == 1 and player.alive)
             ]
             reason = (
-                "La cosa fue eliminada por "
-                + turn_owner_name
-                + " ganaron todos los humanos vivos"
+                    "La cosa fue eliminada por "
+                    + turn_owner_name
+                    + " ganaron todos los humanos vivos"
             )
 
     amount_infected_players = len(
@@ -174,15 +174,15 @@ def verify_finished_game(game: GameOut):
             reason = "La cosa fue el último jugador vivo y ganó la partida"
         else:
             reason = (
-                alive_players[0].name
-                + " fue el último jugador vivo y ganó la partida"
+                    alive_players[0].name
+                    + " fue el último jugador vivo y ganó la partida"
             )
     return_data = {"game": game, "winners": winners, "reason": reason}
     return return_data
 
 
 def verify_data_play_card(
-    game_id: int, player_id: int, card_id: int, destination_name: str
+        game_id: int, player_id: int, card_id: int, destination_name: str
 ):
     # Verify that the game exists and it is started
     try:
@@ -248,7 +248,7 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id and card.code not in ["whk", "vte", "cpo"]:
+    if destination_player.id == player.id and card.code not in ["whk", "vte", "cpo", "trc"]:
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
@@ -263,11 +263,11 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    if card.code not in ["mvc", "whk", "vte", "sed", "cpo", "und", "sda"]:
+    if card.code not in ["mvc", "whk", "vte", "sed", "cpo", "und", "sda", "trc"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
-            alive_players
+                alive_players
         ) or index_destination_player == (index_player - 1) % len(
             alive_players
         ):
@@ -381,9 +381,9 @@ def verify_data_discard_card(game_id: int, player_id: int, card_id: int):
 
     infected_cards = [card for card in player.hand if card.code == "inf"]
     if (
-        len(infected_cards) == 1
-        and infected_cards[0].id == card.id
-        and player.role == 2
+            len(infected_cards) == 1
+            and infected_cards[0].id == card.id
+            and player.role == 2
     ):
         raise HTTPException(
             status_code=422,
@@ -483,9 +483,9 @@ def verify_data_exchange(game_id: int, player_id: int, card_id: int):
 
     infected_cards = [card for card in player.hand if card.code == "inf"]
     if (
-        len(infected_cards) == 1
-        and card.id == infected_cards[0].id
-        and player.role == 2
+            len(infected_cards) == 1
+            and card.id == infected_cards[0].id
+            and player.role == 2
     ):
         raise HTTPException(
             status_code=422,
@@ -546,10 +546,10 @@ def verify_data_exchange_basic(game_id: int, defending_player_id: int):
 
 
 def exchange_cards_effect(
-    game_id: int,
-    exchanging_offerer: PlayerBase,
-    defending_player: PlayerBase,
-    exchange_card_id: int,
+        game_id: int,
+        exchanging_offerer: PlayerBase,
+        defending_player: PlayerBase,
+        exchange_card_id: int,
 ):
     # swap cards in the player's hand from the defending player and the offerer
     # Get the card to exchange from the defending player
@@ -559,8 +559,8 @@ def exchange_cards_effect(
     except Exception as e:
         raise e
     if (
-        exchange_card not in defending_player.hand
-        or offered_card not in exchanging_offerer.hand
+            exchange_card not in defending_player.hand
+            or offered_card not in exchanging_offerer.hand
     ):
         raise HTTPException(
             status_code=404,
@@ -584,9 +584,9 @@ def exchange_cards_effect(
         card for card in defending_player.hand if card.code == "inf"
     ]
     if (
-        len(infected_cards) == 1
-        and exchange_card.id == infected_cards[0].id
-        and defending_player.role == 2
+            len(infected_cards) == 1
+            and exchange_card.id == infected_cards[0].id
+            and defending_player.role == 2
     ):
         raise HTTPException(
             status_code=422,
@@ -619,7 +619,7 @@ def exchange_cards_effect(
 
 
 def verify_data_response_card(
-    game_id: int, defending_player: PlayerBase, response_card_id: int
+        game_id: int, defending_player: PlayerBase, response_card_id: int
 ):
     # It also returns the response card
     # Get defense card
@@ -722,7 +722,7 @@ def assign_turn_owner(game: GameOut):
         played_card_code = played_card.code
         response_card = game.turn.response_card
         if (
-            played_card_code == "cdl" or played_card_code == "mvc"
+                played_card_code == "cdl" or played_card_code == "mvc"
         ) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
             # owner is the position of the destination player
