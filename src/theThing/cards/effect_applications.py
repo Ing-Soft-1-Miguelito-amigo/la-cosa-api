@@ -310,6 +310,86 @@ async def apply_cpo(
     return updated_game
 
 
+async def apply_und(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    card.state = 0
+    # swap table position between the players
+    player.table_position, destination_player.table_position = (
+        destination_player.table_position,
+        player.table_position,
+    )
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    updated_player = update_player(
+        PlayerUpdate(table_position=player.table_position), player.id, game.id
+    )
+
+    updated_destination_player = update_player(
+        PlayerUpdate(table_position=destination_player.table_position),
+        destination_player.id,
+        game.id,
+    )
+
+    game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(game, updated_player.table_position, 1)
+    new_turn = TurnCreate(
+        owner=updated_player.table_position,
+        played_card=card.id,
+        destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name
+    )
+    update_turn(game.id, new_turn)
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
+async def apply_sda(
+        game: GameInDB,
+        player: PlayerBase,
+        destination_player: PlayerBase,
+        card: CardBase,
+):
+    card.state = 0
+    # swap table position between the players
+    player.table_position, destination_player.table_position = (
+        destination_player.table_position,
+        player.table_position,
+    )
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    updated_player = update_player(
+        PlayerUpdate(table_position=player.table_position), player.id, game.id
+    )
+
+    updated_destination_player = update_player(
+        PlayerUpdate(table_position=destination_player.table_position),
+        destination_player.id,
+        game.id,
+    )
+
+    game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(game, updated_player.table_position, 1)
+    new_turn = TurnCreate(
+        owner=updated_player.table_position,
+        played_card=card.id,
+        destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name
+    )
+    update_turn(game.id, new_turn)
+    updated_game = get_full_game(game.id)
+    return updated_game
+
+
 async def just_discard(
         game: GameInDB,
         player: PlayerBase,
@@ -338,6 +418,7 @@ effect_applications = {
     "ups": apply_ups,
     "qen": apply_qen,
     "cpo": apply_cpo,
+    "und": apply_und,
     "default": just_discard,
 }
 
