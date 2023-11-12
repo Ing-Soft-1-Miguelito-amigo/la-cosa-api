@@ -2,7 +2,13 @@ from fastapi import APIRouter, HTTPException
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from pydantic import BaseModel
 from src.theThing.games.socket_handler import *
-from .crud import create_game, create_game_deck, get_all_games, save_log, get_logs
+from .crud import (
+    create_game,
+    create_game_deck,
+    get_all_games,
+    save_log,
+    get_logs,
+)
 from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import *
 from ..cards.crud import *
@@ -243,7 +249,7 @@ async def steal_card(steal_data: dict):
     except Exception as e:
         raise e
     await send_action_event_to_players(game_id, message)
-    
+
     # Verify if the player is in quarantine
     if updated_player.quarantine > 0:
         message = f"{updated_player.name} está en cuarentena y robó la carta {card.name}"
@@ -286,10 +292,12 @@ async def play_card(play_data: dict):
     card_id = play_data["card_id"]
     destination_name = play_data["destination_name"]
 
-    game, turn_player, card, destination_player = verify_data_play_card(
-        game_id, player_id, card_id, destination_name
-    )
-
+    try:
+        game, turn_player, card, destination_player = verify_data_play_card(
+            game_id, player_id, card_id, destination_name
+        )
+    except Exception as e:
+        raise e
     # set the card to played
     remove_card_from_player(card_id, player_id, game_id)
 
@@ -379,7 +387,7 @@ async def discard_card(discard_data: dict):
     try:
         update_turn(
             game_id,
-            TurnCreate(state=3),  # Has to be 3 in the future
+            TurnCreate(state=3),
         )
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -460,9 +468,9 @@ async def respond_to_action_card(response_data: dict):
                 game, attacking_player, defending_player, action_card
             )
         # Update turn status
-        update_turn(game_id, TurnCreate(state=3))  # Has to be 3 in the future
+        update_turn(game_id, TurnCreate(state=3))
         # Send event description to all players
-        message = f"{attacking_player.name} jugó con exito {action_card.name} a {defending_player.name}"
+        message = f"{attacking_player.name} jugó {action_card.name} a {defending_player.name}"
         try:
             save_log(game_id, message)
         except Exception as e:
@@ -486,9 +494,9 @@ async def respond_to_action_card(response_data: dict):
         # Update turn and add the response_card
         update_turn(
             game_id, TurnCreate(response_card=response_card_id, state=3)
-        )  # Has to be 3 in the future
+        )
         # Send event description to all players
-        message = f"{defending_player.name} se defendio con {response_card.name} a {attacking_player.name}"
+        message = f"{defending_player.name} se defendió con {response_card.name} a {attacking_player.name}"
         try:
             save_log(game_id, message)
         except Exception as e:
@@ -509,7 +517,7 @@ async def respond_to_action_card(response_data: dict):
         attacking_player.id, updated_attacking_player
     )
 
-    return {"message": "Efecto de jugada aplicado con éxito"}
+    return {"message": "Jugada finalizada"}
 
 
 @router.put("/game/exchange", status_code=200)
@@ -542,7 +550,17 @@ async def exchange_cards(exchange_data: dict):
     try:
         game, player, card = verify_data_exchange(game_id, player_id, card_id)
     except Exception as e:
-        raise e
+        if str(e) == "Existe una puerta atrancada":
+            update_turn(game_id, TurnCreate(state=5))
+            updated_game = get_game(game_id)
+            player = get_player(player_id, game_id)
+            message = f"{player.name} no pudo intercambiar con {updated_game.turn.destination_player_exchange} porque hay una puerta atrancada entre ambos."
+            save_log(game_id, message)
+            await send_action_event_to_players(game_id, message)
+            await send_game_status_to_players(game_id, updated_game)
+            return {"message": str(e)}
+        else:
+            raise e
 
     player.card_to_exchange = card
     update_player(PlayerUpdate.model_validate(player), player_id, game_id)
@@ -560,7 +578,7 @@ async def exchange_cards(exchange_data: dict):
     except Exception as e:
         raise e
     await send_action_event_to_players(game_id, message)
-    return {"message": "Ofrecimiento de intercambio realizado con éxito"}
+    return {"message": "Ofrecimiento de intercambio realizado"}
 
 
 @router.put("/game/response-exchange", status_code=200)
@@ -604,7 +622,9 @@ async def response_exchange(response_ex_data: dict):
         # Verify if the player is in quarantine
         if exchanging_offerer.quarantine > 0:
             message = f"{exchanging_offerer.name} está en cuarentena y quiso intercambiar la carta {exchanging_offerer.card_to_exchange.name}"
-            await send_quarantine_event_to_players(game_id, exchanging_offerer.card_to_exchange, message)
+            await send_quarantine_event_to_players(
+                game_id, exchanging_offerer.card_to_exchange, message
+            )
 
         try:
             exchange_cards_effect(
@@ -649,7 +669,7 @@ async def response_exchange(response_ex_data: dict):
     await send_player_status_to_player(defending_player.id, updated_defending)
     await send_game_status_to_players(game_id, updated_game)
 
-    return {"message": "Intercambio finalizado con éxito"}
+    return {"message": "Intercambio finalizado"}
 
 
 @router.put("/game/declare-victory")
@@ -855,11 +875,11 @@ async def finish_turn(finish_data: dict):
     if return_data["winners"] is not None:
         await send_finished_game_event_to_players(game_id, return_data)
         response = {
-            "message": "Partida finalizada con éxito",
+            "message": "Partida finalizada",
             "winners": return_data["winners"],
         }
 
-    message = f"Turno finalizado con éxito"
+    message = f"Turno finalizado"
     try:
         save_log(game_id, message)
     except Exception as e:
