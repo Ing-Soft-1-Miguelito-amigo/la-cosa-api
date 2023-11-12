@@ -289,7 +289,7 @@ def verify_data_play_card(
         ):
             if destination_player_position in game.obstacles:
                 door_flag = True
-        if (  # played to the right case 1
+        elif (  # played to the right case 1
             player_position == alive_players[-1]
             and destination_player_position == alive_players[0]
         ):

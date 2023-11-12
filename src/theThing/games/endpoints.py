@@ -558,7 +558,7 @@ async def exchange_cards(exchange_data: dict):
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
-            return {"message": str(e)}
+            return {"message": str(e) + ". Se saltea el intercambio"}
         else:
             raise e
 
