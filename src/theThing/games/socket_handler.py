@@ -178,9 +178,9 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
 
 
 async def send_ate_to_player(
-    game_id: int, player: PlayerBase, dest_player: PlayerBase, hand: [CardBase]
+    game_id: int, player: PlayerBase, dest_player: PlayerBase, card: CardBase
 ):
-    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    data_to_send = [card.model_dump(exclude={"id"})]
     await sio.emit(
         "ate",
         data={
