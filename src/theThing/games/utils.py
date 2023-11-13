@@ -280,6 +280,7 @@ def verify_data_play_card(
         "trc",
         "eaf",
         "hac",
+        "ups"
     ]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
@@ -295,8 +296,8 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if len(game.obstacles) > 0 and destination_name != player.name and (
-        card.code not in ["whk", "vte", "sed", "mvc", "hac", "und", "trc", "eaf", "vyv", "npa", ]
+    if len(game.obstacles) > 0 and (
+        card.code not in ["whk", "vte", "sed", "mvc", "hac"]
     ):
         door_flag = False
         player_position = player.table_position
