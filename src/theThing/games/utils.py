@@ -297,8 +297,8 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if len(game.obstacles) > 0 and (
-        card.code not in ["whk", "vte", "sed", "mvc", "hac"]
+    if len(game.obstacles) > 0 and destination_name != player.name and (
+        card.code not in ["whk", "vte", "sed", "mvc", "hac", "und", "trc", "eaf", "vyv", "npa"]
     ):
         door_flag = False
         player_position = player.table_position
@@ -788,15 +788,15 @@ def assign_turn_owner(game: GameOut):
         # If played_card is None, then it was discarded, and we need to skip this section
         played_card_code = played_card.code
         response_card = game.turn.response_card
-        if (
-            played_card_code == "cdl" or played_card_code == "mvc"
-        ) and response_card is None:
+        cards_change_places = ['cdl', 'mvc', 'und', 'sda']
+        if (played_card_code in cards_change_places) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
             # owner is the position of the destination player
             for player in game.players:
                 if player.name == game.turn.destination_player:
                     new_owner = player.table_position
                     break
+            new_dest_exch = get_player_in_next_n_places(game, new_owner, 1)
             update_turn(
                 game.id,
                 TurnCreate(
@@ -805,8 +805,10 @@ def assign_turn_owner(game: GameOut):
                     played_card=None,
                     response_card=None,
                     destination_player="",
+                    destination_player_exchange=new_dest_exch.name,
                 ),
             )
+
             return
 
     # Assign new turn owner, must be an alive player
