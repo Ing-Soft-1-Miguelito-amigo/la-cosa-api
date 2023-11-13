@@ -295,8 +295,8 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if len(game.obstacles) > 0 and (
-        card.code not in ["whk", "vte", "sed", "mvc", "hac"]
+    if len(game.obstacles) > 0 and destination_name != player.name and (
+        card.code not in ["whk", "vte", "sed", "mvc", "hac", "und", "trc", "eaf", "vyv", "npa", ]
     ):
         door_flag = False
         player_position = player.table_position
