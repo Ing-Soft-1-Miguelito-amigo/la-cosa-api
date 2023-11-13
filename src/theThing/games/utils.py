@@ -277,8 +277,7 @@ def verify_data_play_card(
             )
     # Check for obstacles
     if len(game.obstacles) > 0 and (
-        (card.code == "hac" and destination_player.name != player.name)
-        or (card.code not in ["whk", "vte", "sed", "mvc"])
+        (card.code not in ["hac", "whk", "vte", "sed", "mvc"])
     ):
         door_flag = False
         player_position = player.table_position
