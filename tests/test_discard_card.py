@@ -107,7 +107,7 @@ def test_discard_2_times(test_db):
     # get a random card from the player hand
     player = player_crud.get_player(4, 1)
     # Discard a random card
-    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    card = [card for card in player.hand if card.kind not in [3, 5, 6]][0]
     discard_data = {"game_id": 1, "player_id": 4, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
@@ -116,7 +116,7 @@ def test_discard_2_times(test_db):
     assert game1.turn.state == 3
 
     player = player_crud.get_player(4, 1)
-    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    card = [card for card in player.hand if card.kind not in [3, 5, 6]][0]
     discard_data = {"game_id": 1, "player_id": 4, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422

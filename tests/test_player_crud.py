@@ -29,7 +29,7 @@ def test_create_player(test_db):
         "min_players": 2,
         "max_players": 4,
         "state": 0,
-        "play_direction": None,
+        "play_direction": True,
         "turn": None,
         "obstacles": [],
         "players": [
@@ -73,7 +73,7 @@ def test_create_wrong_player(test_db):
         "min_players": 2,
         "max_players": 4,
         "state": 0,
-        "play_direction": None,
+        "play_direction": True,
         "turn": None,
         "obstacles": [],
         "players": [
