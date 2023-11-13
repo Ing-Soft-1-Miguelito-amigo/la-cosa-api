@@ -1,4 +1,5 @@
-from pony.orm import Required, Set, Optional, PrimaryKey, Json
+from ast import List
+from pony.orm import Required, Set, Optional, PrimaryKey, Json, IntArray
 from src.theThing.models.db import db
 from src.theThing.players.models import Player
 from src.theThing.cards.models import Card
@@ -26,7 +27,7 @@ class Game(db.Entity):
     deck = Set(Card, reverse="game")
     chat = Set(Message)
     logs = Optional(Json)
-    obstacles = Optional(Json)
+    obstacles = Optional(IntArray)
     special_configs = Optional(Json)
 
     # on create, create a list to save in logs
