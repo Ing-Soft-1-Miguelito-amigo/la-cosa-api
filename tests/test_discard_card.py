@@ -52,13 +52,14 @@ def test_discard_card_succesfully(test_db):
 
     # get a random card from the player hand
     player = player_crud.get_player(1, 1)
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
     # Discard a random card
-    discard_data = {"game_id": 1, "player_id": 1, "card_id": player.hand[0].id}
+    discard_data = {"game_id": 1, "player_id": 1, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
     assert response.json() == {"message": "Carta descartada con éxito"}
     game1 = game_crud.get_game(1)
-    assert game1.turn.state == 5
+    assert game1.turn.state == 3
 
 
 def test_discard_wrong_game(test_db):
@@ -73,7 +74,8 @@ def test_discard_wrong_game(test_db):
     # get a random card from the player hand
     player = player_crud.get_player(2, 1)
     # Discard a random card
-    discard_data = {"game_id": 2, "player_id": 2, "card_id": player.hand[0].id}
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    discard_data = {"game_id": 2, "player_id": 2, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 404
     assert response.json() == {"detail": "No se encontró la partida"}
@@ -86,7 +88,8 @@ def test_discard_without_stealing(test_db):
     # get a random card from the player hand
     player = player_crud.get_player(3, 1)
     # Discard a random card
-    discard_data = {"game_id": 1, "player_id": 3, "card_id": player.hand[0].id}
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    discard_data = {"game_id": 1, "player_id": 3, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
     assert response.json() == {
@@ -104,18 +107,22 @@ def test_discard_2_times(test_db):
     # get a random card from the player hand
     player = player_crud.get_player(4, 1)
     # Discard a random card
-    discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    discard_data = {"game_id": 1, "player_id": 4, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 200
 
     game1 = game_crud.get_game(1)
-    assert game1.turn.state == 5
+    assert game1.turn.state == 3
 
     player = player_crud.get_player(4, 1)
-    discard_data = {"game_id": 1, "player_id": 4, "card_id": player.hand[0].id}
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
+    discard_data = {"game_id": 1, "player_id": 4, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "No es posible descartar en este momento"}
+    assert response.json() == {
+        "detail": "No es posible descartar en este momento"
+    }
 
 
 def test_discard_not_existent_card(test_db):
@@ -129,9 +136,9 @@ def test_discard_not_existent_card(test_db):
 
     # get a card id which is not in the player's hand, but exists in the game
     player = player_crud.get_player(2, 1)
-    card_id = player.hand[0].id
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
 
-    discard_data = {"game_id": 1, "player_id": 1, "card_id": card_id}
+    discard_data = {"game_id": 1, "player_id": 1, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
     assert response.json() == {

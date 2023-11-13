@@ -67,9 +67,7 @@ async def apply_olv(
     return updated_player, updated_game
 
 
-async def apply_hac(
-        game, attacker, objective, card, obstacle
-):
+async def apply_hac(game, attacker, objective, card, obstacle):
     # Remove the panic card from the player
     update_card(CardUpdate(id=card.id, state=0), game.id)
     remove_card_from_player(card.id, attacker.id, game.id)

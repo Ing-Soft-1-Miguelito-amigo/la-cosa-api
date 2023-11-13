@@ -20,13 +20,21 @@ def test_start_game_successful(test_db):
     game_data = {"game_id": game_id, "player_name": player_name}
 
     # join a few players
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
+    )
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
+    )
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
+    )
 
     response = client.post("/game/start", json=game_data)
     assert response.status_code == 200
-    assert response.json() == {"message": f"Partida {game_id} iniciada con éxito"}
+    assert response.json() == {
+        "message": f"Partida {game_id} iniciada con éxito"
+    }
     rollback()
 
 
@@ -55,8 +63,12 @@ def test_start_game_with_less_players(test_db):
     game_id = response.json().get("game_id")
 
     # join a few players
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
+    )
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
+    )
 
     player_name = "Test Host"
     game_data = {"game_id": game_id, "player_name": player_name}
@@ -81,9 +93,15 @@ def test_start_game_with_invalid_host(test_db):
     game_id = response.json().get("game_id")
 
     # join a few players
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host2"})
-    client.post("/game/join", json={"game_id": game_id, "player_name": "Not Host3"})
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host"}
+    )
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host2"}
+    )
+    client.post(
+        "/game/join", json={"game_id": game_id, "player_name": "Not Host3"}
+    )
 
     player_name = "Not Host"
     game_data = {"game_id": game_id, "player_name": player_name}

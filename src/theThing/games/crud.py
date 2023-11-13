@@ -60,7 +60,9 @@ def get_game(game_id: int):
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
             if game.turn.destination_player_exchange is not None:
-                destination_player_exchange = game.turn.destination_player_exchange
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
@@ -112,7 +114,9 @@ def get_full_game(game_id: int):
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
             if game.turn.destination_player_exchange is not None:
-                destination_player_exchange = game.turn.destination_player_exchange
+                destination_player_exchange = (
+                    game.turn.destination_player_exchange
+                )
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
