@@ -75,8 +75,8 @@ async def apply_hac(
     remove_card_from_player(card.id, attacker.id, game.id)
 
     # Verify the obstacle to remove
-    if obstacle == "cua":
+    if obstacle.type == "cua" and obstacle.position is None:
         update_player(PlayerUpdate(quarantine=0), objective.id, game.id)
-    elif obstacle == "ptr":
-        game.obstacles.remove(objective.table_position)
+    elif obstacle.type == "ptr" and obstacle.position is not None:
+        game.obstacles.remove(obstacle.position)
         update_game(game.id, GameUpdate(obstacles=game.obstacles))
