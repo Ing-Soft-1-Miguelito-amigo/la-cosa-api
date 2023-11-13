@@ -228,11 +228,7 @@ async def steal_card(steal_data: dict):
     try:
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
-        # if the card is a Panic card, update turn accordingly
-        if card.code in ["cac", "rev", "olv", "vyv"]:
-            turn_state = 6
-        else:
-            turn_state = 1
+        turn_state = 1
         update_turn(game_id, TurnCreate(state=turn_state))
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -328,6 +324,8 @@ async def play_card(play_data: dict):
             game, turn_player, destination_player, card, play_data["obstacle"]
         )
         updated_turn = TurnCreate(state=3)
+    elif card.code in ["cac", "olv"]:
+        updated_turn = TurnCreate(state=6)
     else:
         updated_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2

@@ -261,11 +261,6 @@ async def send_cpo_to_players(game_id: int):
 
 @sio.on("cac")
 async def receive_cac_event(sid, data):
-    game_id = data.get("game_id")
-    player_id = data.get("player_id")
-    card_id = data.get("card_id")
-    panic_card_id = data.get("panic_card_id")
-
     player, game = await apply_cac(data)
 
     await send_game_status_to_players(game.id, game)
@@ -274,11 +269,6 @@ async def receive_cac_event(sid, data):
 
 @sio.on("olv")
 async def receive_olv_event(sid, data):
-    game_id = data.get("game_id")
-    player_id = data.get("player_id")
-    card_id = data.get("card_id")
-    panic_card_id = data.get("panic_card_id")
-
     player, game = await apply_olv(data)
 
     await send_game_status_to_players(game.id, game)
