@@ -132,7 +132,7 @@ async def send_quarantine_event_to_players(game_id: int, card: CardBase, message
 async def send_panic_event_to_players(game_id: int, card: CardBase, message: str):
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
-        "panic", data={"log": message, "card": card_to_send}, room="g" + str(game_id)
+        "panic", data={"log": message, "cards": [card_to_send]}, room="g" + str(game_id)
     )
 
 
@@ -159,7 +159,7 @@ async def send_suspicion_to_player(
         "sospecha",
         data={
             "log": "Esta es una carta de" + attacked_player_name,
-            "card": [data_to_send],
+            "cards": [data_to_send],
         },
         room="p" + str(player_id),
     )

@@ -1,4 +1,6 @@
+from enum import Flag
 from fastapi import HTTPException
+from httpx import get
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from .crud import get_full_game, update_game, get_game
 from .schemas import GameOut, GameInDB, GameUpdate
@@ -262,6 +264,41 @@ def verify_data_play_card(
                 status_code=422,
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
+    # Check for obstacles
+    if len(game.obstacles) > 0 and (
+        (card.code == "hac" and destination_player.name != player.name)
+        or (card.code not in ["whk", "vte", "sed", "mvc"])
+    ):
+        door_flag = False
+        player_position = player.table_position
+        destination_player_position = destination_player.table_position
+        if (  # played to the left case 1
+            player_position == alive_players[0]
+            and destination_player_position == alive_players[-1]
+        ):
+            if destination_player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the right case 1
+            player_position == alive_players[-1]
+            and destination_player_position == alive_players[0]
+        ):
+            if player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the left case 2
+            player_position > destination_player_position
+        ):
+            if destination_player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the right case 2
+            player_position < destination_player_position
+        ):
+            if player_position in game.obstacles:
+                door_flag = True
+        if door_flag:
+            raise HTTPException(
+                status_code=422,
+                detail="No es posible jugar esta carta al jugador, existe una puerta atrancada entre ambos",
+            )
     return game, player, card, destination_player
 
 
@@ -462,6 +499,15 @@ def verify_data_exchange(game_id: int, player_id: int, card_id: int):
             status_code=422,
             detail="No es posible intercambiar la última carta de infección",
         )
+    if len(game.obstacles) > 0:
+        if (
+            player.table_position in game.obstacles and game.play_direction
+        ) or (
+            destination_player.table_position in game.obstacles
+            and not game.play_direction
+        ):
+            raise Exception("Existe una puerta atrancada")
+
     return game, player, card
 
 
@@ -572,8 +618,13 @@ def exchange_cards_effect(
     exchanging_offerer = remove_card_from_player(
         offered_card.id, exchanging_offerer.id, game_id
     )
+    game = get_game(game_id)
     # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
-    if offered_card.code == "inf" and exchanging_offerer.role == 3:
+    if (
+        offered_card.code == "inf"
+        and exchanging_offerer.role == 3
+        and game.turn.played_card.code != "fal"
+    ):
         update_player(PlayerUpdate(role=2), defending_player.id, game_id)
 
     # Clean the field card_to_exchange from the offerer player
@@ -795,5 +846,20 @@ def update_quarantine_status(game):
         player = get_player(player_to_update.id, game.id)
         new_quarantine = player.quarantine - 1
         update_player(
-            PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id
+            PlayerUpdate(quarantine=new_quarantine),
+            player_to_update.id,
+            game.id,
         )
+
+
+def verify_obstacles_for_exchange(
+    game: GameOut, player: PlayerBase, destination_player: PlayerBase
+):
+    if len(game.obstacles) > 0:
+        if (
+            player.table_position in game.obstacles and game.play_direction
+        ) or (
+            destination_player.table_position in game.obstacles
+            and not game.play_direction
+        ):
+            raise Exception("Existe una puerta atrancada")

@@ -65,6 +65,21 @@ async def apply_lla(
     )
     new_turn = TurnCreate(destination_player_exchange=new_exchange_destination.name)
     update_turn(game.id, new_turn)
+
+    # Update the obstacles value, if the dead player was an obstacle
+    if destination_player.table_position in game.obstacles:
+        alive_players = [
+            player.table_position for player in game.players if player.alive
+        ]
+        alive_players.sort()
+        game.obstacles.sort()
+        destination_player_index = alive_players.index(
+            destination_player.table_position
+        )
+        game.obstacles.remove(destination_player.table_position)
+        game.obstacles.append(alive_players[destination_player_index - 1])
+        update_game(game.id, GameUpdate(obstacles=game.obstacles))
+
     updated_game = get_full_game(game.id)
     response = verify_finished_game(updated_game)
     if response["winners"] is not None:
@@ -475,6 +490,45 @@ async def just_discard(
     updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
 
+async def apply_ptr(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    """The values in obstacles[] are interpreted as: a door exists between the value
+    (player_position) and the nearest alive player positionated at the right side of player_position,
+    i.e player_position represents the left side of the door."""
+    player_position = player.table_position
+    destination_player_position = destination_player.table_position
+    alive_players = [
+        player.table_position for player in game.players if player.alive
+    ]
+    alive_players.sort()
+    # Set the door according to the position of the players
+    if (
+        player_position == alive_players[0]
+        and destination_player_position == alive_players[-1]
+    ) or (
+        player_position == alive_players[-1]
+        and destination_player_position == alive_players[0]
+    ):
+        game.obstacles.append(alive_players[-1])
+    elif player_position < destination_player_position:
+        game.obstacles.append(player_position)
+    elif player_position > destination_player_position:
+        game.obstacles.append(destination_player_position)
+
+    update_game(game.id, GameUpdate(obstacles=game.obstacles))
+    card.state = 0
+    player = remove_card_from_player(card.id, player.id, game.id)
+
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+
 effect_applications = {
     "lla": apply_lla,
     "vte": apply_vte,
@@ -491,6 +545,7 @@ effect_applications = {
     "sda": apply_sda,
     "trc": apply_trc,
     "eaf": apply_eaf,
+    "ptr": apply_ptr,
     "default": just_discard,
 }
 
