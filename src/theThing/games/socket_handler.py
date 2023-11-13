@@ -124,7 +124,7 @@ async def send_quarantine_event_to_players(game_id: int, card: CardBase, message
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "quarantine",
-        data={"log": message, "card": card_to_send},
+        data={"log": message, "cards": [card_to_send]},
         room="g" + str(game_id),
     )
 
@@ -194,7 +194,7 @@ async def send_ate_to_player(
 async def send_ups_to_players(game_id: int, player: str, hand: [CardBase]):
     data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
     await sio.emit(
-        "whisky",
+        "ups",
         data={
             "log": player + "jugó ¡Ups! y estas son sus cartas!",
             "cards": data_to_send,
