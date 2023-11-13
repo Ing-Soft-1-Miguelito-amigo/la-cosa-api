@@ -584,7 +584,7 @@ async def exchange_cards(exchange_data: dict):
     game_id = exchange_data["game_id"]
     player_id = exchange_data["player_id"]
     card_id = exchange_data["card_id"]
-
+    # This check is not necessary due to changes in the logic of the turn. But it is left for now just in case.
     try:
         game, player, card = verify_data_exchange(game_id, player_id, card_id)
     except Exception as e:
