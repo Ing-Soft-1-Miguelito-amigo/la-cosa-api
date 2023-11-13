@@ -938,28 +938,26 @@ async def finish_turn(finish_data: dict):
     updated_game = get_game(game_id)
 
     await send_game_status_to_players(game_id, updated_game)
-    response = {"message": "Turno finalizado con éxito"}
     if return_data["winners"] is not None:
         await send_finished_game_event_to_players(game_id, return_data)
         response = {
             "message": "Partida finalizada",
             "winners": return_data["winners"],
         }
+        return response  # return the winners
 
     message = f"Turno finalizado"
     try:
         save_log(game_id, message)
     except Exception as e:
         raise e
-    await send_defense_event_to_players(game_id, message)
-    response_str = str(response["message"])
     # Get name of the next turn owner
     for player in updated_game.players:
         if player.table_position == updated_game.turn.owner:
             new_owner_name = player.name
             break
     return {
-        "message": response_str,
+        "message": message,
         "new_owner_name": new_owner_name,
         "new_owner_position": updated_game.turn.owner,
     }

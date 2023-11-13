@@ -86,12 +86,12 @@ def setup_module():
 
     # give an extra card to the owner
     extra_card_data = CardCreate(
-        code="ext",
-        name="Extra",
+        code="def",
+        name="Default",
         kind=0,
-        description="Extra",
+        description="Default card",
         number_in_card=1,
-        playable=False,
+        playable=True,
     )
 
     extra_card = card_crud.create_card(extra_card_data, created_game.id)
@@ -125,7 +125,7 @@ def test_finish_turn_not_started(test_db):
         1,
         game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
     )
-    turn_crud.create_turn(1, 1)
+    turn_crud.create_turn(1, 1, "Player2")
     turn_crud.update_turn(1, turn_schemas.TurnCreate(state=1))
     # finish the turn
     response = client.put("/turn/finish", json={"game_id": 1})
@@ -134,17 +134,29 @@ def test_finish_turn_not_started(test_db):
 
 
 def test_finish_turn_success(test_db):
-    discard_data = {
-        "game_id": 1,
-        "player_id": 1,
-        "card_id": 1,
-    }
+    game = game_crud.get_full_game(1)
+    turn_owener = [player for player in game.players if player.table_position == game.turn.owner][0]
+    # get card from player hand with kind != 5 or 3
+    card = [card for card in turn_owener.hand if card.kind not in [3, 5]][0]
+    discard_data = {"game_id": 1, "player_id": turn_owener.id, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
+    game = game_crud.get_full_game(1)
     assert response.status_code == 200
+
+    # pass exchange phase
+    turn_crud.update_turn(
+        1,
+        turn_schemas.TurnCreate(
+            state=5,
+        ),
+    )
+
     # finish the turn
     response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 200
-    assert response.json() == {"message": "Turno finalizado con éxito"}
+    assert response.json() == {"message": "Turno finalizado",
+                               "new_owner_name": "Player2",
+                               "new_owner_position": 2}
 
 
 def test_finish_turn_1_end_case(test_db):
@@ -173,7 +185,7 @@ def test_finish_turn_1_end_case(test_db):
     actual_winners = ["Player2", "Player3", "Player4", "Player5"]
     response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 200
-    assert response.json()["message"] == "Partida finalizada con éxito"
+    assert response.json()["message"] == "Partida finalizada"
     # check that each winner is inside the actual winners
     for winner in response.json()["winners"]:
         assert winner in actual_winners
@@ -190,5 +202,5 @@ def test_finish_turn_2_end_case(test_db):
 
     response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 200
-    assert response.json()["message"] == "Partida finalizada con éxito"
+    assert response.json()["message"] == "Partida finalizada"
     assert response.json()["winners"] == ["Player1"]

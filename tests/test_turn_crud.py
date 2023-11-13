@@ -8,20 +8,13 @@ from src.theThing.turn.schemas import TurnCreate, TurnOut
 from .test_setup import test_db, clear_db
 from src.theThing.cards import crud as card_crud
 
-
-@db_session
 def test_create_turn(test_db):
     game_data = GameCreate(name="Test Game", min_players=4, max_players=6)
     created_game = game_crud.create_game(game_data)
 
-    turn_data = {
-        "game": created_game.id,
-        "owner": 1,
-    }
+    created_turn = crud.create_turn(created_game.id, 1, "")
 
-    created_turn = crud.create_turn(turn_data["game"], turn_data["owner"])
-
-    assert created_turn.owner == turn_data["owner"]
+    assert created_turn.owner == 1
     assert game_crud.get_game(created_game.id).model_dump() == {
         "id": 1,
         "name": "Test Game",
@@ -29,8 +22,10 @@ def test_create_turn(test_db):
         "max_players": 6,
         "state": 0,
         "play_direction": None,
+        "obstacles": [],
         "turn": {
             "destination_player": "",
+            "destination_player_exchange": "",
             "owner": 1,
             "played_card": None,
             "response_card": None,
@@ -40,7 +35,6 @@ def test_create_turn(test_db):
     }
 
 
-@db_session
 def test_update_turn(test_db):
     # start the game first to creat the deck
     game_crud.create_game_deck(1, 4)
@@ -68,8 +62,10 @@ def test_update_turn(test_db):
         "max_players": 6,
         "state": 0,  # its 0 because the game is not started (because we never called the endpoint)
         "play_direction": None,
+        "obstacles": [],
         "turn": {
             "destination_player": "TestPlayer1",
+            "destination_player_exchange": "",
             "owner": 1,
             "played_card": card.model_dump(),
             "response_card": response_card.model_dump(),
@@ -77,5 +73,3 @@ def test_update_turn(test_db):
         },
         "players": [],
     }
-
-    rollback()

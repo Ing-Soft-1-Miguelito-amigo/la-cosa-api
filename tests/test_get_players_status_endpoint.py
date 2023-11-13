@@ -27,7 +27,8 @@ def test_get_player_successful(test_db):
         "table_position": 1,
         "role": None,
         "alive": True,
-        "quarantine": False,
+        "quarantine": 0,
+        "card_to_exchange": None,
         "hand": [],
     }
     rollback()
