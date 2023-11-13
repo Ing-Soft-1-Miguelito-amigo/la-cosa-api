@@ -13,6 +13,7 @@ from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import *
 from ..cards.crud import *
 from ..cards.effect_applications import effect_applications, exchange_defense
+from ..cards.special_effect_applications import apply_hac
 from ..players.crud import create_player, get_player, delete_player
 from ..players.schemas import PlayerCreate
 from ..turn.crud import create_turn, update_turn
@@ -314,6 +315,9 @@ async def play_card(play_data: dict):
         # Send event description to all players
         message = f"{turn_player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
         await send_action_event_to_players(game_id, message)
+    elif card.code in ["hac"]:
+        await apply_hac(game, turn_player, destination_player, card, play_data["obstacle"])
+        updated_turn = TurnCreate(state=3)
     else:
         updated_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2

@@ -241,6 +241,7 @@ def verify_data_play_card(
         "cpo",
         "trc",
         "eaf",
+        "hac"
     ]:
         raise HTTPException(
             status_code=422,
@@ -252,7 +253,7 @@ def verify_data_play_card(
     alive_players.sort()
     index_player = alive_players.index(player.table_position)
     index_destination_player = alive_players.index(destination_player.table_position)
-    if card.code not in ["mvc", "whk", "vte", "sed", "cpo", "und", "sda", "trc", "eaf"]:
+    if card.code not in ["mvc", "whk", "vte", "sed", "cpo", "und", "sda", "trc", "eaf", "hac"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(

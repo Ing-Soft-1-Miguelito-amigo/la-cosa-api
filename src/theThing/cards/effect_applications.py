@@ -497,8 +497,8 @@ async def apply_ptr(
     card: CardBase,
 ):
     """The values in obstacles[] are interpreted as: a door exists between the value
-    (player_position) and the nearest alive player positionated at the right side of player_position,
-    i.e player_position represents the left side of the door."""
+    (player_position) and the nearest alive player positioned on the right side of player_position,
+    i.e. player_position represents the left side of the door."""
     player_position = player.table_position
     destination_player_position = destination_player.table_position
     alive_players = [

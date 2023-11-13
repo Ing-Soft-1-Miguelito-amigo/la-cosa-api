@@ -2,6 +2,7 @@ from src.theThing.games.crud import *
 from src.theThing.cards.crud import *
 from src.theThing.players.crud import *
 from src.theThing.turn.crud import *
+from theThing.games.schemas import GameUpdate
 
 
 async def apply_cac(
@@ -64,3 +65,18 @@ async def apply_olv(
     updated_game = get_game(game.id)
     updated_player = get_player(player.id, game.id)
     return updated_player, updated_game
+
+
+async def apply_hac(
+        game, attacker, objective, card, obstacle
+):
+    # Remove the panic card from the player
+    update_card(CardUpdate(id=card.id, state=0), game.id)
+    remove_card_from_player(card.id, attacker.id, game.id)
+
+    # Verify the obstacle to remove
+    if obstacle == "cua":
+        update_player(PlayerUpdate(quarantine=0), objective.id, game.id)
+    elif obstacle == "ptr":
+        game.obstacles.remove(objective.table_position)
+        update_game(game.id, GameUpdate(obstacles=game.obstacles))
