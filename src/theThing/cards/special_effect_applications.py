@@ -78,5 +78,5 @@ async def apply_hac(
     if obstacle["type"] == "cua" and obstacle["position"] is None:
         update_player(PlayerUpdate(quarantine=0), objective.id, game.id)
         if obstacle["type"] == "ptr" and obstacle["position"] is not None:
-        game.obstacles.remove(obstacle.position)
+        game.obstacles.remove(obstacle["position"])
         update_game(game.id, GameUpdate(obstacles=game.obstacles))
