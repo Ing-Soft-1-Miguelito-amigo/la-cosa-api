@@ -280,7 +280,8 @@ def verify_data_play_card(
         "trc",
         "eaf",
         "hac",
-        "ups"
+        "ups",
+        "npa"
     ]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
