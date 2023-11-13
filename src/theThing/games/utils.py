@@ -891,7 +891,9 @@ def update_quarantine_status(game):
         )
 
 
-def verify_obstacles_for_exchange(game: GameOut, player: PlayerBase, destination_player: PlayerBase):
+def verify_obstacles_for_exchange(
+    game: GameOut, player: PlayerBase, destination_player: PlayerBase
+):
     if len(game.obstacles) > 0:
         if (
             player.table_position in game.obstacles and game.play_direction
@@ -900,4 +902,3 @@ def verify_obstacles_for_exchange(game: GameOut, player: PlayerBase, destination
             and not game.play_direction
         ):
             raise Exception("Existe una puerta atrancada")
-    

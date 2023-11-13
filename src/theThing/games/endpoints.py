@@ -410,10 +410,12 @@ async def discard_card(discard_data: dict):
         raise e
 
     await send_discard_event_to_players(game_id, updated_player.name, message)
-    
+
     # Verify if there is an obstacle between players in the next exchange in order to jump to finishing turn
     try:
-        verify_obstacles_for_exchange(updated_game, updated_player, game.turn.destination_player_exchange)
+        verify_obstacles_for_exchange(
+            updated_game, updated_player, game.turn.destination_player_exchange
+        )
     except Exception as e:
         if str(e) == "Existe una puerta atrancada":
             update_turn(game_id, TurnCreate(state=5))
@@ -422,8 +424,11 @@ async def discard_card(discard_data: dict):
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
-            return {"message": "Jugada finalizada. " + str(e) + ", entre los jugadores que van a intercambiar. Se saltea el intercambio"}
-    
+            return {
+                "message": "Jugada finalizada. "
+                + str(e)
+                + ", entre los jugadores que van a intercambiar. Se saltea el intercambio"
+            }
 
     return {"message": "Carta descartada con éxito"}
 
@@ -533,7 +538,9 @@ async def respond_to_action_card(response_data: dict):
 
     # Verify if there is an obstacle between players in the next exchange in order to jump to finishing turn
     try:
-        verify_obstacles_for_exchange(updated_game, updated_attacking_player, updated_defending_player)
+        verify_obstacles_for_exchange(
+            updated_game, updated_attacking_player, updated_defending_player
+        )
     except Exception as e:
         if str(e) == "Existe una puerta atrancada":
             update_turn(game_id, TurnCreate(state=5))
@@ -542,8 +549,12 @@ async def respond_to_action_card(response_data: dict):
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
-            return {"message": "Jugada finalizada. " + str(e) + ", entre los jugadores que van a intercambiar. Se saltea el intercambio"}
-    
+            return {
+                "message": "Jugada finalizada. "
+                + str(e)
+                + ", entre los jugadores que van a intercambiar. Se saltea el intercambio"
+            }
+
     return {"message": "Jugada finalizada"}
 
 
