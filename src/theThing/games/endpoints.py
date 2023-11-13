@@ -520,6 +520,9 @@ async def respond_to_action_card(response_data: dict):
             # Discard the response card from the defending player hand, and give him a new one from the deck.
             remove_card_from_player(response_card_id, defending_player_id, game_id)
             new_card = get_card_from_deck(game_id)
+            while new_card.kind == 4:
+                update_card(CardUpdate(id=new_card.id, state=0), game_id)
+                new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
         except Exception as e:
             raise e
