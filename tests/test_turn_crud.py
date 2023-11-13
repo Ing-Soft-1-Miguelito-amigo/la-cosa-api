@@ -22,7 +22,7 @@ def test_create_turn(test_db):
         "min_players": 4,
         "max_players": 6,
         "state": 0,
-        "play_direction": None,
+        "play_direction": True,
         "obstacles": [],
         "turn": {
             "destination_player": "",
@@ -62,7 +62,7 @@ def test_update_turn(test_db):
         "min_players": 4,
         "max_players": 6,
         "state": 0,  # its 0 because the game is not started (because we never called the endpoint)
-        "play_direction": None,
+        "play_direction": True,
         "obstacles": [],
         "turn": {
             "destination_player": "TestPlayer1",
