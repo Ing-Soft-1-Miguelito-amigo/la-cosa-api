@@ -95,7 +95,9 @@ def setup_module():
     )
 
     extra_card = card_crud.create_card(extra_card_data, created_game.id)
-    card_crud.give_card_to_player(extra_card.id, created_player.id, created_game.id)
+    card_crud.give_card_to_player(
+        extra_card.id, created_player.id, created_game.id
+    )
 
     player_crud.update_player(
         player_schemas.PlayerUpdate(role=3), created_player.id, created_game.id
@@ -135,10 +137,18 @@ def test_finish_turn_not_started(test_db):
 
 def test_finish_turn_success(test_db):
     game = game_crud.get_full_game(1)
-    turn_owener = [player for player in game.players if player.table_position == game.turn.owner][0]
+    turn_owener = [
+        player
+        for player in game.players
+        if player.table_position == game.turn.owner
+    ][0]
     # get card from player hand with kind != 5 or 3
     card = [card for card in turn_owener.hand if card.kind not in [3, 5]][0]
-    discard_data = {"game_id": 1, "player_id": turn_owener.id, "card_id": card.id}
+    discard_data = {
+        "game_id": 1,
+        "player_id": turn_owener.id,
+        "card_id": card.id,
+    }
     response = client.put("/game/discard", json=discard_data)
     game = game_crud.get_full_game(1)
     assert response.status_code == 200
@@ -154,9 +164,11 @@ def test_finish_turn_success(test_db):
     # finish the turn
     response = client.put("/turn/finish", json={"game_id": 1})
     assert response.status_code == 200
-    assert response.json() == {"message": "Turno finalizado",
-                               "new_owner_name": "Player2",
-                               "new_owner_position": 2}
+    assert response.json() == {
+        "message": "Turno finalizado",
+        "new_owner_name": "Player2",
+        "new_owner_position": 2,
+    }
 
 
 def test_finish_turn_1_end_case(test_db):
@@ -194,7 +206,9 @@ def test_finish_turn_1_end_case(test_db):
 def test_finish_turn_2_end_case(test_db):
     game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
     for i in range(2, 6):
-        player_crud.update_player(player_schemas.PlayerUpdate(role=2, alive=True), i, 1)
+        player_crud.update_player(
+            player_schemas.PlayerUpdate(role=2, alive=True), i, 1
+        )
 
     game = game_crud.update_game(1, game_schemas.GameUpdate(state=1))
 

@@ -8,6 +8,7 @@ from src.theThing.turn.schemas import TurnCreate, TurnOut
 from .test_setup import test_db, clear_db
 from src.theThing.cards import crud as card_crud
 
+
 def test_create_turn(test_db):
     game_data = GameCreate(name="Test Game", min_players=4, max_players=6)
     created_game = game_crud.create_game(game_data)

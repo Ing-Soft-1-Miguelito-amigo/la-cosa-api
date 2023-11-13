@@ -946,18 +946,19 @@ async def finish_turn(finish_data: dict):
         }
         return response  # return the winners
 
-    message = f"Turno finalizado"
-    try:
-        save_log(game_id, message)
-    except Exception as e:
-        raise e
     # Get name of the next turn owner
     for player in updated_game.players:
         if player.table_position == updated_game.turn.owner:
             new_owner_name = player.name
             break
-    return {
-        "message": message,
-        "new_owner_name": new_owner_name,
-        "new_owner_position": updated_game.turn.owner,
-    }
+
+    message = f"Turno finalizado. Ahora el turno es de {new_owner_name}"
+    try:
+        save_log(game_id, message)
+    except Exception as e:
+        raise e
+
+    await send_finished_turn_to_players(
+        game_id, message, new_owner_name, updated_game.turn.owner
+    )
+    return message

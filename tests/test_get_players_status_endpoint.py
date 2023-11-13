@@ -45,10 +45,18 @@ def test_get_player_successful_started(test_db):
     client.post("/game/create", json=game_data)
 
     # Add a few players
-    client.post("/game/join", json={"game_id": 1, "player_name": "Test Player 1"})
-    client.post("/game/join", json={"game_id": 1, "player_name": "Test Player 2"})
-    client.post("/game/join", json={"game_id": 1, "player_name": "Test Player 3"})
-    client.post("/game/join", json={"game_id": 1, "player_name": "Test Player 4"})
+    client.post(
+        "/game/join", json={"game_id": 1, "player_name": "Test Player 1"}
+    )
+    client.post(
+        "/game/join", json={"game_id": 1, "player_name": "Test Player 2"}
+    )
+    client.post(
+        "/game/join", json={"game_id": 1, "player_name": "Test Player 3"}
+    )
+    client.post(
+        "/game/join", json={"game_id": 1, "player_name": "Test Player 4"}
+    )
     # Start the game
     client.post("/game/start", json={"game_id": 1, "player_name": "Test Host"})
 

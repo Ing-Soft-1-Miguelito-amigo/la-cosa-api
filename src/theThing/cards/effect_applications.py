@@ -47,7 +47,9 @@ async def apply_lla(
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
     updated_destination_player = update_player(
         PlayerUpdate(
             table_position=destination_player.table_position,
@@ -63,7 +65,9 @@ async def apply_lla(
     new_exchange_destination = get_player_in_next_n_places(
         updated_game, player.table_position, 1
     )
-    new_turn = TurnCreate(destination_player_exchange=new_exchange_destination.name)
+    new_turn = TurnCreate(
+        destination_player_exchange=new_exchange_destination.name
+    )
     update_turn(game.id, new_turn)
 
     # Update the obstacles value, if the dead player was an obstacle
@@ -106,7 +110,9 @@ async def apply_vte(
     new_exchange_destination = get_player_in_next_n_places(
         game, destination_player.table_position, 1
     )
-    new_turn = TurnCreate(destination_player_exchange=new_exchange_destination.name)
+    new_turn = TurnCreate(
+        destination_player_exchange=new_exchange_destination.name
+    )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
     return updated_game
@@ -125,7 +131,9 @@ async def apply_cdl(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -165,7 +173,9 @@ async def apply_mvc(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -328,7 +338,9 @@ async def apply_und(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -368,7 +380,9 @@ async def apply_sda(
         player.table_position,
     )
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     updated_player = update_player(
         PlayerUpdate(table_position=player.table_position), player.id, game.id
@@ -435,7 +449,9 @@ async def apply_eaf(
 
     # Swap the players by pairs clockwise, starting by the current turn owner
     game_to_update = get_full_game(game.id)
-    alive_players = [player for player in game_to_update.players if player.alive]
+    alive_players = [
+        player for player in game_to_update.players if player.alive
+    ]
     alive_players.sort(key=lambda x: x.table_position)
 
     first_player = player
@@ -487,7 +503,9 @@ async def just_discard(
     player = remove_card_from_player(card.id, player.id, game.id)
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
 
 async def apply_ptr(
@@ -559,13 +577,17 @@ async def apply_ate(
     card.state = 0
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     card_to_send = player.card_to_exchange
     update_player(PlayerUpdate(card_to_exchange=None), player.id, game.id)
 
     update_turn(game.id, TurnCreate(state=5))
-    await sh.send_ate_to_player(game.id, player, destination_player, card_to_send)
+    await sh.send_ate_to_player(
+        game.id, player, destination_player, card_to_send
+    )
     # TODO: SEND DEFENSE EVENT TO CLIENT
     updated_game = get_full_game(game.id)
     return updated_game
@@ -580,7 +602,9 @@ async def apply_ngs(
     card.state = 0
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
     update_player(PlayerUpdate(card_to_exchange=None), player.id, game.id)
 
@@ -599,13 +623,21 @@ async def apply_fal(
     card.state = 0
 
     # push the changes to the database
-    updated_card = update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
 
-    update_player(PlayerUpdate(card_to_exchange=None), destination_player.id, game.id)
+    update_player(
+        PlayerUpdate(card_to_exchange=None), destination_player.id, game.id
+    )
 
     game = get_game(game.id)
-    new_dest = get_player_in_next_n_places(game, destination_player.table_position, 1)
-    update_turn(game.id, TurnCreate(state=4, destination_player_exchange=new_dest.name))
+    new_dest = get_player_in_next_n_places(
+        game, destination_player.table_position, 1
+    )
+    update_turn(
+        game.id, TurnCreate(state=4, destination_player_exchange=new_dest.name)
+    )
     # TODO: SEND DEFENSE EVENT TO CLIENT
 
 

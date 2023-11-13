@@ -10,7 +10,9 @@ client = TestClient(app)
 
 
 def test_logs_crud(test_db):
-    game = create_game(GameCreate(name="Test Game", min_players=4, max_players=6))
+    game = create_game(
+        GameCreate(name="Test Game", min_players=4, max_players=6)
+    )
     save_log(game_id=game.id, log="Test log")
     save_log(game_id=game.id, log="Test log 2")
     logs = get_logs(game_id=game.id)
@@ -47,8 +49,12 @@ def test_get_logs_endpoint(test_db):
     ).json()["player_id"]
 
     # start the game
-    client.post("/game/start", json={"game_id": game_id, "player_name": "Test Host"})
-    client.put("/game/steal", json={"player_id": player1_id, "game_id": game_id})
+    client.post(
+        "/game/start", json={"game_id": game_id, "player_name": "Test Host"}
+    )
+    client.put(
+        "/game/steal", json={"player_id": player1_id, "game_id": game_id}
+    )
 
     response = client.get(f"game/{game_id}/get-logs")
     assert response.status_code == 200

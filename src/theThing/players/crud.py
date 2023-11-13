@@ -28,7 +28,9 @@ def create_player(player_data: PlayerCreate, game_id: int):
         elif game_to_join.max_players == len(game_to_join.players):
             raise Exception("La partida está llena")
         # check if a player with the same name exists in the list
-        elif any(player.name == player_data.name for player in game_to_join.players):
+        elif any(
+            player.name == player_data.name for player in game_to_join.players
+        ):
             raise Exception("Ya existe un jugador con el mismo nombre")
 
         player = Player(**player_data.model_dump(), game=game_to_join)
@@ -50,7 +52,9 @@ def get_player(player_id: int, game_id: int):
             raise ObjectNotFound(Player, pkval=player_id)
 
         if player.card_to_exchange is not None:
-            card_to_exchange = CardBase.model_validate(Card[player.card_to_exchange])
+            card_to_exchange = CardBase.model_validate(
+                Card[player.card_to_exchange]
+            )
         else:
             card_to_exchange = None
         response = PlayerBase.model_validate(player, card_to_exchange)
@@ -71,7 +75,9 @@ def update_player(player: PlayerUpdate, player_id: int, game_id: int):
 
         if player.card_to_exchange is not None:
             player_to_update.set(
-                **player.model_dump(exclude_unset=True, exclude=["card_to_exchange"])
+                **player.model_dump(
+                    exclude_unset=True, exclude=["card_to_exchange"]
+                )
             )
             player_to_update.card_to_exchange = player.card_to_exchange.id
         else:

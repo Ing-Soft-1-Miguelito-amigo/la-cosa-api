@@ -52,7 +52,7 @@ def test_discard_card_succesfully(test_db):
 
     # get a random card from the player hand
     player = player_crud.get_player(1, 1)
-    card = [card for card in player.hand if card.kind not in [3,5]][0]
+    card = [card for card in player.hand if card.kind not in [3, 5]][0]
     # Discard a random card
     discard_data = {"game_id": 1, "player_id": 1, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
@@ -120,7 +120,9 @@ def test_discard_2_times(test_db):
     discard_data = {"game_id": 1, "player_id": 4, "card_id": card.id}
     response = client.put("/game/discard", json=discard_data)
     assert response.status_code == 422
-    assert response.json() == {"detail": "No es posible descartar en este momento"}
+    assert response.json() == {
+        "detail": "No es posible descartar en este momento"
+    }
 
 
 def test_discard_not_existent_card(test_db):

@@ -40,7 +40,9 @@ async def disconnect(sid):
 
 
 async def send_player_status_to_player(player_id: int, player_data: PlayerBase):
-    await sio.emit("player_status", player_data.model_dump(), room="p" + str(player_id))
+    await sio.emit(
+        "player_status", player_data.model_dump(), room="p" + str(player_id)
+    )
 
 
 async def send_game_status_to_players(game_id: int, game_data: GameOut):
@@ -50,12 +52,16 @@ async def send_game_status_to_players(game_id: int, game_data: GameOut):
     :param game_data:
     :return:
     """
-    await sio.emit("game_status", game_data.model_dump(), room="g" + str(game_id))
+    await sio.emit(
+        "game_status", game_data.model_dump(), room="g" + str(game_id)
+    )
 
 
 async def send_game_and_player_status_to_players(game_data: GameInDB):
     for player in game_data.players:
-        await sio.emit("player_status", player.model_dump(), room="p" + str(player.id))
+        await sio.emit(
+            "player_status", player.model_dump(), room="p" + str(player.id)
+        )
     game_to_send = GameOut.model_validate_json(game_data.model_dump_json())
     await sio.emit(
         "game_status", game_to_send.model_dump(), room="g" + str(game_data.id)
@@ -86,7 +92,9 @@ async def send_action_event_to_players(game_id: int, message: str):
     )
 
 
-async def send_discard_event_to_players(game_id: int, player_name: str, message: str):
+async def send_discard_event_to_players(
+    game_id: int, player_name: str, message: str
+):
     await sio.emit(
         "discard",
         {
@@ -114,13 +122,31 @@ async def send_exchange_event_to_players(
     await sio.emit(
         "exchange",
         data={
-            "log": exchanging_offerer + " intercambió cartas con " + defending_player
+            "log": exchanging_offerer
+            + " intercambió cartas con "
+            + defending_player
         },
         room="g" + str(game_id),
     )
 
 
-async def send_quarantine_event_to_players(game_id: int, card: CardBase, message: str):
+async def send_finished_turn_to_players(
+    game_id: int, message: str, new_owner_name: str, new_owner_position: int
+):
+    await sio.emit(
+        "turn_finished",
+        data={
+            "log": message,
+            "new_owner_name": new_owner_name,
+            "new_owner_position": new_owner_position,
+        },
+        room="g" + str(game_id),
+    )
+
+
+async def send_quarantine_event_to_players(
+    game_id: int, card: CardBase, message: str
+):
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "quarantine",
@@ -129,10 +155,14 @@ async def send_quarantine_event_to_players(game_id: int, card: CardBase, message
     )
 
 
-async def send_panic_event_to_players(game_id: int, card: CardBase, message: str):
+async def send_panic_event_to_players(
+    game_id: int, card: CardBase, message: str
+):
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
-        "panic", data={"log": message, "cards": [card_to_send]}, room="g" + str(game_id)
+        "panic",
+        data={"log": message, "cards": [card_to_send]},
+        room="g" + str(game_id),
     )
 
 
@@ -203,7 +233,9 @@ async def send_ups_to_players(game_id: int, player: str, hand: [CardBase]):
     )
 
 
-async def send_qen_to_player(game_id: int, hand: [CardBase], dest_player: PlayerBase):
+async def send_qen_to_player(
+    game_id: int, hand: [CardBase], dest_player: PlayerBase
+):
     data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
     await sio.emit(
         "qen",
