@@ -418,9 +418,7 @@ async def discard_card(discard_data: dict):
         if str(e) == "Existe una puerta atrancada":
             update_turn(game_id, TurnCreate(state=5))
             updated_game = get_game(game_id)
-            message = f"{updated_player.name} no pudo intercambiar con 
-                {updated_game.turn.destination_player_exchange} porque hay 
-                una puerta atrancada entre ambos. Se saltea el intercambio."
+            message = f"{updated_player.name} no pudo intercambiar con {updated_game.turn.destination_player_exchange} porque hay una puerta atrancada entre ambos. Se saltea el intercambio."
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
@@ -540,9 +538,7 @@ async def respond_to_action_card(response_data: dict):
         if str(e) == "Existe una puerta atrancada":
             update_turn(game_id, TurnCreate(state=5))
             updated_game = get_game(game_id)
-            message = f"{updated_attacking_player.name} no pudo intercambiar con 
-                {updated_game.turn.destination_player_exchange} porque hay 
-                una puerta atrancada entre ambos. Se saltea el intercambio."
+            message = f"{updated_attacking_player.name} no pudo intercambiar con {updated_game.turn.destination_player_exchange} porque hay una puerta atrancada entre ambos. Se saltea el intercambio."
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
@@ -585,7 +581,7 @@ async def exchange_cards(exchange_data: dict):
             update_turn(game_id, TurnCreate(state=5))
             updated_game = get_game(game_id)
             player = get_player(player_id, game_id)
-            message = f"{player.name} no pudo intercambiar con {updated_game.turn.destination_player_exchange} porque hay una puerta atrancada entre ambos."
+            message = f"{player.name} no pudo intercambiar con {updated_game.turn.destination_player_exchange} porque hay una puerta atrancada entre ambos. Se saltea el intercambio."
             save_log(game_id, message)
             await send_action_event_to_players(game_id, message)
             await send_game_status_to_players(game_id, updated_game)
