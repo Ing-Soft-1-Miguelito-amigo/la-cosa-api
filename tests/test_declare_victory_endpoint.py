@@ -136,9 +136,7 @@ def test_declare_victory_infected_win():
     # make players infected
     player_crud.update_player(player_schemas.PlayerUpdate(role=2), 2, 1)
     player_crud.update_player(player_schemas.PlayerUpdate(role=2), 3, 1)
-    player_crud.update_player(
-        player_schemas.PlayerUpdate(role=1, alive=False), 4, 1
-    )
+    player_crud.update_player(player_schemas.PlayerUpdate(role=1, alive=False), 4, 1)
 
     # then declare victory
     response = test_app.put(

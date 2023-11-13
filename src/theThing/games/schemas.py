@@ -28,6 +28,7 @@ class GameInDB(GameCreate):
     turn: Optional[TurnOut] = None
     players: List[PlayerBase] = None
     deck: List[CardBase] = None
+    obstacles: Optional[List[int]] = []
 
 
 class GameOut(BaseModel):
@@ -40,6 +41,7 @@ class GameOut(BaseModel):
     play_direction: Optional[bool] = None
     turn: Optional[TurnOut] = None
     players: List[PlayerForGame] = []
+    obstacles: Optional[List[int]] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -57,5 +59,5 @@ class GameUpdate(BaseModel):
     # This is used to update a game
     state: Optional[int] = None
     play_direction: Optional[bool] = None
-
+    obstacles: Optional[List[int]] = []
     model_config = ConfigDict(from_attributes=True)

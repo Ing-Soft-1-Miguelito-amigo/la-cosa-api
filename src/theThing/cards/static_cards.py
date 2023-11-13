@@ -568,4 +568,202 @@ dict_of_cards = {
         "number_in_card": 9,
         "amount_in_deck": 1,
     },
+    # PANIC CARDS
+    # Just between us cards
+    "qen7": {
+        "code": "qen",
+        "name": "Que quede entre nosotros...",
+        "kind": 4,
+        "description": "Muéstrale todas las cartas de tu mano a un jugador adyacente de tu eleción.",
+        "number_in_card": 7,
+        "amount_in_deck": 1,
+    },
+    "qen9": {
+        "code": "qen",
+        "name": "Que quede entre nosotros...",
+        "kind": 4,
+        "description": "Muéstrale todas las cartas de tu mano a un jugador adyacente de tu eleción.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Blind date cards
+    "cac4": {
+        "code": "cac",
+        "name": "Cita a ciegas",
+        "kind": 4,
+        "description": "Intercambia una carta de tu mano con la primera del mazo, descartando cualquier carta de "
+        "'¡Pánico!' robada. Tu turno termina",
+        "number_in_card": 4,
+        "amount_in_deck": 1,
+    },
+    "cac9": {
+        "code": "cac",
+        "name": "Cita a ciegas",
+        "kind": 4,
+        "description": "Intercambia una carta de tu mano con la primera del mazo, descartando cualquier carta de "
+        "'¡Pánico!' robada. Tu turno termina",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Oops! cards
+    "ups10": {
+        "code": "ups",
+        "name": "¡Ups!",
+        "kind": 4,
+        "description": "Muéstrales todas las cartas de tu mano a todos los jugadores",
+        "number_in_card": 10,
+        "amount_in_deck": 1,
+    },
+    # Rotten ropes cards
+    "cpo6": {
+        "code": "cpo",
+        "name": "Cuerdas podridas",
+        "kind": 4,
+        "description": "Todas las cartas 'Cuarentena' que haya en juego son descartadas.",
+        "number_in_card": 6,
+        "amount_in_deck": 1,
+    },
+    "cpo9": {
+        "code": "cpo",
+        "name": "Cuerdas podridas",
+        "kind": 4,
+        "description": "Todas las cartas 'Cuarentena' que haya en juego son descartadas.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # So this is the party? cards
+    "eaf5": {
+        "code": "eaf",
+        "name": "¿Es aquí la fiesta?",
+        "kind": 4,
+        "description": "Descarta todas las cartas 'Cuarentena' y 'Puerta atrancada' que haya en juego. A "
+        "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
+        "en el sentido de las agujas del reloj.",
+        "number_in_card": 5,
+        "amount_in_deck": 1,
+    },
+    "eaf9": {
+        "code": "eaf",
+        "name": "¿Es aquí la fiesta?",
+        "kind": 4,
+        "description": "Descarta todas las cartas 'Cuarentena' y 'Puerta atrancada' que haya en juego. A "
+        "continuación, empezando por ti, todos los jugadores cambian de sitio por parejas, "
+        "en el sentido de las agujas del reloj.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Round and round cards
+    """
+    "vyv4": {
+        "code": "vyv",
+        "name": "Vuelta y vuelta",
+        "kind": 4,
+        "description": "Todos los jugadores deben darle 1 carta al siguiente jugador que tengan al lado, "
+                       "simultáneamente y en el sentido de juego actual, ignorando cualquier carta 'Puerta "
+                       "atrancada' y 'Cuarentena' que haya en juego. "
+                       "No puedes usar ninguna carta para evitar este intercambio. La Cosa puede infectar a "
+                       "otro jugador. Tu turno termina.",
+        "number_in_card": 4,
+        "amount_in_deck": 1,
+    },
+    "vyv9": {
+        "code": "vyv",
+        "name": "Vuelta y vuelta",
+        "kind": 4,
+        "description": "Todos los jugadores deben darle 1 carta al siguiente jugador que tengan al lado, "
+                       "simultáneamente y en el sentido de juego actual, ignorando cualquier carta 'Puerta "
+                       "atrancada' y 'Cuarentena' que haya en juego. "
+                       "No puedes usar ninguna carta para evitar este intercambio. La Cosa puede infectar a "
+                       "otro jugador. Tu turno termina.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    """
+    # Can't we be friends? cards
+    "npa7": {
+        "code": "npa",
+        "name": "¿No podemos ser amigos?",
+        "kind": 4,
+        "description": "Intercambia 1 carta con cualquier jugador de tu elección que no esté en Cuarentena",
+        "number_in_card": 7,
+        "amount_in_deck": 1,
+    },
+    "npa9": {
+        "code": "npa",
+        "name": "¿No podemos ser amigos?",
+        "kind": 4,
+        "description": "Intercambia 1 carta con cualquier jugador de tu elección que no esté en Cuarentena",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Forgetful cards
+    "olv4": {
+        "code": "olv",
+        "name": "Olvidadizo",
+        "kind": 4,
+        "description": "Descarta 3 cartas de tu mano y roba 3 nuevas cartas '¡Aléjate!', descartando cualquier carta "
+        "de '¡Pánico!' robada.",
+        "number_in_card": 4,
+        "amount_in_deck": 1,
+    },
+    # One, two... cards
+    "und5": {
+        "code": "und",
+        "name": "Uno, dos...",
+        "kind": 4,
+        "description": "Cámbiate de sitio con el tercer jugador que tengas a tu izquierda o a tu derecha (a tu "
+        "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
+        "estáis en Cuarentena, el cambio no tiene lugar.",
+        "number_in_card": 5,
+        "amount_in_deck": 1,
+    },
+    "und9": {
+        "code": "und",
+        "name": "Uno, dos...",
+        "kind": 4,
+        "description": "Cámbiate de sitio con el tercer jugador que tengas a tu izquierda o a tu derecha (a tu "
+        "elección), ignorando cualquier 'Puerta atrancada' que haya en juego. Si tú o ese jugador "
+        "estáis en Cuarentena, el cambio no tiene lugar.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Three, four... cards
+    "trc4": {
+        "code": "trc",
+        "name": "Tres, cuatro...",
+        "kind": 4,
+        "description": "Todas las cartas 'Puerta atrancada' que haya en juego son descartadas.",
+        "number_in_card": 4,
+        "amount_in_deck": 1,
+    },
+    "trc9": {
+        "code": "trc",
+        "name": "Tres, cuatro...",
+        "kind": 4,
+        "description": "Todas las cartas 'Puerta atrancada' que haya en juego son descartadas.",
+        "number_in_card": 9,
+        "amount_in_deck": 1,
+    },
+    # Revelations cards
+    """
+    "rev8": {
+        "code": "rev",
+        "name": "Revelaciones",
+        "kind": 4,
+        "description": "Empezando por ti y siguiente el orden de juego, cada jugador elige si revela o no su mano. "
+                       "La ronda d e'Revelaciones' termina cuando un jugador muestre una carta '¡Infectado!', sin "
+                       "que tenga que revelar el resto de su mano.",
+        "number_in_card": 8,
+        "amount_in_deck": 1,
+    },
+    """
+    # Get out of here! cards
+    "sda5": {
+        "code": "sda",
+        "name": "¡Sal de aquí!",
+        "kind": 4,
+        "description": "Cámbiate de sitio con cualquier jugador de tu elección que no esté en Cuarentena.",
+        "number_in_card": 5,
+        "amount_in_deck": 1,
+    },
 }

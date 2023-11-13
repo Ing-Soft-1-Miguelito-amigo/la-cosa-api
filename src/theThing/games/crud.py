@@ -60,9 +60,7 @@ def get_game(game_id: int):
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
             if game.turn.destination_player_exchange is not None:
-                destination_player_exchange = (
-                    game.turn.destination_player_exchange
-                )
+                destination_player_exchange = game.turn.destination_player_exchange
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
@@ -82,6 +80,7 @@ def get_game(game_id: int):
                 play_direction=game.play_direction,
                 turn=return_turn,
                 players=game.players,
+                obstacles=game.obstacles,
                 chat=[
                     MessageOut.model_validate(message)
                     for message in ordered_chat
@@ -113,9 +112,7 @@ def get_full_game(game_id: int):
             if game.turn.destination_player is not None:
                 destination_player = game.turn.destination_player
             if game.turn.destination_player_exchange is not None:
-                destination_player_exchange = (
-                    game.turn.destination_player_exchange
-                )
+                destination_player_exchange = game.turn.destination_player_exchange
 
             return_turn = schemas.TurnOut(
                 owner=game.turn.owner,
@@ -142,6 +139,7 @@ def get_full_game(game_id: int):
                 turn=return_turn,
                 players=list_playerbase,
                 deck=game.deck,
+                obstacles=game.obstacles,
                 chat=[
                     MessageOut.model_validate(message)
                     for message in ordered_chat
@@ -214,6 +212,7 @@ def update_game(game_id: int, game: schemas.GameUpdate) -> schemas.GameInDB:
                 turn=return_turn,
                 players=game_to_update.players,
                 deck=game_to_update.deck,
+                obstacles=game_to_update.obstacles,
                 chat=[
                     MessageOut.model_validate(message)
                     for message in ordered_chat

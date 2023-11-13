@@ -1,12 +1,10 @@
+from enum import Flag
 from fastapi import HTTPException
+from httpx import get
 from pony.orm import ObjectNotFound as ExceptionObjectNotFound
 from .crud import get_full_game, update_game, get_game
 from .schemas import GameOut, GameInDB, GameUpdate
-from ..cards.crud import (
-    get_card,
-    give_card_to_player,
-    remove_card_from_player
-)
+from ..cards.crud import get_card, give_card_to_player, remove_card_from_player
 from ..turn.crud import update_turn
 from ..turn.schemas import TurnCreate
 import random
@@ -143,11 +141,7 @@ def verify_finished_game(game: GameOut):
             )
 
     amount_infected_players = len(
-        [
-            player
-            for player in game.players
-            if (player.role == 2 and player.alive)
-        ]
+        [player for player in game.players if (player.role == 2 and player.alive)]
     )
     if amount_infected_players == len(game.players) - 1:
         # if "La cosa" infected all players, the game ends and "La cosa" wins
@@ -174,8 +168,7 @@ def verify_finished_game(game: GameOut):
             reason = "La cosa fue el último jugador vivo y ganó la partida"
         else:
             reason = (
-                alive_players[0].name
-                + " fue el último jugador vivo y ganó la partida"
+                alive_players[0].name + " fue el último jugador vivo y ganó la partida"
             )
     return_data = {"game": game, "winners": winners, "reason": reason}
     return return_data
@@ -188,13 +181,9 @@ def verify_data_play_card(
     try:
         game = get_full_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=404, detail=str("No se encontró la partida")
-        )
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
 
     # Verify that the player exists, and it is the turn owner and it is alive
     try:
@@ -225,10 +214,8 @@ def verify_data_play_card(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
-    if card.kind not in [0, 2]:
-        raise HTTPException(
-            status_code=422, detail="No puedes jugar esta carta"
-        )
+    if card.kind not in [0, 2, 4]:
+        raise HTTPException(status_code=422, detail="No puedes jugar esta carta")
     if card.playable is False:
         raise HTTPException(
             status_code=422, detail="La carta seleccionada no es jugable"
@@ -248,34 +235,69 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id and card.code not in ["whk", "vte"]:
+    if destination_player.id == player.id and card.code not in [
+        "whk",
+        "vte",
+        "cpo",
+        "trc",
+        "eaf",
+        "hac"
+    ]:
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
         )
     if not destination_player.alive:
-        raise HTTPException(
-            status_code=422, detail="El jugador objetivo no está vivo"
-        )
+        raise HTTPException(status_code=422, detail="El jugador objetivo no está vivo")
     alive_players = [p.table_position for p in game.players if p.alive]
     alive_players.sort()
     index_player = alive_players.index(player.table_position)
-    index_destination_player = alive_players.index(
-        destination_player.table_position
-    )
-    if card.code not in ["mvc", "whk", "vte", "sed"]:
+    index_destination_player = alive_players.index(destination_player.table_position)
+    if card.code not in ["mvc", "whk", "vte", "sed", "cpo", "und", "sda", "trc", "eaf", "hac"]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
             alive_players
-        ) or index_destination_player == (index_player - 1) % len(
-            alive_players
-        ):
+        ) or index_destination_player == (index_player - 1) % len(alive_players):
             pass
         else:
             raise HTTPException(
                 status_code=422,
                 detail="El jugador destino no está sentado en una posición adyacente",
+            )
+    # Check for obstacles
+    if len(game.obstacles) > 0 and (
+        card.code not in ["whk", "vte", "sed", "mvc", "hac"]
+    ):
+        door_flag = False
+        player_position = player.table_position
+        destination_player_position = destination_player.table_position
+        if (  # played to the left case 1
+            player_position == alive_players[0]
+            and destination_player_position == alive_players[-1]
+        ):
+            if destination_player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the right case 1
+            player_position == alive_players[-1]
+            and destination_player_position == alive_players[0]
+        ):
+            if player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the left case 2
+            player_position > destination_player_position
+        ):
+            if destination_player_position in game.obstacles:
+                door_flag = True
+        elif (  # played to the right case 2
+            player_position < destination_player_position
+        ):
+            if player_position in game.obstacles:
+                door_flag = True
+        if door_flag:
+            raise HTTPException(
+                status_code=422,
+                detail="No es posible jugar esta carta al jugador, existe una puerta atrancada entre ambos",
             )
     return game, player, card, destination_player
 
@@ -285,13 +307,9 @@ def verify_data_steal_card(game_id: int, player_id: int):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=404, detail=str("No se encontró la partida")
-        )
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
     if game.turn.state != 0:
         raise HTTPException(
             status_code=422,
@@ -306,9 +324,7 @@ def verify_data_steal_card(game_id: int, player_id: int):
                 status_code=422, detail="La mano del jugador está llena"
             )
     except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=422, detail=str("No se encontró el jugador")
-        )
+        raise HTTPException(status_code=422, detail=str("No se encontró el jugador"))
 
     # Verify that it actually is the player turn
     if game.turn.owner != player.table_position:
@@ -322,9 +338,7 @@ def verify_data_generic(game_id: int, player_id: int, card_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
 
     # Verify that the player exists, and it is the turn owner and is alive.
     try:
@@ -401,9 +415,7 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
     if game.turn.state != 2:
         raise HTTPException(
             status_code=422, detail="No es posible defenderse en este momento"
@@ -419,16 +431,12 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
             status_code=404, detail="No se encontró el jugador atacante"
         )
     if not attacking_player.alive:
-        raise HTTPException(
-            status_code=422, detail="El jugador atacante está muerto"
-        )
+        raise HTTPException(status_code=422, detail="El jugador atacante está muerto")
     # Check the defending player exists and its alive
     try:
         defending_player = get_player(defending_player_id, game_id)
     except Exception as e:
-        raise HTTPException(
-            status_code=404, detail="No se encontró el jugador destino"
-        )
+        raise HTTPException(status_code=404, detail="No se encontró el jugador destino")
 
     # Check the action card state
     try:
@@ -491,6 +499,15 @@ def verify_data_exchange(game_id: int, player_id: int, card_id: int):
             status_code=422,
             detail="No es posible intercambiar la última carta de infección",
         )
+    if len(game.obstacles) > 0:
+        if (
+            player.table_position in game.obstacles and game.play_direction
+        ) or (
+            destination_player.table_position in game.obstacles
+            and not game.play_direction
+        ):
+            raise Exception("Existe una puerta atrancada")
+
     return game, player, card
 
 
@@ -502,9 +519,7 @@ def verify_data_exchange_basic(game_id: int, defending_player_id: int):
     except ExceptionObjectNotFound as e:
         raise HTTPException(status_code=404, detail="No se encontró la partida")
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
     if game.turn.state != 4:
         raise HTTPException(
             status_code=422,
@@ -580,9 +595,7 @@ def exchange_cards_effect(
                     detail="No es posible intercambiar esta carta con este jugador",
                 )
 
-    infected_cards = [
-        card for card in defending_player.hand if card.code == "inf"
-    ]
+    infected_cards = [card for card in defending_player.hand if card.code == "inf"]
     if (
         len(infected_cards) == 1
         and exchange_card.id == infected_cards[0].id
@@ -605,8 +618,13 @@ def exchange_cards_effect(
     exchanging_offerer = remove_card_from_player(
         offered_card.id, exchanging_offerer.id, game_id
     )
+    game = get_game(game_id)
     # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
-    if offered_card.code == "inf" and exchanging_offerer.role == 3:
+    if (
+        offered_card.code == "inf"
+        and exchanging_offerer.role == 3
+        and game.turn.played_card.code != "fal"
+    ):
         update_player(PlayerUpdate(role=2), defending_player.id, game_id)
 
     # Clean the field card_to_exchange from the offerer player
@@ -698,19 +716,13 @@ def verify_data_finish_turn(game_id: int):
     try:
         game = get_game(game_id)
     except ExceptionObjectNotFound as e:
-        raise HTTPException(
-            status_code=404, detail=str("No se encontró la partida")
-        )
+        raise HTTPException(status_code=404, detail=str("No se encontró la partida"))
 
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida aún no ha comenzado"
-        )
+        raise HTTPException(status_code=422, detail="La partida aún no ha comenzado")
 
     if game.turn.state != 5:
-        raise HTTPException(
-            status_code=422, detail="El turno aún no ha terminado"
-        )
+        raise HTTPException(status_code=422, detail="El turno aún no ha terminado")
 
     return game
 
@@ -774,9 +786,7 @@ def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
     Returns:
     - PlayerBase: The player that is n places after the player in the table.
     """
-    alive_players = [
-        player.table_position for player in game.players if player.alive
-    ]
+    alive_players = [player.table_position for player in game.players if player.alive]
     alive_players.sort()
     index_player = alive_players.index(owner)
     if game.play_direction:
@@ -796,9 +806,7 @@ def calculate_winners_if_victory_declared(game_id, player_id):
         raise HTTPException(status_code=404, detail=str(e))
 
     if game.state != 1:
-        raise HTTPException(
-            status_code=422, detail="La partida no está en juego"
-        )
+        raise HTTPException(status_code=422, detail="La partida no está en juego")
 
     if player.role != 3:
         raise HTTPException(status_code=422, detail="El jugador no es La Cosa")
@@ -827,9 +835,7 @@ def calculate_winners_if_victory_declared(game_id, player_id):
 
 
 def update_quarantine_status(game):
-    """
-
-    """
+    """ """
     turn_owner_position = game.turn.owner
 
     for player in game.players:
@@ -839,4 +845,21 @@ def update_quarantine_status(game):
     if player_to_update.quarantine > 0:
         player = get_player(player_to_update.id, game.id)
         new_quarantine = player.quarantine - 1
-        update_player(PlayerUpdate(quarantine=new_quarantine), player_to_update.id, game.id)
+        update_player(
+            PlayerUpdate(quarantine=new_quarantine),
+            player_to_update.id,
+            game.id,
+        )
+
+
+def verify_obstacles_for_exchange(
+    game: GameOut, player: PlayerBase, destination_player: PlayerBase
+):
+    if len(game.obstacles) > 0:
+        if (
+            player.table_position in game.obstacles and game.play_direction
+        ) or (
+            destination_player.table_position in game.obstacles
+            and not game.play_direction
+        ):
+            raise Exception("Existe una puerta atrancada")
