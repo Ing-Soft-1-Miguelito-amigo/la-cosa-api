@@ -331,9 +331,15 @@ async def play_card(play_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
-    message = (
-        f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
-    )
+    if card.code == "hac":
+        obstacle = "cuarentena" if play_data["obstacle"] == "cua" else "puerta atrancada"
+        message = (
+            f"{player.name} jugó {card.name} sobre la {obstacle} del jugador {destination_player.name}"
+        )
+    else:
+        message = (
+            f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+        )
     try:
         save_log(game_id, message)
     except Exception as e:
