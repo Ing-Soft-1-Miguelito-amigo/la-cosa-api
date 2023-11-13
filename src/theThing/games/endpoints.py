@@ -718,6 +718,9 @@ async def response_exchange(response_ex_data: dict):
                 defense_card_id, defending_player_id, game_id
             )
             new_card = get_card_from_deck(game_id)
+            while new_card.kind == 4:
+                update_card(CardUpdate(id=new_card.id, state=0), game_id)
+                new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
             # the turn update is performed inside the defense function
             message = f"{defending_player.name} se defendió con {defense_card.name} del intercambio con {exchanging_offerer.name}"
