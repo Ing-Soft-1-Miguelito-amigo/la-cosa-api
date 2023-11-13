@@ -378,7 +378,7 @@ async def discard_card(discard_data: dict):
     Raises:
         HTTPException:
             - 404 (Not Found): If the specified game, or player, or card
-              does not exists.
+              does not exist.
             - 422 (Unprocessable Entity):
                 Multiple possible errors. Description on "detail".
     """
