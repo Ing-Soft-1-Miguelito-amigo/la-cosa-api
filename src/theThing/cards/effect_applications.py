@@ -402,7 +402,7 @@ async def apply_trc(
     card: CardBase,
 ):
     card.state = 0
-
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
     game.obstacles = []
     updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
 
