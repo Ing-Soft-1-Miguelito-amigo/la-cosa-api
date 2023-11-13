@@ -253,6 +253,7 @@ def verify_data_play_card(
         "trc",
         "eaf",
         "hac",
+        "ups"
     ]:
         raise HTTPException(
             status_code=422,
