@@ -434,14 +434,12 @@ async def apply_eaf(
 
     # Remove quarantine from all players
     for player_q in game.players:
-        if player_q.quarantine > 0:
-            player_q.quarantine = 0
-            updated_player = update_player(
-                PlayerUpdate(quarantine=player_q.quarantine),
-                player.id,
-                game.id,
-            )
-            await sh.send_player_status_to_player(player_q.id, updated_player)
+        updated_player = update_player(
+            PlayerUpdate(quarantine=0),
+            player_q.id,
+            game.id,
+        )
+        await sh.send_player_status_to_player(player_q.id, updated_player)
 
     # Remove all locked doors
     game.obstacles = []
