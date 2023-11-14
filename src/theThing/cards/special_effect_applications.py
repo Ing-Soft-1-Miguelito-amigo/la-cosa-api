@@ -2,7 +2,7 @@ from src.theThing.games.crud import *
 from src.theThing.cards.crud import *
 from src.theThing.players.crud import *
 from src.theThing.turn.crud import *
-from theThing.games.schemas import GameUpdate
+from src.theThing.games.schemas import GameUpdate
 
 
 async def apply_cac(

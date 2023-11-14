@@ -696,7 +696,7 @@ def exchange_cards_effect(
         offered_card.code == "inf"
         and exchanging_offerer.role == 3
     ):
-        if game.turn.played_card.code is not None:
+        if game.turn.played_card is not None:
             if game.turn.played_card.code != "fal":
                 update_player(PlayerUpdate(role=2), defending_player.id, game_id)
         else: 

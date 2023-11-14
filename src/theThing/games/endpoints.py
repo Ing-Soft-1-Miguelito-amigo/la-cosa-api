@@ -322,9 +322,17 @@ async def play_card(play_data: dict):
         message = await apply_hac(
             game, turn_player, destination_player, card, play_data["obstacle"]
         )
-        updated_turn = TurnCreate(state=3)
+        updated_turn = TurnCreate(
+            played_card=card_id,
+            destination_player=destination_name,
+            state=3,
+        )
     elif card.code in ["cac", "olv"]:
-        updated_turn = TurnCreate(state=6)
+        updated_turn = TurnCreate(
+            played_card=card_id,
+            destination_player=destination_name,
+            state=6,
+        )
     else:
         updated_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2
