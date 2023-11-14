@@ -303,6 +303,9 @@ async def test_sda(test_db):
     assert updated_player.table_position == destination_player_tb
     assert updated_d_player.table_position == player_tb
     assert game.turn.destination_player_exchange == "Player3"
+    game.players.sort(key=lambda x: x.table_position)
+    name_o_players = [player.name for player in game.players]
+    assert name_o_players == ["Player3", "Player1", "Player2", "Player4"]
     # the positions are [player3, player1, player2, player4]
 
 
@@ -370,7 +373,7 @@ async def test_eaf(test_db):
     assert game.obstacles == []
     game.players.sort(key=lambda x: x.table_position)
     name_o_players = [player.name for player in game.players]
-    assert name_o_players == ["Player1", "Player3", "Player4", "Player2"]
+    assert name_o_players == ["Player4", "Player2", "Player1", "Player3"]
 
 
 @pytest.mark.asyncio
@@ -389,7 +392,8 @@ async def test_ptr(test_db):
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(3, 1)
-
+    # the positions are [('Player4', 1), ('Player2', 2), ('Player1', 3), ('Player3', 4)]
+    # if Player1 puts a ptr to player 3, then the position 3 goes in the obstacle list
     await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
@@ -397,7 +401,7 @@ async def test_ptr(test_db):
     updated_card = cards_crud.get_card(card.id, 1)
     game = games_crud.get_full_game(1)
     assert updated_card.state == 0
-    assert game.obstacles == [1]
+    assert game.obstacles == [3]
 
 
 @pytest.mark.asyncio
@@ -553,7 +557,8 @@ async def test_hac_to_ptr(test_db):
     player = players_crud.get_player(1, 1)
     # the game already has a ptr obstacle in position 1
     # because of test_ptr function
-    obstacle = {"type": "ptr", "position": 1}
+    obstacle = {"type": "ptr", "position": 3}
+    o_players = [(player.name, player.table_position) for player in full_game.players]
 
     try:
         await apply_hac(full_game, player, None, card, obstacle)
