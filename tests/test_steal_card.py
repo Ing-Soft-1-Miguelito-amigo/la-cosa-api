@@ -8,6 +8,7 @@ from src.theThing.turn.schemas import TurnCreate
 from src.theThing.games.schemas import GameUpdate
 from src.theThing.cards.schemas import CardCreate, CardUpdate
 from src.theThing.cards.crud import create_card, delete_card, update_card
+from src.theThing.players.crud import get_player
 
 client = TestClient(app)
 
@@ -55,7 +56,19 @@ def test_steal_card_success(test_db):
     assert response.status_code == 200
     assert response.json() == {"message": "Carta robada con éxito"}
     game1 = get_game(1)
-    assert game1.turn.state == 1
+    player = get_player(1, 1)
+    panic_codes = ["cac", "olv", "rev", "vyv"]
+    panic_card = [
+        card.code
+        for card in player.hand
+        if card.kind == 4 and card.code in panic_codes
+    ]
+    print(panic_card)
+    if panic_card == []:
+        assert game1.turn.state == 1
+    else:
+        assert game1.turn.state == 6
+    # check if the player has a panic card
 
 
 def test_steal_card_empty_deck(test_db):

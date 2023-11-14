@@ -75,9 +75,7 @@ def test_finish_turn_quarantine(test_db):
     updated_game = game_crud.get_game(game_id=1)
 
     assert response.json() == {
-        "message": "Turno finalizado",
-        "new_owner_name": "Player2",
-        "new_owner_position": 2,
+        "message": "Turno finalizado. Ahora el turno es de Player2",
     }
     assert response.status_code == 200
     for player in updated_game.players:
