@@ -873,7 +873,7 @@ def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
     if game.play_direction:
         next_player = alive_players[(index_player + n) % len(alive_players)]
     else:
-        next_player = alive_players[(index_player - n) % len(alive_players)]
+        next_player = alive_players[(index_player - n) + len(alive_players) % len(alive_players)]
     for p in game.players:
         if p.table_position == next_player:
             return p

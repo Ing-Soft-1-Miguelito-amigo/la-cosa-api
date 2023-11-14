@@ -463,20 +463,21 @@ async def apply_eaf(
     # Remove all locked doors
     game.obstacles = []
     updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
-
+    owner_id = player.id
     # Swap the players by pairs clockwise, starting by the current turn owner
     game_to_update = get_full_game(game.id)
     alive_players = [
         player for player in game_to_update.players if player.alive
     ]
     alive_players.sort(key=lambda x: x.table_position)
+    owner_index = alive_players.index(player)
 
     for i in range(0, len(alive_players) - 1, 2):
         first_player = alive_players[
-            (player.table_position + i - 1) % len(alive_players)
+            (owner_index + i) % len(alive_players)
         ]
         next_player = alive_players[
-            first_player.table_position % len(alive_players)
+            (owner_index + i + 1) % len(alive_players)
         ]
 
         update_player(
@@ -496,8 +497,9 @@ async def apply_eaf(
     new_exchange_destination = get_player_in_next_n_places(
         game, updated_player.table_position, 1
     )
+    turn_owner = [player.table_position for player in game.players if player.id == owner_id][0]
     new_turn = TurnCreate(
-        owner=updated_player.table_position,
+        owner=turn_owner,
         played_card=card.id,
         destination_player=destination_player.name,
         destination_player_exchange=new_exchange_destination.name,
