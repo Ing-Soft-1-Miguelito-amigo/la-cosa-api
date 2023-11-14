@@ -517,7 +517,7 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         raise HTTPException(
             status_code=422, detail="La carta de ataque no ha sido jugada"
         )
-
+    attacking_player = get_player(attacking_player.id, game_id)
     return game, attacking_player, defending_player, action_card
 
 

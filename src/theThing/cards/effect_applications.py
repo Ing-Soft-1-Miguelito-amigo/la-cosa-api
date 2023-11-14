@@ -470,7 +470,9 @@ async def apply_eaf(
         player for player in game_to_update.players if player.alive
     ]
     alive_players.sort(key=lambda x: x.table_position)
-    owner_index = alive_players.index(player)
+
+    owner = [player for player in alive_players if player.id == owner_id][0]
+    owner_index = alive_players.index(owner)
 
     for i in range(0, len(alive_players) - 1, 2):
         first_player = alive_players[
@@ -491,7 +493,7 @@ async def apply_eaf(
             game.id,
         )
 
-    updated_player = get_player(player.id, game.id)
+    updated_player = get_player(owner_id, game.id)
     # Update the turn accordingly
     game = get_full_game(game.id)
     new_exchange_destination = get_player_in_next_n_places(
