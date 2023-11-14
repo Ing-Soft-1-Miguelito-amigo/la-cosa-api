@@ -691,18 +691,26 @@ def exchange_cards_effect(
     )
     game = get_game(game_id)
     # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+    
     if (
         offered_card.code == "inf"
         and exchanging_offerer.role == 3
-        and game.turn.played_card.code != "fal"
     ):
-        update_player(PlayerUpdate(role=2), defending_player.id, game_id)
+        if game.turn.played_card.code is not None:
+            if game.turn.played_card.code != "fal":
+                update_player(PlayerUpdate(role=2), defending_player.id, game_id)
+        else: 
+            update_player(PlayerUpdate(role=2), defending_player.id, game_id)
     # If the defending player is La Cosa and gives an infected card
     elif (
         exchange_card.code == "inf"
         and defending_player.role == 3
-        and game.turn.played_card.code != "fal"):
-        update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
+    ):
+        if game.turn.played_card.code is not None:
+            if game.turn.played_card.code != "fal":
+                update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
+        else:
+            update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
     # Clean the field card_to_exchange from the offerer player
     exchanging_offerer = update_player(
         PlayerUpdate(card_to_exchange=None), exchanging_offerer.id, game_id
