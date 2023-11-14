@@ -40,7 +40,7 @@ async def apply_olv(
     data: dict,
 ):
     game = get_game(data["game_id"])
-    cards = [get_card(card_id, game.id) for card_id in data["card_ids"]]
+    cards = [get_card(card_id, game.id) for card_id in data["card_id"]]
     player = get_player(data["player_id"], game.id)
     panic_card = get_card(data["panic_card_id"], game.id)
 
@@ -75,6 +75,13 @@ async def apply_hac(game, attacker, objective, card, obstacle):
     # Verify the obstacle to remove
     if obstacle["type"] == "cua" and obstacle["position"] is None:
         update_player(PlayerUpdate(quarantine=0), objective.id, game.id)
+        if objective.name == attacker.name:
+            message = f"{attacker.name} se jugo hacha para eliminar su cuarentena"
+        else:
+            message = f"{attacker.name} se jugo hacha para eliminar la cuarentena de {objective.name}"
     elif obstacle["type"] == "ptr" and obstacle["position"] is not None:
         game.obstacles.remove(obstacle["position"])
         update_game(game.id, GameUpdate(obstacles=game.obstacles))
+        message = f"{attacker.name} jugo hacha para eliminar una puerta atrancada"
+
+    return message

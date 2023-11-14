@@ -318,9 +318,8 @@ async def play_card(play_data: dict):
         )
         # Send event description to all players
         message = f"{turn_player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
-        await send_action_event_to_players(game_id, message)
     elif card.code in ["hac"]:
-        await apply_hac(
+        message = await apply_hac(
             game, turn_player, destination_player, card, play_data["obstacle"]
         )
         updated_turn = TurnCreate(state=3)
@@ -339,17 +338,12 @@ async def play_card(play_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
-    if card.code == "hac":
-        obstacle = (
-            "cuarentena"
-            if play_data["obstacle"] == "cua"
-            else "puerta atrancada"
-        )
-        message = f"{player.name} jugó {card.name} sobre la {obstacle} del jugador {destination_player.name}"
-    elif player.name == destination_name:
-        message = f"{player.name} jugó {card.name}"
-    else:
-        message = f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+    if card.code != "hac":
+        print(player.name, destination_name)
+        if player.name == destination_name:
+            message = f"{player.name} jugó {card.name}"
+        else:
+            message = f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
 
     try:
         save_log(game_id, message)
@@ -509,17 +503,16 @@ async def respond_to_action_card(response_data: dict):
     if response_card_id is None:
         # Apply the effect of the played card. Call the function from the effect_applications dict
         if action_card.code not in effect_applications:
-            effect_applications["default"](
+            game, message = effect_applications["default"](
                 game, attacking_player, defending_player, action_card
             )
         else:
-            await effect_applications[action_card.code](
+            game, message = await effect_applications[action_card.code](
                 game, attacking_player, defending_player, action_card
             )
         # Update turn status
         update_turn(game_id, TurnCreate(state=3))
         # Send event description to all players
-        message = f"{attacking_player.name} jugó {action_card.name} a {defending_player.name}"
         try:
             save_log(game_id, message)
         except Exception as e:
@@ -710,15 +703,14 @@ async def response_exchange(response_ex_data: dict):
         except Exception as e:
             raise e
         # Send via socket the event description
-        await send_exchange_event_to_players(
-            game_id, exchanging_offerer.name, defending_player.name
-        )
+        message = f"{exchanging_offerer.name} intercambió con {defending_player.name}"
+        await send_action_event_to_players(game_id, message)
         update_turn(game_id, TurnCreate(state=5))
     elif defense_card_id and (not exchange_card_id):
         # Implement defense effect
         try:
             defense_card = get_card(defense_card_id, game_id)
-            await exchange_defense[defense_card.code](
+            game, message = await exchange_defense[defense_card.code](
                 game, exchanging_offerer, defending_player, defense_card
             )
             remove_card_from_player(

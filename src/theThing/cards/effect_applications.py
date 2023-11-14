@@ -89,7 +89,8 @@ async def apply_lla(
     if response["winners"] is not None:
         await send_game_status_to_players(response["game"].id, response["game"])
         await send_finished_game_event_to_players(game.id, response)
-    return updated_game
+    message = f"{player.name} jugó lanzallamas e incinero a {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_vte(
@@ -115,7 +116,8 @@ async def apply_vte(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"Las cosas van para el otro lado! {player.name} invirtió el orden del juego"
+    return updated_game, message
 
 
 async def apply_cdl(
@@ -157,7 +159,8 @@ async def apply_cdl(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó cambio de lugar con {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_mvc(
@@ -199,7 +202,8 @@ async def apply_mvc(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Mas vale que corras! a {destination_player.name} y cambiaron sus lugares"
+    return updated_game, message
 
 
 async def apply_ana(
@@ -216,7 +220,8 @@ async def apply_ana(
         player.id, destination_hand, destination_player.name
     )
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Análisis a {destination_player.name} y vio sus cartas"
+    return updated_game, message
 
 
 async def apply_sos(
@@ -233,7 +238,8 @@ async def apply_sos(
         player.id, destination_card, destination_player.name
     )
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Sospecha a {destination_player.name} y vio una de sus cartas"
+    return updated_game, message
 
 
 async def apply_whk(
@@ -249,7 +255,11 @@ async def apply_whk(
     await sh.send_whk_to_player(game.id, player.name, player_hand)
 
     updated_game = get_full_game(game.id)
-    return updated_game
+    if "lco" in [card.code for card in player_hand]:
+        message = f"¡Whisky!, {player.name} bebió de más y lo encontraron con La Cosa en la mano!"
+    else:
+        message = f"{player.name} bebió de más y dejó ver sus cartas a todos!"
+    return updated_game, message
 
 
 async def apply_cua(
@@ -265,7 +275,8 @@ async def apply_cua(
 
     updated_game = get_full_game(game.id)
 
-    return updated_game
+    message = f"{player.name} jugó Cuarentena a {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_ups(
@@ -281,7 +292,11 @@ async def apply_ups(
     await sh.send_ups_to_players(game.id, player.name, player_hand)
 
     updated_game = get_full_game(game.id)
-    return updated_game
+    if "lco" in [card.code for card in player_hand]:
+        message = f"¡Ups!, {player.name} se descuido y lo encontraron con La Cosa en la mano!"
+    else:
+        message = f"{player.name} se descuido y dejo ver sus cartas a todos!"
+    return updated_game, message
 
 
 async def apply_qen(
@@ -296,7 +311,8 @@ async def apply_qen(
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
     await sh.send_qen_to_player(player.id, player_hand, destination_player)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} tuvo que mostrar sus cartas a {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_cpo(
@@ -322,7 +338,8 @@ async def apply_cpo(
     await sh.send_cpo_to_players(game.id)
 
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Cuerdas podridas y todos se liberaron de su cuarentena!"
+    return updated_game, message
 
 
 async def apply_und(
@@ -364,6 +381,7 @@ async def apply_und(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
+    message = f"{player.name} jugó Uno, dos y cambio lugares con {destination_player.name}"
     return updated_game
 
 
@@ -406,7 +424,8 @@ async def apply_sda(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Sal de aqui y cambio lugares con {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_trc(
@@ -419,8 +438,8 @@ async def apply_trc(
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
     game.obstacles = []
     updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
-
-    return updated_game
+    message = f"{player.name} jugó Tres, cuatro y se rompieron todas las puertas!"
+    return updated_game, message
 
 
 async def apply_eaf(
@@ -486,7 +505,8 @@ async def apply_eaf(
     update_turn(game.id, new_turn)
     # Update the turn
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"A bailar! {player.name} jugó ¿Es aqui la fiesta? y cambiaron todos sus lugares. Ademas, rompió todas las puertas y cuarentenas!"
+    return updated_game, message
 
 
 async def just_discard(
@@ -542,6 +562,10 @@ async def apply_ptr(
     updated_card = update_card(
         CardUpdate(id=card.id, state=card.state), game.id
     )
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} colocó una puerta entre frente a {destination_player.name}"
+    return updated_game, message
+
 
 
 effect_applications = {
@@ -585,9 +609,10 @@ async def apply_ate(
     await sh.send_ate_to_player(
         game.id, player, destination_player, card_to_send
     )
-    # TODO: SEND DEFENSE EVENT TO CLIENT
+
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} se defendio del intercambio usando Aterrador!"
+    return updated_game, message
 
 
 async def apply_ngs(
@@ -606,9 +631,10 @@ async def apply_ngs(
     update_player(PlayerUpdate(card_to_exchange=None), player.id, game.id)
 
     update_turn(game.id, TurnCreate(state=5))
-    # TODO: SEND DEFENSE EVENT TO CLIENT
+
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} dijo No Gracias! y rechazo el intercambio"
+    return updated_game, message
 
 
 async def apply_fal(
@@ -635,8 +661,9 @@ async def apply_fal(
     update_turn(
         game.id, TurnCreate(state=4, destination_player_exchange=new_dest.name)
     )
-    # TODO: SEND DEFENSE EVENT TO CLIENT
-
+    message = f"{player.name} se defendio usando Fallaste!, ahora {new_dest.name} debe intercambiar"
+    game = get_full_game(game.id)
+    return game, message
 
 exchange_defense = {
     "ate": apply_ate,

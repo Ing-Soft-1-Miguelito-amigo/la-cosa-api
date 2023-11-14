@@ -24,8 +24,8 @@ async def connect(sid, environ):
     if not player_id or not game_id:
         return False
     await sio.save_session(sid, {"player_id": player_id, "game_id": game_id})
-    await sio.enter_room(sid, "g" + game_id)
-    await sio.enter_room(sid, "p" + player_id)
+    sio.enter_room(sid, "g" + game_id)
+    sio.enter_room(sid, "p" + player_id)
     print("connect ", sid, "player_id ", player_id, "game_id ", game_id)
     # This is necessary for the client connection logic
     game_to_send = get_game(game_id)
