@@ -346,8 +346,11 @@ async def play_card(play_data: dict):
             else "puerta atrancada"
         )
         message = f"{player.name} jugó {card.name} sobre la {obstacle} del jugador {destination_player.name}"
+    elif player.name == destination_name:
+        message = f"{player.name} jugó {card.name}"
     else:
         message = f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+
     try:
         save_log(game_id, message)
     except Exception as e:
