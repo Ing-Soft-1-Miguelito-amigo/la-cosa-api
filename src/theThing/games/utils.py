@@ -697,7 +697,12 @@ def exchange_cards_effect(
         and game.turn.played_card.code != "fal"
     ):
         update_player(PlayerUpdate(role=2), defending_player.id, game_id)
-
+    # If the defending player is La Cosa and gives an infected card
+    elif (
+        exchange_card.code == "inf"
+        and defending_player.role == 3
+        and game.turn.played_card.code != "fal"):
+        update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
     # Clean the field card_to_exchange from the offerer player
     exchanging_offerer = update_player(
         PlayerUpdate(card_to_exchange=None), exchanging_offerer.id, game_id
