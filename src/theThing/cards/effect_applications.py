@@ -454,14 +454,13 @@ async def apply_eaf(
     ]
     alive_players.sort(key=lambda x: x.table_position)
 
-    first_player = player
     for i in range(0, len(alive_players) - 1, 2):
         first_player = alive_players[
-            (first_player.table_position + i - 1) % len(game.players)
+            (player.table_position + i - 1) % len(alive_players)
         ]
-        next_player = get_player_in_next_n_places(
-            game_to_update, first_player.table_position, 1
-        )
+        next_player = alive_players[
+            first_player.table_position % len(alive_players)
+        ]
 
         update_player(
             PlayerUpdate(table_position=next_player.table_position),
