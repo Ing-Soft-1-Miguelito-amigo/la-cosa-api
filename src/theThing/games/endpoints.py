@@ -339,7 +339,6 @@ async def play_card(play_data: dict):
     await send_game_status_to_players(game_id, updated_game)
 
     if card.code != "hac":
-        print(player.name, destination_name)
         if player.name == destination_name:
             message = f"{player.name} jugó {card.name}"
         else:

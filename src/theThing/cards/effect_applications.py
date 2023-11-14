@@ -382,7 +382,7 @@ async def apply_und(
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
     message = f"{player.name} jugó Uno, dos y cambio lugares con {destination_player.name}"
-    return updated_game
+    return updated_game, message
 
 
 async def apply_sda(

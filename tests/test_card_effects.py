@@ -67,7 +67,7 @@ async def test_lla(test_db):
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(2, 1)
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -93,7 +93,7 @@ async def test_vte(test_db):
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, player, card
     )
 
@@ -119,7 +119,7 @@ async def test_cdl(clear_db):
     player_tb = player.table_position
     destination_player = players_crud.get_player(3, 1)
     destination_player_tb = destination_player.table_position
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -151,7 +151,7 @@ async def test_mvc(clear_db):
     destination_player = players_crud.get_player(4, 1)
     destination_player_tb = destination_player.table_position
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -180,7 +180,7 @@ async def test_cua(test_db):
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(3, 1)
 
-    game = await cards_effect_applications[card.code](
+    game, message= await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -232,7 +232,7 @@ async def test_cpo(test_db):
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, player, card
     )
 
@@ -258,7 +258,7 @@ async def test_und(test_db):
     player_tb = player.table_position
     destination_player = players_crud.get_player(3, 1)
     destination_player_tb = destination_player.table_position
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -291,7 +291,7 @@ async def test_sda(test_db):
     destination_player = players_crud.get_player(2, 1)
     destination_player_tb = destination_player.table_position
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, destination_player, card
     )
 
@@ -329,7 +329,7 @@ async def test_trc(test_db):
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, player, player, card
     )
 
@@ -364,7 +364,7 @@ async def test_eaf(test_db):
         if player.table_position == owner_tb
     ][0]
 
-    game = await cards_effect_applications[card.code](
+    game, message = await cards_effect_applications[card.code](
         full_game, owner_player, owner_player, card
     )
     # the positions are [player1, player3, player4, player2]
@@ -479,7 +479,7 @@ async def test_olv(test_db):
     data = {
         "game_id": 1,
         "player_id": 1,
-        "card_ids": cards_to_discard,
+        "card_id": cards_to_discard,
         "panic_card_id": card.id,
     }
 
