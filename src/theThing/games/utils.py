@@ -254,6 +254,8 @@ def verify_data_play_card(
         "eaf",
         "hac",
         "ups",
+        "cac",
+        "olv"
     ]:
         raise HTTPException(
             status_code=422,
@@ -282,6 +284,8 @@ def verify_data_play_card(
         "hac",
         "ups",
         "npa",
+        "cac",
+        "olv"
     ]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
@@ -297,24 +301,9 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if (
-        len(game.obstacles) > 0
-        and destination_name != player.name
-        and (
-            card.code
-            not in [
-                "whk",
-                "vte",
-                "sed",
-                "mvc",
-                "hac",
-                "und",
-                "trc",
-                "eaf",
-                "vyv",
-                "npa",
-            ]
-        )
+    if len(game.obstacles) > 0 and destination_name != player.name and (
+        card.code not in ["whk", "vte", "sed", "mvc", "hac", "und", "trc", "eaf", "vyv", "npa", "cac",
+        "olv"]
     ):
         door_flag = False
         player_position = player.table_position
@@ -902,11 +891,11 @@ def calculate_winners_if_victory_declared(game_id, player_id):
 
     if win:
         result = {
-            "message": "Gana La Cosa e infectados",
+            "reason": "¡No quedan humano vivos! Gana La Cosa e infectados",
             "winners": alive_infected,
         }
     else:
-        result = {"message": "Ganan los humanos", "winners": alive_humans}
+        result = {"reason": "¡La cosa se equivocó! Ganan los humanos", "winners": alive_humans}
 
     return result
 
