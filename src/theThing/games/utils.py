@@ -891,11 +891,11 @@ def calculate_winners_if_victory_declared(game_id, player_id):
 
     if win:
         result = {
-            "message": "Gana La Cosa e infectados",
+            "reason": "¡No quedan humano vivos! Gana La Cosa e infectados",
             "winners": alive_infected,
         }
     else:
-        result = {"message": "Ganan los humanos", "winners": alive_humans}
+        result = {"reason": "¡La cosa se equivocó! Ganan los humanos", "winners": alive_humans}
 
     return result
 

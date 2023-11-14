@@ -769,6 +769,7 @@ async def declare_victory(data: dict):
     update_game(game_id, GameUpdate(state=2))
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
+    await send_finished_game_event_to_players(game_id, game_result)
 
     return game_result
 
