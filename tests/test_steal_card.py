@@ -57,14 +57,19 @@ def test_steal_card_success(test_db):
     assert response.json() == {"message": "Carta robada con éxito"}
     game1 = get_game(1)
     player = get_player(1, 1)
-    panic_codes =['cac', 'olv', 'rev', 'vyv']
-    panic_card = [card.code for card in player.hand if card.kind == 4 and card.code in panic_codes]
+    panic_codes = ["cac", "olv", "rev", "vyv"]
+    panic_card = [
+        card.code
+        for card in player.hand
+        if card.kind == 4 and card.code in panic_codes
+    ]
     print(panic_card)
     if panic_card == []:
         assert game1.turn.state == 1
     else:
         assert game1.turn.state == 6
     # check if the player has a panic card
+
 
 def test_steal_card_empty_deck(test_db):
     # Test #2: steal a card with empty deck

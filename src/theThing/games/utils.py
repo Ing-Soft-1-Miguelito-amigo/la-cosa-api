@@ -253,7 +253,7 @@ def verify_data_play_card(
         "trc",
         "eaf",
         "hac",
-        "ups"
+        "ups",
     ]:
         raise HTTPException(
             status_code=422,
@@ -281,7 +281,7 @@ def verify_data_play_card(
         "eaf",
         "hac",
         "ups",
-        "npa"
+        "npa",
     ]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
@@ -297,8 +297,24 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if len(game.obstacles) > 0 and destination_name != player.name and (
-        card.code not in ["whk", "vte", "sed", "mvc", "hac", "und", "trc", "eaf", "vyv", "npa"]
+    if (
+        len(game.obstacles) > 0
+        and destination_name != player.name
+        and (
+            card.code
+            not in [
+                "whk",
+                "vte",
+                "sed",
+                "mvc",
+                "hac",
+                "und",
+                "trc",
+                "eaf",
+                "vyv",
+                "npa",
+            ]
+        )
     ):
         door_flag = False
         player_position = player.table_position
@@ -788,7 +804,7 @@ def assign_turn_owner(game: GameOut):
         # If played_card is None, then it was discarded, and we need to skip this section
         played_card_code = played_card.code
         response_card = game.turn.response_card
-        cards_change_places = ['cdl', 'mvc', 'und', 'sda']
+        cards_change_places = ["cdl", "mvc", "und", "sda"]
         if (played_card_code in cards_change_places) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
             # owner is the position of the destination player

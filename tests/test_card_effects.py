@@ -3,7 +3,9 @@ from src.theThing.games import crud as games_crud
 from src.theThing.games import schemas as games_schemas
 from src.theThing.players import crud as players_crud
 from src.theThing.players import schemas as players_schemas
-from src.theThing.cards.effect_applications import effect_applications as cards_effect_applications
+from src.theThing.cards.effect_applications import (
+    effect_applications as cards_effect_applications,
+)
 from src.theThing.cards.special_effect_applications import *
 from src.theThing.cards import crud as cards_crud
 from src.theThing.cards import schemas as cards_schemas
@@ -34,11 +36,13 @@ def setup_module():
     created_player3 = players_crud.create_player(player_data, created_game.id)
     player_data = players_schemas.PlayerCreate(name="Player4", owner=False)
     created_player4 = players_crud.create_player(player_data, created_game.id)
-    created_player4 = players_crud.update_player(players_schemas.PlayerUpdate(role=3),
-                                                 created_player4.id, created_game.id)
+    created_player4 = players_crud.update_player(
+        players_schemas.PlayerUpdate(role=3),
+        created_player4.id,
+        created_game.id,
+    )
     # create a turn, owner is player 1, exchange destination is player 2
     turn_crud.create_turn(created_game.id, 1, created_player2.name)
-
 
     # start the game to have a deck
     client.post("/game/start", json={"game_id": 1, "player_name": "Player1"})
@@ -51,17 +55,21 @@ def setup_module():
 @pytest.mark.asyncio
 async def test_lla(test_db):
     # this card kills the destination player
-    card = cards_schemas.CardCreate(code='lla',
-                                    name='Lanzallamas',
-                                    kind=0,
-                                    description='Lanzallamas',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="lla",
+        name="Lanzallamas",
+        kind=0,
+        description="Lanzallamas",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(2, 1)
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_d_player = players_crud.get_player(2, 1)
@@ -73,17 +81,21 @@ async def test_lla(test_db):
 
 @pytest.mark.asyncio
 async def test_vte(test_db):
-    card = cards_schemas.CardCreate(code='vte',
-                                    name='Vigila tus espaldas',
-                                    kind=0,
-                                    description='Vigila tus espaldas',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="vte",
+        name="Vigila tus espaldas",
+        kind=0,
+        description="Vigila tus espaldas",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](full_game, player, player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     assert updated_card.state == 0
@@ -93,19 +105,23 @@ async def test_vte(test_db):
 
 @pytest.mark.asyncio
 async def test_cdl(clear_db):
-    card = cards_schemas.CardCreate(code='cdl',
-                                    name='Cambio de lugar',
-                                    kind=0,
-                                    description='Cambio de lugar',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="cdl",
+        name="Cambio de lugar",
+        kind=0,
+        description="Cambio de lugar",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     player_tb = player.table_position
     destination_player = players_crud.get_player(3, 1)
     destination_player_tb = destination_player.table_position
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_player = players_crud.get_player(1, 1)
@@ -120,12 +136,14 @@ async def test_cdl(clear_db):
 @pytest.mark.asyncio
 async def test_mvc(clear_db):
     # this card does the same as cdl
-    card = cards_schemas.CardCreate(code='mvc',
-                                    name='Mas vale que corras',
-                                    kind=0,
-                                    description='Mas vale que corras',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="mvc",
+        name="Mas vale que corras",
+        kind=0,
+        description="Mas vale que corras",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
@@ -133,7 +151,9 @@ async def test_mvc(clear_db):
     destination_player = players_crud.get_player(4, 1)
     destination_player_tb = destination_player.table_position
 
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_player = players_crud.get_player(1, 1)
@@ -147,18 +167,22 @@ async def test_mvc(clear_db):
 
 @pytest.mark.asyncio
 async def test_cua(test_db):
-    card = cards_schemas.CardCreate(code='cua',
-                                    name='Cuarentena',
-                                    kind=0,
-                                    description='Cuarentena',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="cua",
+        name="Cuarentena",
+        kind=0,
+        description="Cuarentena",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(3, 1)
 
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_d_player = players_crud.get_player(3, 1)
@@ -166,26 +190,51 @@ async def test_cua(test_db):
     assert updated_card.state == 0
     assert updated_d_player.quarantine == 2
 
+
 @pytest.mark.asyncio
 async def test_cpo(test_db):
     # set all players in quarantine, revive all players and order assign new table positions
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, table_position=1), 1, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=2), 2, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=3), 3, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=4), 4, 1)
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(quarantine=2, table_position=1), 1, 1
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=2
+        ),
+        2,
+        1,
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=3
+        ),
+        3,
+        1,
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=4
+        ),
+        4,
+        1,
+    )
 
-    card = cards_schemas.CardCreate(code='cpo',
-                                    name='Cuerdas podridas',
-                                    kind=4,
-                                    description='Cuerdas podridas',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="cpo",
+        name="Cuerdas podridas",
+        kind=4,
+        description="Cuerdas podridas",
+        number_in_card=1,
+        playable=True,
+    )
 
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](full_game, player, player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     assert updated_card.state == 0
@@ -195,19 +244,23 @@ async def test_cpo(test_db):
 
 @pytest.mark.asyncio
 async def test_und(test_db):
-    card = cards_schemas.CardCreate(code='und',
-                                    name='Uno,dos',
-                                    kind=4,
-                                    description='Uno,dos',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="und",
+        name="Uno,dos",
+        kind=4,
+        description="Uno,dos",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
     player_tb = player.table_position
     destination_player = players_crud.get_player(3, 1)
     destination_player_tb = destination_player.table_position
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_player = players_crud.get_player(1, 1)
@@ -223,12 +276,14 @@ async def test_und(test_db):
 
 @pytest.mark.asyncio
 async def test_sda(test_db):
-    card = cards_schemas.CardCreate(code='sda',
-                                    name='Sal de aqui',
-                                    kind=4,
-                                    description='Sal de aqui',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="sda",
+        name="Sal de aqui",
+        kind=4,
+        description="Sal de aqui",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
@@ -236,7 +291,9 @@ async def test_sda(test_db):
     destination_player = players_crud.get_player(2, 1)
     destination_player_tb = destination_player.table_position
 
-    game = await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     updated_player = players_crud.get_player(1, 1)
@@ -251,21 +308,27 @@ async def test_sda(test_db):
 
 @pytest.mark.asyncio
 async def test_trc(test_db):
-    card = cards_schemas.CardCreate(code='trc',
-                                    name='Tres, cuatro',
-                                    kind=4,
-                                    description='Tres, cuatro',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="trc",
+        name="Tres, cuatro",
+        kind=4,
+        description="Tres, cuatro",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     game = games_crud.get_full_game(1)
     game.obstacles.append(1)
     game.obstacles.append(2)
-    games_crud.update_game(1, games_schemas.GameUpdate(obstacles=game.obstacles))
+    games_crud.update_game(
+        1, games_schemas.GameUpdate(obstacles=game.obstacles)
+    )
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
 
-    game = await cards_effect_applications[card.code](full_game, player, player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, player, player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     assert updated_card.state == 0
@@ -274,23 +337,33 @@ async def test_trc(test_db):
 
 @pytest.mark.asyncio
 async def test_eaf(test_db):
-    card = cards_schemas.CardCreate(code='eaf',
-                                    name='¿Es aqui la fiesta?',
-                                    kind=4,
-                                    description='¿Es aqui la fiesta?',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="eaf",
+        name="¿Es aqui la fiesta?",
+        kind=4,
+        description="¿Es aqui la fiesta?",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
 
     game = games_crud.get_full_game(1)
     game.obstacles.append(1)
     game.obstacles.append(2)
-    games_crud.update_game(1, games_schemas.GameUpdate(obstacles=game.obstacles))
+    games_crud.update_game(
+        1, games_schemas.GameUpdate(obstacles=game.obstacles)
+    )
     full_game = games_crud.get_full_game(1)
     owner_tb = full_game.turn.owner
-    owner_player = [player for player in full_game.players if player.table_position == owner_tb][0]
+    owner_player = [
+        player
+        for player in full_game.players
+        if player.table_position == owner_tb
+    ][0]
 
-    game = await cards_effect_applications[card.code](full_game, owner_player, owner_player, card)
+    game = await cards_effect_applications[card.code](
+        full_game, owner_player, owner_player, card
+    )
     # the positions are [player1, player3, player4, player2]
     card = cards_crud.get_card(card.id, 1)
     assert card.state == 0
@@ -302,12 +375,14 @@ async def test_eaf(test_db):
 
 @pytest.mark.asyncio
 async def test_ptr(test_db):
-    card = cards_schemas.CardCreate(code='ptr',
-                                    name='Puerta atrancada',
-                                    kind=2,
-                                    description='Puerta atrancada',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="ptr",
+        name="Puerta atrancada",
+        kind=2,
+        description="Puerta atrancada",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
 
     game = games_crud.get_full_game(1)
@@ -315,7 +390,9 @@ async def test_ptr(test_db):
     player = players_crud.get_player(1, 1)
     destination_player = players_crud.get_player(3, 1)
 
-    await cards_effect_applications[card.code](full_game, player, destination_player, card)
+    await cards_effect_applications[card.code](
+        full_game, player, destination_player, card
+    )
 
     updated_card = cards_crud.get_card(card.id, 1)
     game = games_crud.get_full_game(1)
@@ -325,19 +402,23 @@ async def test_ptr(test_db):
 
 @pytest.mark.asyncio
 async def test_cac(test_db):
-    card = cards_schemas.CardCreate(code='cac',
-                                    name='Cita a ciegas',
-                                    kind=4,
-                                    description='Cita a ciegas',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="cac",
+        name="Cita a ciegas",
+        kind=4,
+        description="Cita a ciegas",
+        number_in_card=1,
+        playable=True,
+    )
 
-    default_card = cards_schemas.CardCreate(code='def',
-                                            name='default',
-                                            kind=0,
-                                            description='default',
-                                            number_in_card=1,
-                                            playable=True)
+    default_card = cards_schemas.CardCreate(
+        code="def",
+        name="default",
+        kind=0,
+        description="default",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     default_card = cards_crud.create_card(default_card, 1)
     cards_crud.give_card_to_player(default_card.id, 1, 1)
@@ -358,27 +439,31 @@ async def test_cac(test_db):
     cac_card = cards_crud.get_card(card.id, 1)
     def_card = cards_crud.get_card(default_card.id, 1)
 
-    #assert cac_card.state == 0
+    # assert cac_card.state == 0
     assert def_card.state == 2
     assert default_card not in player.hand
 
 
 @pytest.mark.asyncio
 async def test_olv(test_db):
-    card = cards_schemas.CardCreate(code='olv',
-                                    name='Olvidadizo',
-                                    kind=4,
-                                    description='Olvidadizo',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="olv",
+        name="Olvidadizo",
+        kind=4,
+        description="Olvidadizo",
+        number_in_card=1,
+        playable=True,
+    )
 
     card = cards_crud.create_card(card, 1)
-    default_card = cards_schemas.CardCreate(code='def',
-                                            name='default',
-                                            kind=0,
-                                            description='default',
-                                            number_in_card=1,
-                                            playable=True)
+    default_card = cards_schemas.CardCreate(
+        code="def",
+        name="default",
+        kind=0,
+        description="default",
+        number_in_card=1,
+        playable=True,
+    )
     for i in range(3):
         default_card = cards_crud.create_card(default_card, 1)
         cards_crud.give_card_to_player(default_card.id, 1, 1)
@@ -404,17 +489,39 @@ async def test_olv(test_db):
 
 @pytest.mark.asyncio
 async def test_hac_to_cua(test_db):
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, table_position=1), 1, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=2), 2, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=3), 3, 1)
-    players_crud.update_player(players_schemas.PlayerUpdate(quarantine=2, alive=True, table_position=4), 4, 1)
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(quarantine=2, table_position=1), 1, 1
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=2
+        ),
+        2,
+        1,
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=3
+        ),
+        3,
+        1,
+    )
+    players_crud.update_player(
+        players_schemas.PlayerUpdate(
+            quarantine=2, alive=True, table_position=4
+        ),
+        4,
+        1,
+    )
 
-    card = cards_schemas.CardCreate(code='hac',
-                                    name='Hacha',
-                                    kind=0,
-                                    description='Hacha',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="hac",
+        name="Hacha",
+        kind=0,
+        description="Hacha",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)
@@ -433,12 +540,14 @@ async def test_hac_to_cua(test_db):
 
 @pytest.mark.asyncio
 async def test_hac_to_ptr(test_db):
-    card = cards_schemas.CardCreate(code='hac',
-                                    name='Hacha',
-                                    kind=0,
-                                    description='Hacha',
-                                    number_in_card=1,
-                                    playable=True)
+    card = cards_schemas.CardCreate(
+        code="hac",
+        name="Hacha",
+        kind=0,
+        description="Hacha",
+        number_in_card=1,
+        playable=True,
+    )
     card = cards_crud.create_card(card, 1)
     full_game = games_crud.get_full_game(1)
     player = players_crud.get_player(1, 1)

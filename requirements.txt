@@ -12,3 +12,4 @@ socketio
 python-socketio
 fastapi-socketio
 websockets
+pytest-asyncio
