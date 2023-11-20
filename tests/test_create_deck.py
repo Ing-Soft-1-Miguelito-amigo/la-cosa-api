@@ -46,7 +46,7 @@ def test_create_deck_4_players_success(test_db):
 
     # Check deck size
     game = get_full_game(1)
-    assert len(game.deck) == 31
+    assert len(game.deck) == 32
     # Check that the deck contains the card "lco"
     assert any(card.code == "lco" for card in game.deck)
 
@@ -92,6 +92,6 @@ def test_create_deck_6_players_success(test_db):
 
     # Check deck size
     game = get_full_game(2)
-    assert len(game.deck) == 46
+    assert len(game.deck) == 50
     # Check that the deck contains the card "lco"
     assert any(card.code == "lco" for card in game.deck)

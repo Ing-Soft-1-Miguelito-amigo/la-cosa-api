@@ -223,7 +223,7 @@ def verify_data_play_card(
             status_code=422,
             detail="La carta no pertenece a la mano del jugador o al mazo de la partida",
         )
-    if card.kind not in [0, 2]:
+    if card.kind not in [0, 2, 4]:
         raise HTTPException(
             status_code=422, detail="No puedes jugar esta carta"
         )
@@ -246,7 +246,17 @@ def verify_data_play_card(
         raise HTTPException(
             status_code=422, detail="No se encontró al jugador objetivo"
         )
-    if destination_player.id == player.id and card.code not in ["whk", "vte"]:
+    if destination_player.id == player.id and card.code not in [
+        "whk",
+        "vte",
+        "cpo",
+        "trc",
+        "eaf",
+        "hac",
+        "ups",
+        "cac",
+        "olv",
+    ]:
         raise HTTPException(
             status_code=422,
             detail="No se puede aplicar el efecto a sí mismo",
@@ -261,7 +271,22 @@ def verify_data_play_card(
     index_destination_player = alive_players.index(
         destination_player.table_position
     )
-    if card.code not in ["mvc", "whk", "vte", "sed"]:
+    if card.code not in [
+        "mvc",
+        "whk",
+        "vte",
+        "sed",
+        "cpo",
+        "und",
+        "sda",
+        "trc",
+        "eaf",
+        "hac",
+        "ups",
+        "npa",
+        "cac",
+        "olv",
+    ]:
         # check if the destination !=player is adjacent to the player,
         # the first and the last player are adjacent
         if index_destination_player == (index_player + 1) % len(
@@ -276,9 +301,26 @@ def verify_data_play_card(
                 detail="El jugador destino no está sentado en una posición adyacente",
             )
     # Check for obstacles
-    if len(game.obstacles) > 0 and (
-        (card.code == "hac" and destination_player.name != player.name)
-        or (card.code not in ["whk", "vte", "sed", "mvc"])
+    if (
+        len(game.obstacles) > 0
+        and destination_name != player.name
+        and (
+            card.code
+            not in [
+                "whk",
+                "vte",
+                "sed",
+                "mvc",
+                "hac",
+                "und",
+                "trc",
+                "eaf",
+                "vyv",
+                "npa",
+                "cac",
+                "olv",
+            ]
+        )
     ):
         door_flag = False
         player_position = player.table_position
@@ -475,7 +517,7 @@ def verify_data_response_basic(game_id: int, defending_player_id: int):
         raise HTTPException(
             status_code=422, detail="La carta de ataque no ha sido jugada"
         )
-
+    attacking_player = get_player(attacking_player.id, game_id)
     return game, attacking_player, defending_player, action_card
 
 
@@ -649,13 +691,26 @@ def exchange_cards_effect(
     )
     game = get_game(game_id)
     # If offered_card.code is "inf" and exchanging_offerer.role="laCosa", change the defending player role to infected.
+    
     if (
         offered_card.code == "inf"
         and exchanging_offerer.role == 3
-        and game.turn.played_card.code != "fal"
     ):
-        update_player(PlayerUpdate(role=2), defending_player.id, game_id)
-
+        if game.turn.played_card is not None:
+            if game.turn.played_card.code != "fal":
+                update_player(PlayerUpdate(role=2), defending_player.id, game_id)
+        else: 
+            update_player(PlayerUpdate(role=2), defending_player.id, game_id)
+    # If the defending player is La Cosa and gives an infected card
+    elif (
+        exchange_card.code == "inf"
+        and defending_player.role == 3
+    ):
+        if game.turn.played_card.code is not None:
+            if game.turn.played_card.code != "fal":
+                update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
+        else:
+            update_player(PlayerUpdate(role=2), exchanging_offerer.id, game_id)
     # Clean the field card_to_exchange from the offerer player
     exchanging_offerer = update_player(
         PlayerUpdate(card_to_exchange=None), exchanging_offerer.id, game_id
@@ -768,15 +823,15 @@ def assign_turn_owner(game: GameOut):
         # If played_card is None, then it was discarded, and we need to skip this section
         played_card_code = played_card.code
         response_card = game.turn.response_card
-        if (
-            played_card_code == "cdl" or played_card_code == "mvc"
-        ) and response_card is None:
+        cards_change_places = ["cdl", "mvc", "und", "sda"]
+        if (played_card_code in cards_change_places) and response_card is None:
             # If the played card is "cdl" or "mvc" and there's no response, the turn
             # owner is the position of the destination player
             for player in game.players:
                 if player.name == game.turn.destination_player:
                     new_owner = player.table_position
                     break
+            new_dest_exch = get_player_in_next_n_places(game, new_owner, 1)
             update_turn(
                 game.id,
                 TurnCreate(
@@ -785,8 +840,10 @@ def assign_turn_owner(game: GameOut):
                     played_card=None,
                     response_card=None,
                     destination_player="",
+                    destination_player_exchange=new_dest_exch.name,
                 ),
             )
+
             return
 
     # Assign new turn owner, must be an alive player
@@ -829,7 +886,7 @@ def get_player_in_next_n_places(game: GameOut, owner: int, n: int):
     if game.play_direction:
         next_player = alive_players[(index_player + n) % len(alive_players)]
     else:
-        next_player = alive_players[(index_player - n) % len(alive_players)]
+        next_player = alive_players[(index_player - n) + len(alive_players) % len(alive_players)]
     for p in game.players:
         if p.table_position == next_player:
             return p
@@ -864,11 +921,14 @@ def calculate_winners_if_victory_declared(game_id, player_id):
 
     if win:
         result = {
-            "message": "Gana La Cosa e infectados",
+            "reason": "¡No quedan humano vivos! Gana La Cosa e infectados",
             "winners": alive_infected,
         }
     else:
-        result = {"message": "Ganan los humanos", "winners": alive_humans}
+        result = {
+            "reason": "¡La cosa se equivocó! Ganan los humanos",
+            "winners": alive_humans,
+        }
 
     return result
 

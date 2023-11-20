@@ -31,14 +31,15 @@ def test_create_player(test_db):
         "min_players": 2,
         "max_players": 4,
         "state": 0,
-        "play_direction": None,
+        "play_direction": True,
         "turn": None,
+        "obstacles": [],
         "players": [
             {
                 "name": "Test Player",
                 "table_position": 1,
                 "alive": True,
-                "quarantine": False,
+                "quarantine": 0,
             }
         ],
     }
@@ -76,14 +77,15 @@ def test_create_wrong_player(test_db):
         "min_players": 2,
         "max_players": 4,
         "state": 0,
-        "play_direction": None,
+        "play_direction": True,
         "turn": None,
+        "obstacles": [],
         "players": [
             {
                 "name": "Test Player",
                 "table_position": 1,
                 "alive": True,
-                "quarantine": False,
+                "quarantine": 0,
             }
         ],
     }
@@ -132,13 +134,13 @@ def test_add_player_to_full_game(test_db):
                     "name": "Test Player 1",
                     "table_position": 1,
                     "alive": True,
-                    "quarantine": False,
+                    "quarantine": 0,
                 },
                 {
                     "name": "Test Player 2",
                     "table_position": 2,
                     "alive": True,
-                    "quarantine": False,
+                    "quarantine": 0,
                 },
             ],
         }
@@ -162,7 +164,8 @@ def test_get_player(test_db):
         "table_position": 1,
         "role": None,
         "alive": True,
-        "quarantine": False,
+        "quarantine": 0,
+        "card_to_exchange": None,
         "hand": [],
     }
 
@@ -181,7 +184,7 @@ def test_update_player(test_db):
         "table_position": 1,
         "role": 2,
         "alive": False,
-        "quarantine": True,
+        "quarantine": 2,
     }
     updated_player = crud.update_player(
         PlayerUpdate(**updated_data), 1, game_id=1
@@ -194,7 +197,8 @@ def test_update_player(test_db):
         "table_position": 1,
         "role": 2,
         "alive": False,
-        "quarantine": True,
+        "quarantine": 2,
+        "card_to_exchange": None,
         "hand": [],
     }
 

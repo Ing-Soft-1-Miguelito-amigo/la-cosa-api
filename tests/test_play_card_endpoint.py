@@ -107,7 +107,7 @@ def setup_module():
         created_game.id,
         game_schemas.GameUpdate(state=1, play_direction=True, turn_owner=1),
     )
-    turn_crud.create_turn(created_game.id, 1)
+    turn_crud.create_turn(created_game.id, 1, "Player2")
     turn_crud.update_turn(created_game.id, turn_schemas.TurnCreate(state=1))
     # finish setup
     yield
@@ -236,6 +236,7 @@ def test_play_card(setup_module):
         owner=1,
         played_card=card_played_status,
         destination_player="Player2",
+        destination_player_exchange="Player2",
         response_card=None,
         state=2,
     )

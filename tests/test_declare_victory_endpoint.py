@@ -120,7 +120,7 @@ def test_declare_victory_humans_win():
     )
 
     assert response.status_code == 200
-    assert response.json()["message"] == "Ganan los humanos"
+    assert response.json()["reason"] == "¡La cosa se equivocó! Ganan los humanos"
     for player in ["Player2", "Player3", "Player4"]:
         assert player in response.json()["winners"]
 
@@ -147,6 +147,6 @@ def test_declare_victory_infected_win():
     )
 
     assert response.status_code == 200
-    assert response.json()["message"] == "Gana La Cosa e infectados"
+    assert response.json()["reason"] == "¡No quedan humano vivos! Gana La Cosa e infectados"
     for player in ["Player1", "Player2", "Player3"]:
         assert player in response.json()["winners"]

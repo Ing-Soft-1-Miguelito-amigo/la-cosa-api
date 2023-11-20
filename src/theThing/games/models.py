@@ -21,7 +21,7 @@ class Game(db.Entity):
     state = Required(
         int, default=0
     )  # 0 = waiting, 1 = playing, 2 = finished, 3 = aborted
-    play_direction = Optional(bool)  # true = clockwise
+    play_direction = Optional(bool, default=True)  # true = clockwise
     turn = Optional(Turn, reverse="game")
     players = Set(Player, reverse="game")
     deck = Set(Card, reverse="game")

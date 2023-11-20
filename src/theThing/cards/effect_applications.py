@@ -5,6 +5,8 @@ from src.theThing.cards.crud import (
     remove_card_from_player,
     update_card,
     get_card,
+    give_card_to_player,
+    get_card_from_deck,
 )
 from src.theThing.cards.schemas import CardBase, CardUpdate
 from src.theThing.players.crud import get_player, update_player
@@ -61,7 +63,7 @@ async def apply_lla(
     # get the full game again to have the list of players updated
     updated_game = get_full_game(game.id)
     new_exchange_destination = get_player_in_next_n_places(
-        game, destination_player.table_position, 1
+        updated_game, player.table_position, 1
     )
     new_turn = TurnCreate(
         destination_player_exchange=new_exchange_destination.name
@@ -87,7 +89,8 @@ async def apply_lla(
     if response["winners"] is not None:
         await send_game_status_to_players(response["game"].id, response["game"])
         await send_finished_game_event_to_players(game.id, response)
-    return updated_game
+    message = f"{player.name} jugó lanzallamas e incinero a {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_vte(
@@ -113,7 +116,8 @@ async def apply_vte(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"Las cosas van para el otro lado! {player.name} invirtió el orden del juego"
+    return updated_game, message
 
 
 async def apply_cdl(
@@ -155,7 +159,8 @@ async def apply_cdl(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó cambio de lugar con {destination_player.name}"
+    return updated_game, message
 
 
 async def apply_mvc(
@@ -197,7 +202,8 @@ async def apply_mvc(
     )
     update_turn(game.id, new_turn)
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Mas vale que corras! a {destination_player.name} y cambiaron sus lugares"
+    return updated_game, message
 
 
 async def apply_ana(
@@ -214,7 +220,8 @@ async def apply_ana(
         player.id, destination_hand, destination_player.name
     )
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Análisis a {destination_player.name} y vio sus cartas"
+    return updated_game, message
 
 
 async def apply_sos(
@@ -231,7 +238,8 @@ async def apply_sos(
         player.id, destination_card, destination_player.name
     )
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} jugó Sospecha a {destination_player.name} y vio una de sus cartas"
+    return updated_game, message
 
 
 async def apply_whk(
@@ -247,7 +255,11 @@ async def apply_whk(
     await sh.send_whk_to_player(game.id, player.name, player_hand)
 
     updated_game = get_full_game(game.id)
-    return updated_game
+    if "lco" in [card.code for card in player_hand]:
+        message = f"¡Whisky!, {player.name} bebió de más y lo encontraron con La Cosa en la mano!"
+    else:
+        message = f"{player.name} bebió de más y dejó ver sus cartas a todos!"
+    return updated_game, message
 
 
 async def apply_cua(
@@ -259,7 +271,246 @@ async def apply_cua(
     card.state = 0
     update_card(CardUpdate(id=card.id, state=card.state), game.id)
 
-    update_player(PlayerUpdate(quarantine=2), player.id, game.id)
+    update_player(PlayerUpdate(quarantine=2), destination_player.id, game.id)
+
+    updated_game = get_full_game(game.id)
+
+    message = f"{player.name} jugó Cuarentena a {destination_player.name}"
+    return updated_game, message
+
+
+async def apply_ups(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    player_hand = player.hand
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_ups_to_players(game.id, player.name, player_hand)
+
+    updated_game = get_full_game(game.id)
+    if "lco" in [card.code for card in player_hand]:
+        message = f"¡Ups!, {player.name} se descuido y lo encontraron con La Cosa en la mano!"
+    else:
+        message = f"{player.name} se descuido y dejo ver sus cartas a todos!"
+    return updated_game, message
+
+
+async def apply_qen(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    player_hand = player.hand
+    card.state = 0
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_qen_to_player(player.id, player_hand, destination_player)
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} tuvo que mostrar sus cartas a {destination_player.name}"
+    return updated_game, message
+
+
+async def apply_cpo(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+
+    # Remove quarantine from all players
+    for player in game.players:
+        if player.quarantine > 0:
+            player.quarantine = 0
+            updated_player = update_player(
+                PlayerUpdate(quarantine=player.quarantine),
+                player.id,
+                game.id,
+            )
+            await sh.send_player_status_to_player(player.id, updated_player)
+
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    await sh.send_cpo_to_players(game.id)
+
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} jugó Cuerdas podridas y todos se liberaron de su cuarentena!"
+    return updated_game, message
+
+
+async def apply_und(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    # swap table position between the players
+    player.table_position, destination_player.table_position = (
+        destination_player.table_position,
+        player.table_position,
+    )
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    updated_player = update_player(
+        PlayerUpdate(table_position=player.table_position), player.id, game.id
+    )
+
+    updated_destination_player = update_player(
+        PlayerUpdate(table_position=destination_player.table_position),
+        destination_player.id,
+        game.id,
+    )
+
+    game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(
+        game, updated_player.table_position, 1
+    )
+    new_turn = TurnCreate(
+        owner=updated_player.table_position,
+        played_card=card.id,
+        destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name,
+    )
+    update_turn(game.id, new_turn)
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} jugó Uno, dos y cambio lugares con {destination_player.name}"
+    return updated_game, message
+
+
+async def apply_sda(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    # swap table position between the players
+    player.table_position, destination_player.table_position = (
+        destination_player.table_position,
+        player.table_position,
+    )
+    # push the changes to the database
+    updated_card = update_card(
+        CardUpdate(id=card.id, state=card.state), game.id
+    )
+
+    updated_player = update_player(
+        PlayerUpdate(table_position=player.table_position), player.id, game.id
+    )
+
+    updated_destination_player = update_player(
+        PlayerUpdate(table_position=destination_player.table_position),
+        destination_player.id,
+        game.id,
+    )
+
+    game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(
+        game, updated_player.table_position, 1
+    )
+    new_turn = TurnCreate(
+        owner=updated_player.table_position,
+        played_card=card.id,
+        destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name,
+    )
+    update_turn(game.id, new_turn)
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} jugó Sal de aqui y cambio lugares con {destination_player.name}"
+    return updated_game, message
+
+
+async def apply_trc(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+    game.obstacles = []
+    updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
+    message = f"{player.name} jugó Tres, cuatro y se rompieron todas las puertas!"
+    return updated_game, message
+
+
+async def apply_eaf(
+    game: GameInDB,
+    player: PlayerBase,
+    destination_player: PlayerBase,
+    card: CardBase,
+):
+    card.state = 0
+    update_card(CardUpdate(id=card.id, state=card.state), game.id)
+
+    # Remove quarantine from all players
+    for player_q in game.players:
+        updated_player = update_player(
+            PlayerUpdate(quarantine=0),
+            player_q.id,
+            game.id,
+        )
+        await sh.send_player_status_to_player(player_q.id, updated_player)
+
+    # Remove all locked doors
+    game.obstacles = []
+    updated_game = update_game(game.id, GameUpdate(obstacles=game.obstacles))
+    owner_id = player.id
+    # Swap the players by pairs clockwise, starting by the current turn owner
+    game_to_update = get_full_game(game.id)
+    alive_players = [
+        player for player in game_to_update.players if player.alive
+    ]
+    alive_players.sort(key=lambda x: x.table_position)
+
+    owner = [player for player in alive_players if player.id == owner_id][0]
+    owner_index = alive_players.index(owner)
+
+    for i in range(0, len(alive_players) - 1, 2):
+        first_player = alive_players[
+            (owner_index + i) % len(alive_players)
+        ]
+        next_player = alive_players[
+            (owner_index + i + 1) % len(alive_players)
+        ]
+
+        update_player(
+            PlayerUpdate(table_position=next_player.table_position),
+            first_player.id,
+            game.id,
+        )
+        update_player(
+            PlayerUpdate(table_position=first_player.table_position),
+            next_player.id,
+            game.id,
+        )
+
+    updated_player = get_player(owner_id, game.id)
+    # Update the turn accordingly
+    game = get_full_game(game.id)
+    new_exchange_destination = get_player_in_next_n_places(
+        game, updated_player.table_position, 1
+    )
+    turn_owner = [player.table_position for player in game.players if player.id == owner_id][0]
+    new_turn = TurnCreate(
+        owner=turn_owner,
+        played_card=card.id,
+        destination_player=destination_player.name,
+        destination_player_exchange=new_exchange_destination.name,
+    )
+    update_turn(game.id, new_turn)
+    # Update the turn
+    updated_game = get_full_game(game.id)
+    message = f"A bailar! {player.name} jugó ¿Es aqui la fiesta? y cambiaron todos sus lugares. Ademas, rompió todas las puertas y cuarentenas!"
+    return updated_game, message
 
 
 async def just_discard(
@@ -285,8 +536,8 @@ async def apply_ptr(
     card: CardBase,
 ):
     """The values in obstacles[] are interpreted as: a door exists between the value
-    (player_position) and the nearest alive player positionated at the right side of player_position,
-    i.e player_position represents the left side of the door."""
+    (player_position) and the nearest alive player positioned on the right side of player_position,
+    i.e. player_position represents the left side of the door."""
     player_position = player.table_position
     destination_player_position = destination_player.table_position
     alive_players = [
@@ -315,6 +566,10 @@ async def apply_ptr(
     updated_card = update_card(
         CardUpdate(id=card.id, state=card.state), game.id
     )
+    updated_game = get_full_game(game.id)
+    message = f"{player.name} colocó una puerta entre frente a {destination_player.name}"
+    return updated_game, message
+
 
 
 effect_applications = {
@@ -326,6 +581,13 @@ effect_applications = {
     "sos": apply_sos,
     "whk": apply_whk,
     "cua": apply_cua,
+    "ups": apply_ups,
+    "qen": apply_qen,
+    "cpo": apply_cpo,
+    "und": apply_und,
+    "sda": apply_sda,
+    "trc": apply_trc,
+    "eaf": apply_eaf,
     "ptr": apply_ptr,
     "default": just_discard,
 }
@@ -351,9 +613,10 @@ async def apply_ate(
     await sh.send_ate_to_player(
         game.id, player, destination_player, card_to_send
     )
-    # TODO: SEND DEFENSE EVENT TO CLIENT
+
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} se defendio del intercambio usando Aterrador!"
+    return updated_game, message
 
 
 async def apply_ngs(
@@ -372,9 +635,10 @@ async def apply_ngs(
     update_player(PlayerUpdate(card_to_exchange=None), player.id, game.id)
 
     update_turn(game.id, TurnCreate(state=5))
-    # TODO: SEND DEFENSE EVENT TO CLIENT
+
     updated_game = get_full_game(game.id)
-    return updated_game
+    message = f"{player.name} dijo No Gracias! y rechazo el intercambio"
+    return updated_game, message
 
 
 async def apply_fal(
@@ -401,8 +665,9 @@ async def apply_fal(
     update_turn(
         game.id, TurnCreate(state=4, destination_player_exchange=new_dest.name)
     )
-    # TODO: SEND DEFENSE EVENT TO CLIENT
-
+    message = f"{player.name} se defendio usando Fallaste!, ahora {new_dest.name} debe intercambiar"
+    game = get_full_game(game.id)
+    return game, message
 
 exchange_defense = {
     "ate": apply_ate,

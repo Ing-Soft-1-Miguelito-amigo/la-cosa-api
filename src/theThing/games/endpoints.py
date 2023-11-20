@@ -13,6 +13,7 @@ from .schemas import GameCreate, GameUpdate, GamePlayerAmount
 from .utils import *
 from ..cards.crud import *
 from ..cards.effect_applications import effect_applications, exchange_defense
+from ..cards.special_effect_applications import apply_hac
 from ..players.crud import create_player, get_player, delete_player
 from ..players.schemas import PlayerCreate
 from ..turn.crud import create_turn, update_turn
@@ -227,23 +228,25 @@ async def steal_card(steal_data: dict):
     try:
         card = get_card_from_deck(game_id)
         give_card_to_player(card.id, player_id, game_id)
+        turn_state = 1
+        update_turn(game_id, TurnCreate(state=turn_state))
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    # Change turn state
-    try:
-        update_turn(game_id, TurnCreate(state=1))
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
+    # Update player and game status
     updated_player = get_player(player_id, game_id)
     await send_player_status_to_player(player_id, updated_player)
 
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
-    # log message
-    message = f"{updated_player.name} robó una carta"
+    # Log message
+    if card.kind == 4:
+        message = f"{updated_player.name} robó la carta de ¡Pánico! {card.name}. Esperando a que la juegue..."
+        await send_panic_event_to_players(game_id, card, message)
+    else:
+        message = f"{updated_player.name} robó una carta"
+
     try:
         save_log(game_id, message)
     except Exception as e:
@@ -251,9 +254,13 @@ async def steal_card(steal_data: dict):
     await send_action_event_to_players(game_id, message)
 
     # Verify if the player is in quarantine
-    if updated_player.quarantine > 0:
+    if updated_player.quarantine > 0 and card.kind != 4:
         message = f"{updated_player.name} está en cuarentena y robó la carta {card.name}"
         await send_quarantine_event_to_players(game_id, card, message)
+        try:
+            save_log(game_id, message)
+        except Exception as e:
+            raise e
 
     return {"message": "Carta robada con éxito"}
 
@@ -302,7 +309,7 @@ async def play_card(play_data: dict):
     remove_card_from_player(card_id, player_id, game_id)
 
     # Update the turn structure
-    if card.code == "sed":
+    if card.code in ["sed", "npa"]:
         updated_turn = TurnCreate(
             played_card=card_id,
             destination_player=destination_name,
@@ -311,7 +318,21 @@ async def play_card(play_data: dict):
         )
         # Send event description to all players
         message = f"{turn_player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
-        await send_action_event_to_players(game_id, message)
+    elif card.code in ["hac"]:
+        message = await apply_hac(
+            game, turn_player, destination_player, card, play_data["obstacle"]
+        )
+        updated_turn = TurnCreate(
+            played_card=card_id,
+            destination_player=destination_name,
+            state=3,
+        )
+    elif card.code in ["cac", "olv"]:
+        updated_turn = TurnCreate(
+            played_card=card_id,
+            destination_player=destination_name,
+            state=6,
+        )
     else:
         updated_turn = TurnCreate(
             played_card=card_id, destination_player=destination_name, state=2
@@ -325,12 +346,22 @@ async def play_card(play_data: dict):
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
 
-    message = f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+    if card.code != "hac":
+        if player.name == destination_name:
+            message = f"{player.name} jugó {card.name}"
+        else:
+            message = f"{player.name} jugó {card.name} a {destination_name}, esperando su respuesta"
+
     try:
         save_log(game_id, message)
     except Exception as e:
         raise e
-    await send_action_event_to_players(game_id, message)
+
+    if card.kind == 4:
+        message = f"{player.name} jugó {card.name}"
+        await send_panic_event_to_players(game_id, card, message)
+    else:
+        await send_action_event_to_players(game_id, message)
     return {"message": "Carta jugada con éxito"}
 
 
@@ -351,7 +382,7 @@ async def discard_card(discard_data: dict):
     Raises:
         HTTPException:
             - 404 (Not Found): If the specified game, or player, or card
-              does not exists.
+              does not exist.
             - 422 (Unprocessable Entity):
                 Multiple possible errors. Description on "detail".
     """
@@ -479,17 +510,16 @@ async def respond_to_action_card(response_data: dict):
     if response_card_id is None:
         # Apply the effect of the played card. Call the function from the effect_applications dict
         if action_card.code not in effect_applications:
-            effect_applications["default"](
+            game, message = effect_applications["default"](
                 game, attacking_player, defending_player, action_card
             )
         else:
-            await effect_applications[action_card.code](
+            game, message = await effect_applications[action_card.code](
                 game, attacking_player, defending_player, action_card
             )
         # Update turn status
         update_turn(game_id, TurnCreate(state=3))
         # Send event description to all players
-        message = f"{attacking_player.name} jugó {action_card.name} a {defending_player.name}"
         try:
             save_log(game_id, message)
         except Exception as e:
@@ -507,6 +537,9 @@ async def respond_to_action_card(response_data: dict):
                 response_card_id, defending_player_id, game_id
             )
             new_card = get_card_from_deck(game_id)
+            while new_card.kind == 4:
+                update_card(CardUpdate(id=new_card.id, state=0), game_id)
+                new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
         except Exception as e:
             raise e
@@ -584,7 +617,7 @@ async def exchange_cards(exchange_data: dict):
     game_id = exchange_data["game_id"]
     player_id = exchange_data["player_id"]
     card_id = exchange_data["card_id"]
-    # This check is not necessary due to changes in the logic of the turn. But it is left for now just in case.
+    # This check is not necessary due to changes in the logic of the turn. But it is here for now just in case.
     try:
         game, player, card = verify_data_exchange(game_id, player_id, card_id)
     except Exception as e:
@@ -664,6 +697,12 @@ async def response_exchange(response_ex_data: dict):
                 game_id, exchanging_offerer.card_to_exchange, message
             )
 
+        if defending_player.quarantine > 0:
+            message = f"{defending_player.name} está en cuarentena y quiso intercambiar la carta {defending_player.card_to_exchange.name}"
+            await send_quarantine_event_to_players(
+                game_id, defending_player.card_to_exchange, message
+            )
+
         try:
             exchange_cards_effect(
                 game_id, exchanging_offerer, defending_player, exchange_card_id
@@ -671,21 +710,23 @@ async def response_exchange(response_ex_data: dict):
         except Exception as e:
             raise e
         # Send via socket the event description
-        await send_exchange_event_to_players(
-            game_id, exchanging_offerer.name, defending_player.name
-        )
+        message = f"{exchanging_offerer.name} intercambió con {defending_player.name}"
+        await send_action_event_to_players(game_id, message)
         update_turn(game_id, TurnCreate(state=5))
     elif defense_card_id and (not exchange_card_id):
         # Implement defense effect
         try:
             defense_card = get_card(defense_card_id, game_id)
-            await exchange_defense[defense_card.code](
+            game, message = await exchange_defense[defense_card.code](
                 game, exchanging_offerer, defending_player, defense_card
             )
             remove_card_from_player(
                 defense_card_id, defending_player_id, game_id
             )
             new_card = get_card_from_deck(game_id)
+            while new_card.kind == 4:
+                update_card(CardUpdate(id=new_card.id, state=0), game_id)
+                new_card = get_card_from_deck(game_id)
             give_card_to_player(new_card.id, defending_player_id, game_id)
             # the turn update is performed inside the defense function
             message = f"{defending_player.name} se defendió con {defense_card.name} del intercambio con {exchanging_offerer.name}"
@@ -736,6 +777,7 @@ async def declare_victory(data: dict):
     update_game(game_id, GameUpdate(state=2))
     updated_game = get_game(game_id)
     await send_game_status_to_players(game_id, updated_game)
+    await send_finished_game_event_to_players(game_id, game_result)
 
     return game_result
 
@@ -909,18 +951,27 @@ async def finish_turn(finish_data: dict):
     updated_game = get_game(game_id)
 
     await send_game_status_to_players(game_id, updated_game)
-    response = {"message": "Turno finalizado con éxito"}
     if return_data["winners"] is not None:
         await send_finished_game_event_to_players(game_id, return_data)
         response = {
             "message": "Partida finalizada",
             "winners": return_data["winners"],
         }
+        return response  # return the winners
 
-    message = f"Turno finalizado"
+    # Get name of the next turn owner
+    for player in updated_game.players:
+        if player.table_position == updated_game.turn.owner:
+            new_owner_name = player.name
+            break
+
+    message = f"Turno finalizado. Ahora el turno es de {new_owner_name}"
     try:
         save_log(game_id, message)
     except Exception as e:
         raise e
-    await send_defense_event_to_players(game_id, message)
-    return response
+
+    await send_finished_turn_to_players(
+        game_id, message, new_owner_name, updated_game.turn.owner
+    )
+    return {"message": message}

@@ -6,6 +6,7 @@ from src.theThing.players.crud import get_player
 from urllib.parse import parse_qs
 from src.theThing.games.crud import get_game
 from src.theThing.messages.schemas import MessageOut
+from src.theThing.cards.special_effect_applications import apply_cac, apply_olv
 
 sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 # define an asgi app
@@ -129,13 +130,38 @@ async def send_exchange_event_to_players(
     )
 
 
+async def send_finished_turn_to_players(
+    game_id: int, message: str, new_owner_name: str, new_owner_position: int
+):
+    await sio.emit(
+        "turn_finished",
+        data={
+            "log": message,
+            "new_owner_name": new_owner_name,
+            "new_owner_position": new_owner_position,
+        },
+        room="g" + str(game_id),
+    )
+
+
 async def send_quarantine_event_to_players(
     game_id: int, card: CardBase, message: str
 ):
     card_to_send = card.model_dump(exclude={"id"})
     await sio.emit(
         "quarantine",
-        data={"message": message, "card": card_to_send},
+        data={"log": message, "cards": [card_to_send]},
+        room="g" + str(game_id),
+    )
+
+
+async def send_panic_event_to_players(
+    game_id: int, card: CardBase, message: str
+):
+    card_to_send = card.model_dump(exclude={"id"})
+    await sio.emit(
+        "panic",
+        data={"log": message, "cards": [card_to_send]},
         room="g" + str(game_id),
     )
 
@@ -182,9 +208,9 @@ async def send_whk_to_player(game_id: int, player: str, hand: [CardBase]):
 
 
 async def send_ate_to_player(
-    game_id: int, player: PlayerBase, dest_player: PlayerBase, hand: [CardBase]
+    game_id: int, player: PlayerBase, dest_player: PlayerBase, card: CardBase
 ):
-    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    data_to_send = [card.model_dump(exclude={"id"})]
     await sio.emit(
         "ate",
         data={
@@ -193,3 +219,57 @@ async def send_ate_to_player(
         },
         room="p" + str(dest_player.id),
     )
+
+
+async def send_ups_to_players(game_id: int, player: str, hand: [CardBase]):
+    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    await sio.emit(
+        "ups",
+        data={
+            "log": player + "jugó ¡Ups! y estas son sus cartas!",
+            "cards": data_to_send,
+        },
+        room="g" + str(game_id),
+    )
+
+
+async def send_qen_to_player(
+    game_id: int, hand: [CardBase], dest_player: PlayerBase
+):
+    data_to_send = [card.model_dump(exclude={"id"}) for card in hand]
+    await sio.emit(
+        "qen",
+        data={
+            "log": dest_player.name
+            + "jugó Que quede entre nosotros y estas son sus cartas!",
+            "cards": data_to_send,
+        },
+        room="p" + str(dest_player.id),
+    )
+
+
+async def send_cpo_to_players(game_id: int):
+    await sio.emit(
+        "cpo",
+        data={
+            "log": "¡Las viejas cuerdas que usaste son fáciles de romper! Todas las cartas "
+            "Todas las cartas 'Cuarentena' que haya en juego son descartadas",
+        },
+        room="g" + str(game_id),
+    )
+
+
+@sio.on("cac")
+async def receive_cac_event(sid, data):
+    player, game = await apply_cac(data)
+
+    await send_game_status_to_players(game.id, game)
+    await send_player_status_to_player(player.id, player)
+
+
+@sio.on("olv")
+async def receive_olv_event(sid, data):
+    player, game = await apply_olv(data)
+
+    await send_game_status_to_players(game.id, game)
+    await send_player_status_to_player(player.id, player)

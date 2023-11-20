@@ -31,7 +31,9 @@ def setup_module():
 
     # make player 1 La Cosa
     player_crud.update_player(
-        player_schemas.PlayerUpdate(role=1, quarantine=2), created_player.id, created_game.id
+        player_schemas.PlayerUpdate(role=1, quarantine=2),
+        created_player.id,
+        created_game.id,
     )
 
     # make other players human
@@ -52,7 +54,9 @@ def setup_module():
 def test_finish_turn_quarantine(test_db):
     test_app = TestClient(app)
 
-    res = test_app.post("game/start", json={"game_id": 1, "player_name": "Player1"})
+    res = test_app.post(
+        "game/start", json={"game_id": 1, "player_name": "Player1"}
+    )
 
     # get the game
     game = game_crud.get_game(game_id=1)
@@ -70,7 +74,9 @@ def test_finish_turn_quarantine(test_db):
 
     updated_game = game_crud.get_game(game_id=1)
 
-    assert response.json() == {"message": "Turno finalizado con éxito"}
+    assert response.json() == {
+        "message": "Turno finalizado. Ahora el turno es de Player2",
+    }
     assert response.status_code == 200
     for player in updated_game.players:
         if player.table_position == turn_owner:
