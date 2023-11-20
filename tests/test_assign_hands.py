@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 @db_session
-def hands_are_not_empty(test_db):
+def test_hands_are_not_empty(test_db):
     game_data = {
         "game": {"name": "Prueba", "min_players": 4, "max_players": 6},
         "host": {"name": "Test Host"},
@@ -34,13 +34,12 @@ def hands_are_not_empty(test_db):
             hand_is_empty = True
 
     assert not hand_is_empty
-    rollback()
 
 
 @db_session
 def test_the_thing_is_assigned(test_db):
     game_data = {
-        "game": {"name": "Prueba", "min_players": 4, "max_players": 6},
+        "game": {"name": "Prueba2", "min_players": 4, "max_players": 6},
         "host": {"name": "Test Host"},
     }
     response = client.post("/game/create", json=game_data)

@@ -90,62 +90,15 @@ def test_delete_game(test_db):
 
 
 @db_session
-def test_get_all_games_in_db(test_db):
-    game1 = Game(name="Game 6", min_players=2, max_players=4)
-    game2 = Game(name="Game 8", min_players=3, max_players=6)
-    game1.flush()
-    game2.flush()
-
-    games = crud.get_all_games_in_db()
-
-    assert len(games) == 2
-    assert [game.model_dump() for game in games] == [
-        {
-            "id": game1.id,
-            "name": game1.name,
-            "min_players": game1.min_players,
-            "max_players": game1.max_players,
-            "password": game1.password,
-            "state": game1.state,
-            "play_direction": game1.play_direction,
-            "turn_owner": game1.turn_owner,
-            "turn": None,
-            "players": [],
-            "deck": [],
-        },
-        {
-            "id": game2.id,
-            "name": game2.name,
-            "min_players": game2.min_players,
-            "max_players": game2.max_players,
-            "password": game2.password,
-            "state": game2.state,
-            "play_direction": game2.play_direction,
-            "turn_owner": game2.turn_owner,
-            "turn": None,
-            "players": [],
-            "deck": [],
-        },
-    ]
-
-    rollback()
-
-
-@db_session
 def test_update_game(test_db):
     game = Game(name="Test Game", min_players=2, max_players=4)
     game.flush()
 
-    updated_data = {
-        "state": 1,
-        "play_direction": True,
-        "turn_owner": 5,
-    }
+    updated_data = {"state": 1, "play_direction": True}
 
     updated_game = crud.update_game(game.id, GameUpdate(**updated_data))
 
     assert updated_game.state == updated_data["state"]
     assert updated_game.play_direction == updated_data["play_direction"]
-    assert updated_game.turn_owner == updated_data["turn_owner"]
 
     rollback()

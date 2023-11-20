@@ -3,9 +3,14 @@ from pony.orm import db_session
 from .schemas import TurnCreate
 
 
-def create_turn(game_id: int, turn_owner: int):
+def create_turn(game_id: int, turn_owner: int, exchange_player: str):
     with db_session:
-        turn = models.Turn(game=game_id, owner=turn_owner, state=0)
+        turn = models.Turn(
+            game=game_id,
+            owner=turn_owner,
+            destination_player_exchange=exchange_player,
+            state=0,
+        )
         turn.flush()
         response = schemas.TurnCreate.model_validate(turn)
     return response

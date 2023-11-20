@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
+from src.theThing.cards.models import Card
 from src.theThing.cards.schemas import CardBase
 
 
@@ -17,9 +18,24 @@ class PlayerBase(PlayerCreate):
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    quarantine: Optional[int] = None
     owner: Optional[bool] = None
     hand: List[CardBase] = None
+    card_to_exchange: Optional[CardBase] = None
+
+    @classmethod
+    def model_validate(cls, player, card_to_exchange=None):
+        return cls(
+            id=player.id,
+            name=player.name,
+            table_position=player.table_position,
+            role=player.role,
+            alive=player.alive,
+            quarantine=player.quarantine,
+            owner=player.owner,
+            hand=player.hand,
+            card_to_exchange=card_to_exchange,
+        )
 
 
 class PlayerForGame(BaseModel):
@@ -27,7 +43,7 @@ class PlayerForGame(BaseModel):
     name: str
     table_position: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    quarantine: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +53,7 @@ class PlayerUpdate(BaseModel):
     table_position: Optional[int] = None
     role: Optional[int] = None
     alive: Optional[bool] = None
-    quarantine: Optional[bool] = None
+    card_to_exchange: Optional[CardBase] = None
+    quarantine: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
